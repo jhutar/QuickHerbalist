@@ -36,22 +36,12 @@ game_state = "RUNNING"  # "RUNNING", "GAME_OVER"
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        # V reálné hře bys nahrával obrázky:
-        # self.images = [
-        #     pygame.image.load("hero1.png").convert_alpha(),
-        #     pygame.image.load("hero2.png").convert_alpha(),
-        #     pygame.image.load("hero3.png").convert_alpha(),
-        #     pygame.image.load("hero4.png").convert_alpha()
-        # ]
-        # Pro simulaci použijeme obdélníky
         self.images = [
-            pygame.Surface((64, 64)),
-            pygame.Surface((64, 64)),
-            pygame.Surface((64, 64)),
-            pygame.Surface((64, 64)),
+            pygame.image.load("hero1.png").convert_alpha(),
+            pygame.image.load("hero2.png").convert_alpha(),
+            pygame.image.load("hero1.png").convert_alpha(),
+            pygame.image.load("hero3.png").convert_alpha(),
         ]
-        for img in self.images:
-            img.fill(BLUE)  # Vyplníme je modrou barvou
 
         self.index = 0
         self.image = self.images[self.index]
@@ -86,11 +76,7 @@ class Player(pygame.sprite.Sprite):
 class Ground(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        # V reálné hře bys nahrával obrázek:
-        # self.image = pygame.image.load("grass.png").convert_alpha()
-        # Pro simulaci použijeme obdélník
-        self.image = pygame.Surface((64, 64))
-        self.image.fill(random.choice([GREEN1, GREEN2, GREEN3]))
+        self.image = pygame.image.load("grass.png").convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
