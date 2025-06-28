@@ -9,12 +9,14 @@ pygame.init()
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Běžec s Květinami")
+pygame.display.set_caption("Rychlá bylinkářka")
 
 # --- Barvy ---
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-GREEN = (0, 150, 0) # Pro trávu
+GREEN1 = (0, 150, 0) # Pro trávu
+GREEN2 = (0, 130, 0) # Pro trávu
+GREEN3 = (0, 170, 0) # Pro trávu
 RED = (255, 0, 0)   # Pro kameny
 YELLOW = (255, 255, 0) # Pro květiny
 BLUE = (0, 0, 255) # Pro hráče
@@ -24,7 +26,7 @@ font = pygame.font.Font(None, 36)
 game_over_font = pygame.font.Font(None, 72)
 
 # --- Herní proměnné ---
-game_speed = 5 # Počáteční rychlost
+game_speed = 3 # Počáteční rychlost
 score = 0
 distance = 0 # Vzdálenost "ušlá" hráčem
 game_state = "RUNNING" # "RUNNING", "GAME_OVER"
@@ -42,10 +44,10 @@ class Player(pygame.sprite.Sprite):
         # ]
         # Pro simulaci použijeme obdélníky
         self.images = [
-            pygame.Surface((50, 50)),
-            pygame.Surface((50, 50)),
-            pygame.Surface((50, 50)),
-            pygame.Surface((50, 50))
+            pygame.Surface((64, 64)),
+            pygame.Surface((64, 64)),
+            pygame.Surface((64, 64)),
+            pygame.Surface((64, 64))
         ]
         for img in self.images:
             img.fill(BLUE) # Vyplníme je modrou barvou
@@ -80,21 +82,21 @@ class Player(pygame.sprite.Sprite):
 
 # --- Třída Země/Trávy ---
 class Ground(pygame.sprite.Sprite):
-    def __init__(self, x):
+    def __init__(self, x, y):
         super().__init__()
         # V reálné hře bys nahrával obrázek:
         # self.image = pygame.image.load("grass.png").convert_alpha()
         # Pro simulaci použijeme obdélník
-        self.image = pygame.Surface((SCREEN_WIDTH, 50)) # Pás trávy
-        self.image.fill(GREEN)
+        self.image = pygame.Surface((64, 64))
+        self.image.fill(random.choice([GREEN1, GREEN2, GREEN3]))
         self.rect = self.image.get_rect()
         self.rect.x = x
-        self.rect.y = SCREEN_HEIGHT - 50 # Umístění trávy dole
+        self.rect.y = y
 
     def update(self):
         self.rect.x -= game_speed
         if self.rect.right < 0:
-            self.rect.x = SCREEN_WIDTH # Reset na pravý okraj
+            self.kill() # Odstraní se, pokud je mimo obrazovku
 
 # --- Třída Květiny ---
 class Flower(pygame.sprite.Sprite):
@@ -132,28 +134,62 @@ class Stone(pygame.sprite.Sprite):
         if self.rect.right < 0:
             self.kill() # Odstraní se, pokud je mimo obrazovku
 
+class GroundTiles(pygame.sprite.Group):
+    def __init__(self):
+        super().__init__()
+        self.max_x = 0   # X axis of most right tile (it's left border)
+
+    def add(self, *sprites):
+        super().add(*sprites)
+
+        # Update max_x if added sprite is more to the right
+        for s in sprites:
+            if s.rect.x > self.max_x:
+                self.max_x = s.rect.x
+
+    def update(self):
+        super().update()
+
+        # Tiles were just updated to move to the left, so move max_x as well
+        self.max_x -= game_speed
+
+        ###print("Max: ", max([s.rect.x for s in self.sprites()]), " vs. ", self.max_x, " (", len(self), ")")
+
+        # Create new column of tiles if needed
+        current_max_x = self.max_x
+        if current_max_x <= SCREEN_WIDTH:
+            first = iter(self).__next__()
+            tile_width = first.rect.width
+            tile_height = first.rect.height
+            for row in range(int(SCREEN_HEIGHT / tile_height)):
+                tile = Ground(current_max_x + tile_width, row * tile_height)
+                self.add(tile)
+
+
 # --- Skupiny sprajtů ---
-all_sprites = pygame.sprite.Group()
 flowers = pygame.sprite.Group()
 stones = pygame.sprite.Group()
-ground_tiles = pygame.sprite.Group()
+players = pygame.sprite.Group()
+ground_tiles = GroundTiles()
 
 # --- Vytvoření hráče ---
 player = Player()
-all_sprites.add(player)
+players.add(player)
 
 # --- Vytvoření počátečních dlaždic země ---
-for i in range(2): # Dvě dlaždice pro plynulý pohyb
-    ground = Ground(i * SCREEN_WIDTH)
-    all_sprites.add(ground)
-    ground_tiles.add(ground)
+first = Ground(0, 0)
+for row in range(int(SCREEN_HEIGHT / first.rect.height)):
+    for col in range(int(SCREEN_WIDTH / first.rect.width)):
+        ground = Ground(col * first.rect.width, row * first.rect.height)
+        ground_tiles.add(ground)
 
 # --- Časovače pro generování objektů ---
 flower_spawn_event = pygame.USEREVENT + 1
-pygame.time.set_timer(flower_spawn_event, 2000) # Květina každé 2 sekundy
+pygame.time.set_timer(flower_spawn_event, 1000) # Květina každou 1 sekundu
 
+stone_spawn_event_interval = 3000
 stone_spawn_event = pygame.USEREVENT + 2
-pygame.time.set_timer(stone_spawn_event, 3000) # Kámen každé 3 sekundy
+pygame.time.set_timer(stone_spawn_event, stone_spawn_event_interval, 1) # Kámen každé 3 sekundy a potom častěji
 
 # --- Hlavní herní smyčka ---
 clock = pygame.time.Clock()
@@ -165,19 +201,25 @@ while running:
             running = False
         if event.type == flower_spawn_event and game_state == "RUNNING":
             new_flower = Flower()
-            all_sprites.add(new_flower)
             flowers.add(new_flower)
         if event.type == stone_spawn_event and game_state == "RUNNING":
             new_stone = Stone()
-            all_sprites.add(new_stone)
             stones.add(new_stone)
+
+            # Next stone will appear faster
+            if stone_spawn_event_interval > 50:
+                stone_spawn_event_interval -= random.randint(0, 50)
+            pygame.time.set_timer(stone_spawn_event, stone_spawn_event_interval, 1)
 
     if game_state == "RUNNING":
         # --- Aktualizace ---
-        all_sprites.update()
+        ground_tiles.update()
+        flowers.update()
+        stones.update()
+        players.update()
 
         # Zvýšení rychlosti hry a vzdálenosti
-        game_speed += 0.001 # Postupné zrychlování
+        ###game_speed += 0.001 # Postupné zrychlování   FIXME
         distance += game_speed / 10 # Vzdálenost se zvyšuje s rychlostí
 
         # Kontrola kolizí s květinami
@@ -190,12 +232,6 @@ while running:
         if stone_hits:
             game_state = "GAME_OVER"
 
-        # Zajištění plynulého pohybu země
-        if ground_tiles.sprites()[0].rect.right < 0:
-            ground_tiles.sprites()[0].rect.x = SCREEN_WIDTH
-        if ground_tiles.sprites()[1].rect.right < 0:
-            ground_tiles.sprites()[1].rect.x = SCREEN_WIDTH
-
         # --- Kreslení ---
         screen.fill(WHITE) # Vyplní pozadí bílou barvou
 
@@ -203,7 +239,9 @@ while running:
         for tile in ground_tiles:
             screen.blit(tile.image, tile.rect)
 
-        all_sprites.draw(screen)
+        flowers.draw(screen)
+        stones.draw(screen)
+        players.draw(screen)
 
         # Zobrazení skóre a vzdálenosti
         score_text = font.render(f"Květiny: {score}", True, BLACK)
@@ -215,7 +253,7 @@ while running:
         screen.fill(BLACK)
         game_over_text = game_over_font.render("KONEC HRY!", True, WHITE)
         final_score_text = font.render(f"Květiny: {score}", True, WHITE)
-        final_distance_text = font.render(f"Ušlá vzdálenost: {int(distance)} m", True, WHITE)
+        final_distance_text = font.render(f"Vzdálenost: {int(distance)} m", True, WHITE)
 
         game_over_rect = game_over_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50))
         score_rect = final_score_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 20))
