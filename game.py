@@ -91,7 +91,7 @@ class Ground(pygame.sprite.Sprite):
 class Flower(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.image.load("flower1.png").convert_alpha()
+        self.image = pygame.image.load(random.choice(["flower1.png", "flower2.png"])).convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.x = SCREEN_WIDTH + random.randint(
             50, 200
