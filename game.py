@@ -91,13 +91,7 @@ class Ground(pygame.sprite.Sprite):
 class Flower(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        # V reálné hře bys nahrával obrázek:
-        # self.image = pygame.image.load("flower.png").convert_alpha()
-        # Pro simulaci použijeme kruh
-        self.image = pygame.Surface(
-            (30, 30), pygame.SRCALPHA
-        )  # SRCALPHA pro průhlednost
-        pygame.draw.circle(self.image, YELLOW, (15, 15), 15)  # Žlutý kruh
+        self.image = pygame.image.load("flower1.png").convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.x = SCREEN_WIDTH + random.randint(
             50, 200
@@ -114,11 +108,7 @@ class Flower(pygame.sprite.Sprite):
 class Stone(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        # V reálné hře bys nahrával obrázek:
-        # self.image = pygame.image.load("stone.png").convert_alpha()
-        # Pro simulaci použijeme obdélník
-        self.image = pygame.Surface((40, 40))
-        self.image.fill(RED)  # Červený obdélník
+        self.image = pygame.image.load("stone.png").convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.x = SCREEN_WIDTH + random.randint(
             100, 300
