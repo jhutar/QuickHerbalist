@@ -121,7 +121,7 @@ class Stone(pygame.sprite.Sprite):
             self.kill()  # Odstraní se, pokud je mimo obrazovku
 
 
-class GroundTiles(pygame.sprite.Group):
+class Background(pygame.sprite.Group):
     def __init__(self):
         super().__init__()
         self.max_x = 0  # X axis of most right tile (it's left border)
@@ -157,7 +157,7 @@ class GroundTiles(pygame.sprite.Group):
 flowers = pygame.sprite.Group()
 stones = pygame.sprite.Group()
 players = pygame.sprite.Group()
-ground_tiles = GroundTiles()
+background = Background()
 
 # --- Vytvoření hráče ---
 player = Player()
@@ -167,8 +167,8 @@ players.add(player)
 first = Ground(0, 0)
 for row in range(int(SCREEN_HEIGHT / first.rect.height)):
     for col in range(int(SCREEN_WIDTH / first.rect.width)):
-        ground = Ground(col * first.rect.width, row * first.rect.height)
-        ground_tiles.add(ground)
+        tile = Ground(col * first.rect.width, row * first.rect.height)
+        background.add(tile)
 
 # --- Časovače pro generování objektů ---
 flower_spawn_event = pygame.USEREVENT + 1
@@ -202,7 +202,7 @@ while running:
 
     if game_state == "RUNNING":
         # --- Aktualizace ---
-        ground_tiles.update()
+        background.update()
         flowers.update()
         stones.update()
         players.update()
@@ -227,11 +227,7 @@ while running:
 
         # --- Kreslení ---
         screen.fill(WHITE)  # Vyplní pozadí bílou barvou
-
-        # Kreslení země (trávy)
-        for tile in ground_tiles:
-            screen.blit(tile.image, tile.rect)
-
+        background.draw(screen)
         flowers.draw(screen)
         stones.draw(screen)
         players.draw(screen)
