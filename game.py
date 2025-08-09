@@ -46,7 +46,7 @@ class Player(pygame.sprite.Sprite):
         self.index = 0
         self.image = self.images[self.index]
         self.rect = self.image.get_rect()
-        self.rect.center = (SCREEN_WIDTH // 4, SCREEN_HEIGHT // 2)
+        self.rect.center = (SCREEN_WIDTH // 8, SCREEN_HEIGHT // 2)
         self.animation_speed = 0.1  # Rychlost animace
         self.last_update = pygame.time.get_ticks()
 
