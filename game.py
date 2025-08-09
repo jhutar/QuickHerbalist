@@ -72,78 +72,70 @@ class Player(pygame.sprite.Sprite):
             self.rect.bottom = SCREEN_HEIGHT
 
 
-# --- Třída Země/Trávy ---
-class Ground(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+class MovingSprite(pygame.sprite.Sprite):
+    """Base class for sprite that is constatntly moving to the left in the game like grass, flowers or stones."""
+    def __init__(self, image, x, y):
         super().__init__()
-        self.image = pygame.image.load("grass.png").convert_alpha()
+        self.image = image
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+        self.rect_x_float = float(x)
 
     def update(self):
-        self.rect.x -= game_speed
+        self.rect_x_float -= game_speed
+        self.rect.x = int(self.rect_x_float)
         if self.rect.right < 0:
-            self.kill()  # Odstraní se, pokud je mimo obrazovku
+            self.kill()
+
+
+# --- Třída Země/Trávy ---
+class Ground(MovingSprite):
+    def __init__(self, x, y):
+        image = pygame.image.load("grass.png").convert_alpha()
+        super().__init__(image, x, y)
 
 
 # --- Třída Květiny ---
-class Flower(pygame.sprite.Sprite):
+class Flower(MovingSprite):
     def __init__(self):
-        super().__init__()
-        self.image = pygame.image.load(random.choice(["flower1.png"])).convert_alpha()
-        self.rect = self.image.get_rect()
-        self.rect.x = SCREEN_WIDTH + random.randint(
-            50, 200
-        )  # Náhodná pozice za obrazovkou
-        self.rect.y = random.randint(0, SCREEN_HEIGHT - self.rect.height)
-
-    def update(self):
-        self.rect.x -= game_speed
-        if self.rect.right < 0:
-            self.kill()  # Odstraní se, pokud je mimo obrazovku
+        image = pygame.image.load(random.choice(["flower1.png"])).convert_alpha()
+        x = SCREEN_WIDTH + random.randint(50, 200)
+        y = random.randint(0, SCREEN_HEIGHT)
+        super().__init__(image, x, y)
 
 
 # --- Třída Kamene ---
-class Stone(pygame.sprite.Sprite):
+class Stone(MovingSprite):
     def __init__(self):
-        super().__init__()
-        self.image = pygame.image.load("stone.png").convert_alpha()
-        self.rect = self.image.get_rect()
-        self.rect.x = SCREEN_WIDTH + random.randint(
-            100, 300
-        )  # Náhodná pozice za obrazovkou
-        self.rect.y = random.randint(0, SCREEN_HEIGHT - self.rect.height)
-
-    def update(self):
-        self.rect.x -= game_speed
-        if self.rect.right < 0:
-            self.kill()  # Odstraní se, pokud je mimo obrazovku
+        image = pygame.image.load("stone.png").convert_alpha()
+        x = SCREEN_WIDTH + random.randint(100, 300)
+        y = random.randint(0, SCREEN_HEIGHT)
+        super().__init__(image, x, y)
 
 
 class Background(pygame.sprite.Group):
     def __init__(self):
         super().__init__()
-        self.max_x = 0  # X axis of most right tile (it's left border)
+        self.max_x_float = 0.0  # X axis of most right tile (it's left border)
 
     def add(self, *sprites):
         super().add(*sprites)
 
-        # Update max_x if added sprite is more to the right
+        # Update max_x_float if added sprite is more to the right
         for s in sprites:
-            if s.rect.x > self.max_x:
-                self.max_x = s.rect.x
+            if s.rect_x_float > self.max_x_float:
+                self.max_x_float = s.rect_x_float
 
     def update(self):
         super().update()
 
-        # Tiles were just updated to move to the left, so move max_x as well
-        self.max_x -= game_speed
-
-        ###print("Max: ", max([s.rect.x for s in self.sprites()]), " vs. ", self.max_x, " (", len(self), ")")
+        # Tiles were just updated to move to the left, so move max_x_float as well
+        self.max_x_float -= game_speed
+        max_x = int(self.max_x_float)
 
         # Create new column of tiles if needed
-        current_max_x = self.max_x
+        current_max_x = max_x
         if current_max_x <= SCREEN_WIDTH:
             first = iter(self).__next__()
             tile_width = first.rect.width
@@ -208,7 +200,7 @@ while running:
         players.update()
 
         # Zvýšení rychlosti hry a vzdálenosti
-        ###game_speed += 0.001 # Postupné zrychlování   FIXME
+        game_speed += 0.001 # Postupné zrychlování
         distance += game_speed / 10  # Vzdálenost se zvyšuje s rychlostí
 
         # Kontrola kolizí s květinami
