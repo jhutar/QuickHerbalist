@@ -1,0 +1,49 @@
+# Quick Herbalist translations
+# Copyright (C) YEAR ORGANIZATION
+# Jan Hutar <jhutar@seznam.cz>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.1\n"
+"POT-Creation-Date: 2025-08-10 21:45+0200\n"
+"PO-Revision-Date: 2025-08-10 21:45+0200\n"
+"Last-Translator: Jan Hutar <jhutar@seznam.cz>\n"
+"Language-Team: Jan Hutar <jhutar@seznam.cz>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+#: game.py:16 game.py:207
+msgid "Quick Herbalist"
+msgstr ""
+
+#: game.py:211
+msgid "Press 's' for start"
+msgstr ""
+
+#: game.py:251 game.py:280
+msgid "Collected: "
+msgstr ""
+
+#: game.py:252 game.py:281
+msgid "Distance: "
+msgstr ""
+
+#: game.py:261
+msgid "Do you want to quit?"
+msgstr ""
+
+#: game.py:265
+msgid "Press 's' to continue"
+msgstr ""
+
+#: game.py:269
+msgid "Press 'q' to quit"
+msgstr ""
+
+#: game.py:279
+msgid "GAME OVER!"
+msgstr ""
+

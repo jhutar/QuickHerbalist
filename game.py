@@ -1,6 +1,12 @@
 import pygame
 import random
 import sys
+import gettext
+
+# --- Inicializace lokalizace
+gettext.bindtextdomain("base", "locales/")
+gettext.textdomain("base")
+_ = gettext.gettext
 
 # --- Inicializace Pygame ---
 pygame.init()
@@ -9,7 +15,7 @@ pygame.init()
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Rychlá bylinkářka")
+pygame.display.set_caption(_("Quick Herbalist"))
 
 # --- Barvy ---
 WHITE = (255, 255, 255)
@@ -200,11 +206,11 @@ while running:
 
     if game_state == "MENU":
         screen.fill(BLACK)
-        title_text = font.render("Rychlá bylinkářka", True, WHITE)
+        title_text = font.render(_("Quick Herbalist"), True, WHITE)
         title_rect = title_text.get_rect(
             center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50)
         )
-        start_text = font.render("Stiskni 's' pro začátek", True, WHITE)
+        start_text = font.render(_("Press 's' for start"), True, WHITE)
         start_rect = start_text.get_rect(
             center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
         )
@@ -244,8 +250,8 @@ while running:
         players.draw(screen)
 
         # Zobrazení skóre a vzdálenosti
-        score_text = font.render(f"Květiny: {score}", True, BLACK)
-        distance_text = font.render(f"Vzdálenost: {int(distance)} m", True, BLACK)
+        score_text = font.render(_("Collected: ") + str(score), True, BLACK)
+        distance_text = font.render(_("Distance: ") + str(int(distance)), True, BLACK)
         screen.blit(score_text, (10, 10))
         screen.blit(distance_text, (10, 50))
 
@@ -254,15 +260,15 @@ while running:
 
     elif game_state == "QUIT":
         screen.fill(BLACK)
-        title_text = font.render("Opravdu skončit?", True, WHITE)
+        title_text = font.render(_("Do you want to quit?"), True, WHITE)
         title_rect = title_text.get_rect(
             center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50)
         )
-        start_text = font.render("Stiskni 's' pro pokračování", True, WHITE)
+        start_text = font.render(_("Press 's' to continue"), True, WHITE)
         start_rect = start_text.get_rect(
             center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
         )
-        quit_text = font.render("Stiskni 'q' pro konec", True, WHITE)
+        quit_text = font.render(_("Press 'q' to quit"), True, WHITE)
         quit_rect = quit_text.get_rect(
             center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100)
         )
@@ -272,9 +278,9 @@ while running:
 
     elif game_state == "GAME_OVER":
         screen.fill(BLACK)
-        game_over_text = game_over_font.render("KONEC HRY!", True, WHITE)
-        final_score_text = font.render(f"Květiny: {score}", True, WHITE)
-        final_distance_text = font.render(f"Vzdálenost: {int(distance)} m", True, WHITE)
+        game_over_text = game_over_font.render(_("GAME OVER!"), True, WHITE)
+        final_score_text = font.render(_("Collected: ") + str(score), True, WHITE)
+        final_distance_text = font.render(_("Distance: ") + str(int(distance)), True, WHITE)
 
         game_over_rect = game_over_text.get_rect(
             center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50)
