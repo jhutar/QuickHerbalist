@@ -29,7 +29,7 @@ game_over_font = pygame.font.Font(None, 72)
 game_speed = 3  # Počáteční rychlost
 score = 0
 distance = 0  # Vzdálenost "ušlá" hráčem
-game_state = "RUNNING"  # "RUNNING", "GAME_OVER"
+game_state = "MENU"
 
 
 # --- Třída Hráče ---
@@ -180,10 +180,16 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == flower_spawn_event and game_state == "RUNNING":
+        if game_state in ("QUIT",) and event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE, pygame.K_q):
+            running = False
+        if game_state in ("MENU", "RUNNING") and event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE, pygame.K_q):
+            game_state = "QUIT"
+        if game_state in ("MENU", "QUIT") and event.type == pygame.KEYDOWN and event.key == pygame.K_s:
+            game_state = "RUNNING"
+        if game_state in ("RUNNING",) and event.type == flower_spawn_event:
             new_flower = Flower()
             flowers.add(new_flower)
-        if event.type == stone_spawn_event and game_state == "RUNNING":
+        if game_state in ("RUNNING",) and event.type == stone_spawn_event:
             new_stone = Stone()
             stones.add(new_stone)
 
@@ -192,7 +198,20 @@ while running:
                 stone_spawn_event_interval -= random.randint(0, 50)
             pygame.time.set_timer(stone_spawn_event, stone_spawn_event_interval, 1)
 
-    if game_state == "RUNNING":
+    if game_state == "MENU":
+        screen.fill(BLACK)
+        title_text = font.render("Rychlá bylinkářka", True, WHITE)
+        title_rect = title_text.get_rect(
+            center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50)
+        )
+        start_text = font.render("Stiskni 's' pro začátek", True, WHITE)
+        start_rect = start_text.get_rect(
+            center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
+        )
+        screen.blit(title_text, title_rect)
+        screen.blit(start_text, start_rect)
+
+    elif game_state == "RUNNING":
         # --- Aktualizace ---
         background.update()
         flowers.update()
@@ -229,6 +248,27 @@ while running:
         distance_text = font.render(f"Vzdálenost: {int(distance)} m", True, BLACK)
         screen.blit(score_text, (10, 10))
         screen.blit(distance_text, (10, 50))
+
+    elif game_state == "BREWING":
+        pass
+
+    elif game_state == "QUIT":
+        screen.fill(BLACK)
+        title_text = font.render("Opravdu skončit?", True, WHITE)
+        title_rect = title_text.get_rect(
+            center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50)
+        )
+        start_text = font.render("Stiskni 's' pro pokračování", True, WHITE)
+        start_rect = start_text.get_rect(
+            center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
+        )
+        quit_text = font.render("Stiskni 'q' pro konec", True, WHITE)
+        quit_rect = quit_text.get_rect(
+            center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100)
+        )
+        screen.blit(title_text, title_rect)
+        screen.blit(start_text, start_rect)
+        screen.blit(quit_text, quit_rect)
 
     elif game_state == "GAME_OVER":
         screen.fill(BLACK)
