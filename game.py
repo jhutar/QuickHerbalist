@@ -186,7 +186,7 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if game_state in ("QUIT",) and event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE, pygame.K_q):
+        if game_state in ("QUIT", "GAME_OVER") and event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE, pygame.K_q):
             running = False
         if game_state in ("MENU", "RUNNING") and event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE, pygame.K_q):
             game_state = "QUIT"
