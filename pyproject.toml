@@ -5,7 +5,7 @@ description = "A quick 2D items collecting game"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "pygame>=2.5.2",
+    "kivy>=2.3.0",
 ]
 
 [project.scripts]
