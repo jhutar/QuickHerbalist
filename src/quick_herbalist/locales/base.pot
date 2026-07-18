@@ -46,4 +46,3 @@ msgstr ""
 #: game.py:279
 msgid "GAME OVER!"
 msgstr ""
-

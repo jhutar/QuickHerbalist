@@ -7,11 +7,14 @@ import os
 # --- Správa cest k prostředkům (assets / locales) ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+
 def get_asset_path(filename):
     return os.path.join(BASE_DIR, "assets", filename)
 
+
 def get_locales_dir():
     return os.path.join(BASE_DIR, "locales")
+
 
 # --- Inicializace lokalizace
 gettext.bindtextdomain("base", get_locales_dir())
@@ -90,6 +93,7 @@ class Player(pygame.sprite.Sprite):
 
 class MovingSprite(pygame.sprite.Sprite):
     """Base class for sprite that is constatntly moving to the left in the game like grass, flowers or stones."""
+
     def __init__(self, image, x, y):
         super().__init__()
         self.image = image
@@ -115,7 +119,9 @@ class Ground(MovingSprite):
 # --- Třída Květiny ---
 class Flower(MovingSprite):
     def __init__(self):
-        image = pygame.image.load(get_asset_path(random.choice(["flower1.png"]))).convert_alpha()
+        image = pygame.image.load(
+            get_asset_path(random.choice(["flower1.png"]))
+        ).convert_alpha()
         x = SCREEN_WIDTH + random.randint(50, 200)
         y = random.randint(0, SCREEN_HEIGHT)
         super().__init__(image, x, y)
@@ -199,11 +205,23 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if game_state in ("QUIT", "GAME_OVER") and event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE, pygame.K_q):
+            if (
+                game_state in ("QUIT", "GAME_OVER")
+                and event.type == pygame.KEYDOWN
+                and event.key in (pygame.K_ESCAPE, pygame.K_q)
+            ):
                 running = False
-            if game_state in ("MENU", "RUNNING") and event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE, pygame.K_q):
+            if (
+                game_state in ("MENU", "RUNNING")
+                and event.type == pygame.KEYDOWN
+                and event.key in (pygame.K_ESCAPE, pygame.K_q)
+            ):
                 game_state = "QUIT"
-            if game_state in ("MENU", "QUIT") and event.type == pygame.KEYDOWN and event.key == pygame.K_s:
+            if (
+                game_state in ("MENU", "QUIT")
+                and event.type == pygame.KEYDOWN
+                and event.key == pygame.K_s
+            ):
                 game_state = "RUNNING"
             if game_state in ("RUNNING",) and event.type == flower_spawn_event:
                 new_flower = Flower()
@@ -238,7 +256,7 @@ def main():
             players.update()
 
             # Zvýšení rychlosti hry a vzdálenosti
-            game_speed += 0.001 # Postupné zrychlování
+            game_speed += 0.001  # Postupné zrychlování
             distance += game_speed / 10  # Vzdálenost se zvyšuje s rychlostí
 
             # Kontrola kolizí s květinami
@@ -264,7 +282,9 @@ def main():
 
             # Zobrazení skóre a vzdálenosti
             score_text = font.render(_("Collected: ") + str(score), True, BLACK)
-            distance_text = font.render(_("Distance: ") + str(int(distance)), True, BLACK)
+            distance_text = font.render(
+                _("Distance: ") + str(int(distance)), True, BLACK
+            )
             screen.blit(score_text, (10, 10))
             screen.blit(distance_text, (10, 50))
 
@@ -293,7 +313,9 @@ def main():
             screen.fill(BLACK)
             game_over_text = game_over_font.render(_("GAME OVER!"), True, WHITE)
             final_score_text = font.render(_("Collected: ") + str(score), True, WHITE)
-            final_distance_text = font.render(_("Distance: ") + str(int(distance)), True, WHITE)
+            final_distance_text = font.render(
+                _("Distance: ") + str(int(distance)), True, WHITE
+            )
 
             game_over_rect = game_over_text.get_rect(
                 center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50)
