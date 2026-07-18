@@ -1,0 +1,16 @@
+[project]
+name = "quick-herbalist"
+version = "0.1.0"
+description = "A quick 2D items collecting game"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pygame>=2.5.2",
+]
+
+[project.scripts]
+quick-herbalist = "quick_herbalist.game:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
