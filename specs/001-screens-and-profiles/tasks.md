@@ -23,8 +23,8 @@
 
 **Purpose**: Project dependency and basic testing layout initialization
 
-- [ ] T001 Add `pyyaml` dependency to `pyproject.toml`
-- [ ] T002 [P] Create basic unit test structure under `tests/unit/test_profiles.py` with pytest configuration
+- [X] T001 Add `pyyaml` dependency to `pyproject.toml`
+- [X] T002 [P] Create basic unit test structure under `tests/unit/test_profiles.py` with pytest configuration
 
 ---
 
@@ -34,9 +34,9 @@
 
 **⚠️ CRITICAL**: No user story GUI development can begin until this data core is ready and verified
 
-- [ ] T003 Implement `ProfileManager` and config file folder resolution in `src/quick_herbalist/profiles.py`
-- [ ] T004 [P] Implement YAML configuration loading, saving, and defaults recovery in `src/quick_herbalist/profiles.py`
-- [ ] T005 Write unit tests for configuration loading, saving, fallback, and corruption recovery in `tests/unit/test_profiles.py`
+- [X] T003 Implement `ProfileManager` and config file folder resolution in `src/quick_herbalist/profiles.py`
+- [X] T004 [P] Implement YAML configuration loading, saving, and defaults recovery in `src/quick_herbalist/profiles.py`
+- [X] T005 Write unit tests for configuration loading, saving, fallback, and corruption recovery in `tests/unit/test_profiles.py`
 
 **Checkpoint**: Foundation ready - decoupled storage state machine can now be used by user story screens
 

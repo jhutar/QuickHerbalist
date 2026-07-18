@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "kivy>=2.3.0",
+    "pyyaml>=6.0",
 ]
 
 [project.scripts]
@@ -14,3 +15,6 @@ quick-herbalist = "quick_herbalist.game:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
