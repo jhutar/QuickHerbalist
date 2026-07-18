@@ -68,7 +68,9 @@ class MenuScreen(KeyboardScreen):
         self.ids.title.text = _("Quick Herbalist")
         self.ids.subtitle.text = _("Press 's' to start")
         active_name = app.profile_manager.active_character_name
-        self.ids.active_char_lbl.text = _("Active Character: ") + (active_name if active_name else _("None"))
+        self.ids.active_char_lbl.text = _("Active Character: ") + (
+            active_name if active_name else _("None")
+        )
         self.ids.start_btn.text = _("Start Game")
         self.ids.new_btn.text = _("New Character")
         self.ids.load_btn.text = _("Load Character")
@@ -143,12 +145,7 @@ class LoadCharacterScreen(KeyboardScreen):
 
         app = App.get_running_app()
         for name in app.profile_manager.characters.keys():
-            btn = Button(
-                text=name,
-                size_hint_y=None,
-                height=50,
-                font_size=18
-            )
+            btn = Button(text=name, size_hint_y=None, height=50, font_size=18)
             btn.bind(on_release=self.select_and_return)
             self.ids.list_layout.add_widget(btn)
 
@@ -194,7 +191,9 @@ class GameWonScreen(KeyboardScreen):
 class PotionsScreen(KeyboardScreen):
     def on_pre_enter(self):
         self.ids.title.text = _("Potion Crafting")
-        self.ids.desc.text = _("Placeholder Screen: Future crafting system will be here!")
+        self.ids.desc.text = _(
+            "Placeholder Screen: Future crafting system will be here!"
+        )
         self.ids.back_btn.text = _("Back to Menu")
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
@@ -473,8 +472,14 @@ class GameView(Widget):
 
     def update_labels(self):
         app = App.get_running_app()
-        active_name = app.profile_manager.active_character_name if app and hasattr(app, "profile_manager") and app.profile_manager else None
-        self.char_label.text = str(active_name) if active_name else _("No Active Character")
+        active_name = (
+            app.profile_manager.active_character_name
+            if app and hasattr(app, "profile_manager") and app.profile_manager
+            else None
+        )
+        self.char_label.text = (
+            str(active_name) if active_name else _("No Active Character")
+        )
         self.score_label.text = _("Collected: ") + str(self.score)
         self.distance_label.text = _("Distance: ") + str(int(self.distance))
 

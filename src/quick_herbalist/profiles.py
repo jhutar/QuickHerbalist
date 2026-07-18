@@ -1,6 +1,7 @@
 import os
 import yaml
 
+
 class ProfileManager:
     def __init__(self, config_dir=None):
         if config_dir:
@@ -9,6 +10,7 @@ class ProfileManager:
             # Attempt to resolve from running Kivy App
             try:
                 from kivy.app import App
+
                 kivy_app = App.get_running_app()
                 if kivy_app and kivy_app.user_data_dir:
                     self.config_dir = kivy_app.user_data_dir
@@ -22,11 +24,7 @@ class ProfileManager:
         self.config_path = os.path.join(self.config_dir, "config.yaml")
 
         self.active_character_name = None
-        self.settings = {
-            "fps": 60,
-            "win_distance": 1000.0,
-            "game_speed_start": 3.0
-        }
+        self.settings = {"fps": 60, "win_distance": 1000.0, "game_speed_start": 3.0}
         self.characters = {}
 
         # Load configuration on initialization
@@ -36,13 +34,17 @@ class ProfileManager:
         # Resolve standard OS-specific config directory
         home = os.path.expanduser("~")
         if os.name == "nt":  # Windows
-            appdata = os.environ.get("APPDATA", os.path.join(home, "AppData", "Roaming"))
+            appdata = os.environ.get(
+                "APPDATA", os.path.join(home, "AppData", "Roaming")
+            )
             return os.path.join(appdata, "quickherbalist")
         elif os.name == "posix":  # macOS / Linux
             # Follow XDG on Linux, default to Library on macOS if preferred,
             # but simple ~/.config/quickherbalist or ~/.quickherbalist is highly standard.
             if os.uname().sysname == "Darwin":
-                return os.path.join(home, "Library", "Application Support", "quickherbalist")
+                return os.path.join(
+                    home, "Library", "Application Support", "quickherbalist"
+                )
             else:
                 return os.path.join(home, ".config", "quickherbalist")
         else:
@@ -51,12 +53,8 @@ class ProfileManager:
     def get_default_config(self):
         return {
             "active_character": None,
-            "settings": {
-                "fps": 60,
-                "win_distance": 1000.0,
-                "game_speed_start": 3.0
-            },
-            "characters": {}
+            "settings": {"fps": 60, "win_distance": 1000.0, "game_speed_start": 3.0},
+            "characters": {},
         }
 
     def load_config(self):
@@ -78,7 +76,7 @@ class ProfileManager:
 
         # Safe extraction of data with robust defaults
         self.active_character_name = data.get("active_character")
-        
+
         # Merge settings with default to handle missing fields gracefully
         loaded_settings = data.get("settings", {})
         if not isinstance(loaded_settings, dict):
@@ -101,7 +99,7 @@ class ProfileManager:
         data = {
             "active_character": self.active_character_name,
             "settings": self.settings,
-            "characters": self.characters
+            "characters": self.characters,
         }
         with open(self.config_path, "w", encoding="utf-8") as f:
             yaml.safe_dump(data, f, default_flow_style=False, allow_unicode=True)
@@ -125,9 +123,7 @@ class ProfileManager:
         self.characters[stripped_name] = {
             "name": stripped_name,
             "levels_completed": 0,
-            "inventory": {
-                "flower": 0
-            }
+            "inventory": {"flower": 0},
         }
         self.active_character_name = stripped_name
         self.save_config()
@@ -136,4 +132,20 @@ class ProfileManager:
         if not name or name not in self.characters:
             raise ValueError("Character not found.")
         self.active_character_name = name
+        self.save_config()
+
+    def add_rewards(self, flower_count):
+        if (
+            not self.active_character_name
+            or self.active_character_name not in self.characters
+        ):
+            raise ValueError("No active character selected.")
+
+        char = self.characters[self.active_character_name]
+        char["levels_completed"] = char.get("levels_completed", 0) + 1
+
+        if "inventory" not in char or not isinstance(char["inventory"], dict):
+            char["inventory"] = {}
+        char["inventory"]["flower"] = char["inventory"].get("flower", 0) + flower_count
+
         self.save_config()

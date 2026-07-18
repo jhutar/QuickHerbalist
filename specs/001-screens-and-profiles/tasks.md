@@ -74,14 +74,14 @@
 
 ### Tests for User Story 2
 
-- [ ] T014 [P] [US2] Write unit tests for profile reward additions (`add_rewards` state changes) in `tests/unit/test_profiles.py`
+- [X] T014 [P] [US2] Write unit tests for profile reward additions (`add_rewards` state changes) in `tests/unit/test_profiles.py`
 
 ### Implementation for User Story 2
 
-- [ ] T015 [US2] Implement `add_rewards` method in `src/quick_herbalist/profiles.py`
-- [ ] T016 [US2] Create Kivy `GameWonScreen` showing completion state, buttons to play again or return to menu, and bind 'escape'/'q' in `src/quick_herbalist/game.py`
-- [ ] T017 [US2] Update `GameView` widget in `src/quick_herbalist/game.py` to show active character name in the top corner of the HUD
-- [ ] T018 [US2] Update `GameView.update` loop in `src/quick_herbalist/game.py` to verify distance against `win_distance` from global settings, stop game runs, invoke `add_rewards`, and transition to `GameWonScreen` on success
+- [X] T015 [US2] Implement `add_rewards` method in `src/quick_herbalist/profiles.py`
+- [X] T016 [US2] Create Kivy `GameWonScreen` showing completion state, buttons to play again or return to menu, and bind 'escape'/'q' in `src/quick_herbalist/game.py`
+- [X] T017 [US2] Update `GameView` widget in `src/quick_herbalist/game.py` to show active character name in the top corner of the HUD
+- [X] T018 [US2] Update `GameView.update` loop in `src/quick_herbalist/game.py` to verify distance against `win_distance` from global settings, stop game runs, invoke `add_rewards`, and transition to `GameWonScreen` on success
 
 **Checkpoint**: Gameplay loop transitions to victory screen and records inventory updates in profiles
 
@@ -95,8 +95,8 @@
 
 ### Implementation for User Story 3
 
-- [ ] T019 [US3] Create Kivy `PotionsScreen` placeholder layout and back button in `src/quick_herbalist/game.py`
-- [ ] T020 [US3] Update `MenuScreen` key bindings in `src/quick_herbalist/game.py` to map 'c' shortcut to switch to `PotionsScreen`
+- [X] T019 [US3] Create Kivy `PotionsScreen` placeholder layout and back button in `src/quick_herbalist/game.py`
+- [X] T020 [US3] Update `MenuScreen` key bindings in `src/quick_herbalist/game.py` to map 'c' shortcut to switch to `PotionsScreen`
 
 **Checkpoint**: Core screens navigation complete and user stories are fully connected
 
@@ -106,9 +106,9 @@
 
 **Purpose**: Code cleanup, formatting, localization, and manual validations
 
-- [ ] T021 [P] Wrap all newly added UI text strings with Gettext `_()` translations in `src/quick_herbalist/game.py`
-- [ ] T022 [P] Verify code style, formatting, and linting standards using pre-commit on command line
-- [ ] T023 Run E2E validation scenarios defined in `specs/001-screens-and-profiles/quickstart.md`
+- [X] T021 [P] Wrap all newly added UI text strings with Gettext `_()` translations in `src/quick_herbalist/game.py`
+- [X] T022 [P] Verify code style, formatting, and linting standards using pre-commit on command line
+- [X] T023 Run E2E validation scenarios defined in `specs/001-screens-and-profiles/quickstart.md`
 
 ---
 
