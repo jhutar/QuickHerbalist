@@ -39,17 +39,24 @@ _ = gettext.gettext
 class KeyboardScreen(Screen):
     def on_enter(self):
         self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
-        self._keyboard.bind(on_key_down=self._on_keyboard_down)
+        self._keyboard.bind(
+            on_key_down=self._on_keyboard_down, on_key_up=self._on_keyboard_up
+        )
 
     def on_leave(self):
         if self._keyboard:
-            self._keyboard.unbind(on_key_down=self._on_keyboard_down)
+            self._keyboard.unbind(
+                on_key_down=self._on_keyboard_down, on_key_up=self._on_keyboard_up
+            )
             self._keyboard = None
 
     def _keyboard_closed(self):
         self._keyboard = None
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        return False
+
+    def _on_keyboard_up(self, keyboard, keycode):
         return False
 
 
@@ -191,18 +198,12 @@ class Player(Widget):
             self.index = (self.index + 1) % len(self.sprites)
             self.rect.source = self.sprites[self.index]
 
-    def move_up(self):
-        step = 0.05 * 600
-        new_y = self.y + step
-        if new_y + self.height > 600:
-            new_y = 600 - self.height
-        self.y = new_y
-
-    def move_down(self):
-        step = 0.05 * 600
-        new_y = self.y - step
+    def move_by(self, dy):
+        new_y = self.y + dy
         if new_y < 0:
             new_y = 0
+        elif new_y + self.height > 600:
+            new_y = 600 - self.height
         self.y = new_y
 
 
@@ -252,6 +253,11 @@ class GameView(Widget):
 
         self.flowers = []
         self.stones = []
+
+        self.moving_up = False
+        self.moving_down = False
+        self.touch_active = False
+        self.target_y = 0
 
         self.background = Background()
         self.add_widget(self.background)
@@ -336,6 +342,21 @@ class GameView(Widget):
 
         self.background.update(self.game_speed * frame_factor)
 
+        # Player Movement Y
+        step = 0.01 * 600 * frame_factor
+        if self.touch_active:
+            diff_y = self.target_y - self.hero.center_y
+            if abs(diff_y) > 2:
+                if diff_y > 0:
+                    self.hero.move_by(min(step, diff_y))
+                else:
+                    self.hero.move_by(-min(step, abs(diff_y)))
+        else:
+            if self.moving_up:
+                self.hero.move_by(step)
+            elif self.moving_down:
+                self.hero.move_by(-step)
+
         for flower in self.flowers[:]:
             alive = flower.update(self.game_speed * frame_factor)
             if not alive:
@@ -365,27 +386,34 @@ class GameView(Widget):
         app.root.current = "game_over"
 
     def on_touch_down(self, touch):
-        touch.ud["start_y"] = touch.y
-        touch.ud["start_x"] = touch.x
+        self.touch_active = True
+        self.target_y = touch.y
+        return True
+
+    def on_touch_move(self, touch):
+        if self.touch_active:
+            self.target_y = touch.y
         return True
 
     def on_touch_up(self, touch):
-        if "start_y" in touch.ud:
-            dy = touch.y - touch.ud["start_y"]
-            dx = touch.x - touch.ud["start_x"]
-            if abs(dy) > abs(dx) and abs(dy) > 30:
-                if dy > 0:
-                    self.hero.move_up()
-                else:
-                    self.hero.move_down()
+        self.touch_active = False
         return True
 
     def on_keyboard_down(self, key):
         if key in ("up", "w"):
-            self.hero.move_up()
+            self.moving_up = True
             return True
         elif key in ("down", "s"):
-            self.hero.move_down()
+            self.moving_down = True
+            return True
+        return False
+
+    def on_keyboard_up(self, key):
+        if key in ("up", "w"):
+            self.moving_up = False
+            return True
+        elif key in ("down", "s"):
+            self.moving_down = False
             return True
         return False
 
@@ -397,11 +425,15 @@ class GameScreen(Screen):
         self.game_view.start_game()
 
         self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
-        self._keyboard.bind(on_key_down=self._on_keyboard_down)
+        self._keyboard.bind(
+            on_key_down=self._on_keyboard_down, on_key_up=self._on_keyboard_up
+        )
 
     def on_leave(self):
         if self._keyboard:
-            self._keyboard.unbind(on_key_down=self._on_keyboard_down)
+            self._keyboard.unbind(
+                on_key_down=self._on_keyboard_down, on_key_up=self._on_keyboard_up
+            )
             self._keyboard = None
         self.game_view.stop_game()
         self.remove_widget(self.game_view)
@@ -415,6 +447,10 @@ class GameScreen(Screen):
             self.manager.current = "quit"
             return True
         return self.game_view.on_keyboard_down(key)
+
+    def _on_keyboard_up(self, keyboard, keycode):
+        key = keycode[1]
+        return self.game_view.on_keyboard_up(key)
 
 
 Builder.load_string("""
