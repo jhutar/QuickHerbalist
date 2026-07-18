@@ -50,17 +50,17 @@
 
 ### Tests for User Story 1
 
-- [ ] T006 [P] [US1] Write unit tests for character creation validations (duplicate, empty, or whitespace name rejections) in `tests/unit/test_profiles.py`
-- [ ] T007 [P] [US1] Write unit tests for character loading and switching in `tests/unit/test_profiles.py`
+- [X] T006 [P] [US1] Write unit tests for character creation validations (duplicate, empty, or whitespace name rejections) in `tests/unit/test_profiles.py`
+- [X] T007 [P] [US1] Write unit tests for character loading and switching in `tests/unit/test_profiles.py`
 
 ### Implementation for User Story 1
 
-- [ ] T008 [US1] Implement `create_character` and `select_character` methods with validations in `src/quick_herbalist/profiles.py`
-- [ ] T009 [US1] Instantiate global `ProfileManager` instance and integrate it during application builder startup in `src/quick_herbalist/game.py`
-- [ ] T010 [US1] Implement Kivy `NewCharacterScreen` layout, validation input fields, error warnings, and confirmation buttons in `src/quick_herbalist/game.py`
-- [ ] T011 [US1] Implement Kivy `LoadCharacterScreen` dynamically listing created characters and switching profile on select in `src/quick_herbalist/game.py`
-- [ ] T012 [US1] Update `MenuScreen` layout in `src/quick_herbalist/game.py` to display active character name and bind 'n' and 'l' keys for screen navigation
-- [ ] T013 [US1] Update startup logic in `src/quick_herbalist/game.py` to skip the main menu and redirect directly to `NewCharacterScreen` if active character is None
+- [X] T008 [US1] Implement `create_character` and `select_character` methods with validations in `src/quick_herbalist/profiles.py`
+- [X] T009 [US1] Instantiate global `ProfileManager` instance and integrate it during application builder startup in `src/quick_herbalist/game.py`
+- [X] T010 [US1] Implement Kivy `NewCharacterScreen` layout, validation input fields, error warnings, and confirmation buttons in `src/quick_herbalist/game.py`
+- [X] T011 [US1] Implement Kivy `LoadCharacterScreen` dynamically listing created characters and switching profile on select in `src/quick_herbalist/game.py`
+- [X] T012 [US1] Update `MenuScreen` layout in `src/quick_herbalist/game.py` to display active character name and bind 'n' and 'l' keys for screen navigation
+- [X] T013 [US1] Update startup logic in `src/quick_herbalist/game.py` to skip the main menu and redirect directly to `NewCharacterScreen` if active character is None
 
 **Checkpoint**: User Story 1 is fully functional as a standalone MVP profile creation/switching system
 

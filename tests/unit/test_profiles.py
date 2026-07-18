@@ -86,3 +86,75 @@ def test_profile_manager_partial_missing_fields_recovery(temp_config_dir):
     assert pm.active_character_name == "MissingKeysHero"
     assert pm.settings["fps"] == 60
     assert pm.characters == {}
+
+
+# --- User Story 1 (US1) Test Cases ---
+
+def test_profile_manager_create_character_success(temp_config_dir):
+    pm = ProfileManager(config_dir=temp_config_dir)
+    
+    # Create valid character
+    pm.create_character("HerbalistMax")
+    
+    # Assert it is saved in characters dictionary with default values
+    assert "HerbalistMax" in pm.characters
+    char = pm.characters["HerbalistMax"]
+    assert char["name"] == "HerbalistMax"
+    assert char["levels_completed"] == 0
+    assert char["inventory"]["flower"] == 0
+    
+    # Assert it is set as the active character
+    assert pm.active_character_name == "HerbalistMax"
+    assert pm.active_character == char
+    
+    # Assert saved to file
+    pm2 = ProfileManager(config_dir=temp_config_dir)
+    assert "HerbalistMax" in pm2.characters
+    assert pm2.active_character_name == "HerbalistMax"
+
+def test_profile_manager_create_character_validations(temp_config_dir):
+    pm = ProfileManager(config_dir=temp_config_dir)
+    
+    # Rejects empty name
+    with pytest.raises(ValueError, match="Name cannot be empty"):
+        pm.create_character("")
+        
+    # Rejects whitespace-only name
+    with pytest.raises(ValueError, match="Name cannot be empty"):
+        pm.create_character("   ")
+        
+    # Rejects None name
+    with pytest.raises(ValueError, match="Name cannot be empty"):
+        pm.create_character(None)
+
+    # Rejects duplicate name
+    pm.create_character("UniqueName")
+    with pytest.raises(ValueError, match="Character already exists"):
+        pm.create_character("UniqueName")
+        
+    # Rejects duplicate name with leading/trailing whitespaces (since it gets stripped)
+    with pytest.raises(ValueError, match="Character already exists"):
+        pm.create_character(" UniqueName ")
+
+def test_profile_manager_select_character_success(temp_config_dir):
+    pm = ProfileManager(config_dir=temp_config_dir)
+    
+    pm.create_character("Hero1")
+    pm.create_character("Hero2")
+    
+    # Select Hero1
+    pm.select_character("Hero1")
+    assert pm.active_character_name == "Hero1"
+    assert pm.active_character["name"] == "Hero1"
+    
+    # Select Hero2
+    pm.select_character("Hero2")
+    assert pm.active_character_name == "Hero2"
+    assert pm.active_character["name"] == "Hero2"
+
+def test_profile_manager_select_character_not_found(temp_config_dir):
+    pm = ProfileManager(config_dir=temp_config_dir)
+    
+    # Select non-existent character
+    with pytest.raises(ValueError, match="Character not found"):
+        pm.select_character("FakeHero")

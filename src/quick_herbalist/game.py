@@ -13,6 +13,8 @@ from kivy.app import App  # noqa: E402
 from kivy.uix.screenmanager import ScreenManager, Screen  # noqa: E402
 from kivy.uix.widget import Widget  # noqa: E402
 from kivy.uix.label import Label  # noqa: E402
+from kivy.uix.button import Button  # noqa: E402
+from quick_herbalist.profiles import ProfileManager  # noqa: E402
 from kivy.clock import Clock  # noqa: E402
 from kivy.graphics import Rectangle  # noqa: E402
 from kivy.core.window import Window  # noqa: E402
@@ -62,15 +64,30 @@ class KeyboardScreen(Screen):
 
 class MenuScreen(KeyboardScreen):
     def on_pre_enter(self):
+        app = App.get_running_app()
         self.ids.title.text = _("Quick Herbalist")
-        self.ids.subtitle.text = _("Press 's' for start")
+        self.ids.subtitle.text = _("Press 's' to start")
+        active_name = app.profile_manager.active_character_name
+        self.ids.active_char_lbl.text = _("Active Character: ") + (active_name if active_name else _("None"))
         self.ids.start_btn.text = _("Start Game")
+        self.ids.new_btn.text = _("New Character")
+        self.ids.load_btn.text = _("Load Character")
+        self.ids.potions_btn.text = _("Create Potions")
         self.ids.quit_btn.text = _("Quit")
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
         key = keycode[1]
         if key == "s":
             self.start_game()
+            return True
+        elif key == "n":
+            self.manager.current = "new_character"
+            return True
+        elif key == "l":
+            self.manager.current = "load_character"
+            return True
+        elif key == "c":
+            self.manager.current = "potions"
             return True
         elif key in ("escape", "q"):
             App.get_running_app().stop()
@@ -79,6 +96,113 @@ class MenuScreen(KeyboardScreen):
 
     def start_game(self):
         self.manager.current = "game"
+
+
+class NewCharacterScreen(Screen):
+    def on_pre_enter(self):
+        self.ids.title.text = _("Enter Character Name")
+        self.ids.name_input.text = ""
+        self.ids.error_label.text = ""
+        self.ids.confirm_btn.text = _("Confirm")
+
+        app = App.get_running_app()
+        if app.profile_manager.active_character_name is None:
+            self.ids.back_btn.opacity = 0
+            self.ids.back_btn.disabled = True
+            self.ids.back_btn.text = ""
+        else:
+            self.ids.back_btn.opacity = 1
+            self.ids.back_btn.disabled = False
+            self.ids.back_btn.text = _("Back to Menu")
+
+    def confirm(self):
+        app = App.get_running_app()
+        name = self.ids.name_input.text
+        try:
+            app.profile_manager.create_character(name)
+            self.manager.current = "menu"
+        except ValueError as e:
+            err_msg = str(e)
+            if "Name cannot be empty" in err_msg:
+                self.ids.error_label.text = _("Name cannot be empty.")
+            elif "Character already exists" in err_msg:
+                self.ids.error_label.text = _("Character already exists.")
+            else:
+                self.ids.error_label.text = _(err_msg)
+
+    def back_to_menu(self):
+        self.manager.current = "menu"
+
+
+class LoadCharacterScreen(KeyboardScreen):
+    def on_pre_enter(self):
+        self.ids.title.text = _("Select Character")
+        self.ids.back_btn.text = _("Back to Menu")
+
+        self.ids.list_layout.clear_widgets()
+
+        app = App.get_running_app()
+        for name in app.profile_manager.characters.keys():
+            btn = Button(
+                text=name,
+                size_hint_y=None,
+                height=50,
+                font_size=18
+            )
+            btn.bind(on_release=self.select_and_return)
+            self.ids.list_layout.add_widget(btn)
+
+    def select_and_return(self, btn):
+        app = App.get_running_app()
+        app.profile_manager.select_character(btn.text)
+        self.manager.current = "menu"
+
+    def back_to_menu(self):
+        self.manager.current = "menu"
+
+    def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        key = keycode[1]
+        if key in ("escape", "q"):
+            self.back_to_menu()
+            return True
+        return False
+
+
+class GameWonScreen(KeyboardScreen):
+    score = 0
+
+    def on_pre_enter(self):
+        self.ids.title.text = _("LEVEL COMPLETED!")
+        self.ids.score_lbl.text = _("Collected Flowers: ") + str(self.score)
+        self.ids.restart_btn.text = _("Play Again")
+        self.ids.menu_btn.text = _("Main Menu")
+
+    def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        key = keycode[1]
+        if key in ("escape", "q"):
+            self.manager.current = "menu"
+            return True
+        return False
+
+    def restart_game(self):
+        self.manager.current = "game"
+
+    def goto_menu(self):
+        self.manager.current = "menu"
+
+
+class PotionsScreen(KeyboardScreen):
+    def on_pre_enter(self):
+        self.ids.title.text = _("Potion Crafting")
+        self.ids.desc.text = _("Placeholder Screen: Future crafting system will be here!")
+        self.ids.back_btn.text = _("Back to Menu")
+
+    def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        key = keycode[1]
+        if key in ("escape", "q"):
+            self.manager.current = "menu"
+            return True
+        return False
 
 
 class QuitScreen(KeyboardScreen):
@@ -246,7 +370,15 @@ class GameView(Widget):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.active = True
-        self.game_speed = 3.0
+
+        app = App.get_running_app()
+        if app and hasattr(app, "profile_manager") and app.profile_manager:
+            self.win_distance = app.profile_manager.settings.get("win_distance", 1000.0)
+            self.game_speed = app.profile_manager.settings.get("game_speed_start", 3.0)
+        else:
+            self.win_distance = 1000.0
+            self.game_speed = 3.0
+
         self.score = 0
         self.distance = 0.0
         self.stone_interval = 3.0
@@ -289,6 +421,19 @@ class GameView(Widget):
         self.distance_label.bind(size=self.distance_label.setter("text_size"))
         self.add_widget(self.distance_label)
 
+        # HUD Active Character Name Label
+        self.char_label = Label(
+            text="",
+            font_size=24,
+            color=(0, 0, 0, 1),
+            pos=(590, 560),
+            size=(200, 30),
+            halign="right",
+            valign="middle",
+        )
+        self.char_label.bind(size=self.char_label.setter("text_size"))
+        self.add_widget(self.char_label)
+
         self.update_labels()
 
     def start_game(self):
@@ -327,6 +472,9 @@ class GameView(Widget):
         self.schedule_next_stone()
 
     def update_labels(self):
+        app = App.get_running_app()
+        active_name = app.profile_manager.active_character_name if app and hasattr(app, "profile_manager") and app.profile_manager else None
+        self.char_label.text = str(active_name) if active_name else _("No Active Character")
         self.score_label.text = _("Collected: ") + str(self.score)
         self.distance_label.text = _("Distance: ") + str(int(self.distance))
 
@@ -339,6 +487,11 @@ class GameView(Widget):
 
         self.game_speed += 0.001 * frame_factor
         self.distance += (self.game_speed / 10) * frame_factor
+
+        # Check Win Condition
+        if self.distance >= self.win_distance:
+            self.game_won()
+            return
 
         self.background.update(self.game_speed * frame_factor)
 
@@ -384,6 +537,15 @@ class GameView(Widget):
         go_screen.score = self.score
         go_screen.distance = self.distance
         app.root.current = "game_over"
+
+    def game_won(self):
+        self.stop_game()
+        app = App.get_running_app()
+        if app and hasattr(app, "profile_manager") and app.profile_manager:
+            app.profile_manager.add_rewards(self.score)
+        won_screen = app.root.get_screen("game_won")
+        won_screen.score = self.score
+        app.root.current = "game_won"
 
     def on_touch_down(self, touch):
         self.touch_active = True
@@ -463,6 +625,161 @@ Builder.load_string("""
             size: self.size
     BoxLayout:
         orientation: 'vertical'
+        padding: 40
+        spacing: 15
+        Label:
+            id: title
+            font_size: 40
+            color: 1, 1, 1, 1
+        Label:
+            id: active_char_lbl
+            font_size: 22
+            color: 0.8, 0.8, 0.2, 1
+        Label:
+            id: subtitle
+            font_size: 20
+            color: 1, 1, 1, 1
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: 10
+            size_hint_y: 0.15
+            Button:
+                id: start_btn
+                font_size: 18
+                on_release: root.start_game()
+            Button:
+                id: potions_btn
+                font_size: 18
+                on_release: root.manager.current = 'potions'
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: 10
+            size_hint_y: 0.15
+            Button:
+                id: new_btn
+                font_size: 18
+                on_release: root.manager.current = 'new_character'
+            Button:
+                id: load_btn
+                font_size: 18
+                on_release: root.manager.current = 'load_character'
+        Button:
+            id: quit_btn
+            size_hint: (0.4, 0.15)
+            pos_hint: {'center_x': 0.5}
+            font_size: 18
+            on_release: app.stop()
+
+<NewCharacterScreen>:
+    canvas.before:
+        Color:
+            rgb: 0, 0, 0
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 50
+        spacing: 20
+        Label:
+            id: title
+            font_size: 32
+            color: 1, 1, 1, 1
+        TextInput:
+            id: name_input
+            multiline: False
+            font_size: 24
+            size_hint: (0.6, 0.15)
+            pos_hint: {'center_x': 0.5}
+        Label:
+            id: error_label
+            font_size: 20
+            color: 1, 0, 0, 1
+        Button:
+            id: confirm_btn
+            size_hint: (0.4, 0.15)
+            pos_hint: {'center_x': 0.5}
+            font_size: 20
+            on_release: root.confirm()
+        Button:
+            id: back_btn
+            size_hint: (0.4, 0.15)
+            pos_hint: {'center_x': 0.5}
+            font_size: 20
+            on_release: root.back_to_menu()
+
+<LoadCharacterScreen>:
+    canvas.before:
+        Color:
+            rgb: 0, 0, 0
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 50
+        spacing: 20
+        Label:
+            id: title
+            font_size: 32
+            color: 1, 1, 1, 1
+            size_hint_y: 0.2
+        ScrollView:
+            size_hint_y: 0.6
+            BoxLayout:
+                id: list_layout
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: 10
+        Button:
+            id: back_btn
+            size_hint: (0.4, 0.15)
+            pos_hint: {'center_x': 0.5}
+            font_size: 20
+            on_release: root.back_to_menu()
+
+<GameWonScreen>:
+    canvas.before:
+        Color:
+            rgb: 0, 0, 0
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 50
+        spacing: 20
+        Label:
+            id: title
+            font_size: 50
+            color: 0.2, 0.8, 0.2, 1
+        Label:
+            id: score_lbl
+            font_size: 28
+            color: 1, 1, 1, 1
+        Button:
+            id: restart_btn
+            size_hint: (0.4, 0.15)
+            pos_hint: {'center_x': 0.5}
+            font_size: 20
+            on_release: root.restart_game()
+        Button:
+            id: menu_btn
+            size_hint: (0.4, 0.15)
+            pos_hint: {'center_x': 0.5}
+            font_size: 20
+            on_release: root.goto_menu()
+
+<PotionsScreen>:
+    canvas.before:
+        Color:
+            rgb: 0, 0, 0
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
         padding: 50
         spacing: 20
         Label:
@@ -470,21 +787,15 @@ Builder.load_string("""
             font_size: 40
             color: 1, 1, 1, 1
         Label:
-            id: subtitle
+            id: desc
             font_size: 24
-            color: 1, 1, 1, 1
+            color: 0.7, 0.7, 0.7, 1
         Button:
-            id: start_btn
+            id: back_btn
             size_hint: (0.4, 0.15)
             pos_hint: {'center_x': 0.5}
             font_size: 20
-            on_release: root.start_game()
-        Button:
-            id: quit_btn
-            size_hint: (0.4, 0.15)
-            pos_hint: {'center_x': 0.5}
-            font_size: 20
-            on_release: app.stop()
+            on_release: root.manager.current = 'menu'
 
 <QuitScreen>:
     canvas.before:
@@ -562,11 +873,24 @@ Builder.load_string("""
 
 class QuickHerbalistApp(App):
     def build(self):
+        self.profile_manager = ProfileManager()
+
         sm = ScreenManager()
         sm.add_widget(MenuScreen(name="menu"))
+        sm.add_widget(NewCharacterScreen(name="new_character"))
+        sm.add_widget(LoadCharacterScreen(name="load_character"))
+        sm.add_widget(PotionsScreen(name="potions"))
         sm.add_widget(GameScreen(name="game"))
+        sm.add_widget(GameWonScreen(name="game_won"))
         sm.add_widget(QuitScreen(name="quit"))
         sm.add_widget(GameOverScreen(name="game_over"))
+
+        # Skip main menu and redirect directly to "new_character" if no active character exists
+        if self.profile_manager.active_character_name is None:
+            sm.current = "new_character"
+        else:
+            sm.current = "menu"
+
         return sm
 
 

@@ -111,3 +111,29 @@ class ProfileManager:
         if self.active_character_name and self.active_character_name in self.characters:
             return self.characters[self.active_character_name]
         return None
+
+    def create_character(self, name):
+        if not name or not isinstance(name, str):
+            raise ValueError("Name cannot be empty.")
+        stripped_name = name.strip()
+        if not stripped_name:
+            raise ValueError("Name cannot be empty.")
+
+        if stripped_name in self.characters:
+            raise ValueError("Character already exists.")
+
+        self.characters[stripped_name] = {
+            "name": stripped_name,
+            "levels_completed": 0,
+            "inventory": {
+                "flower": 0
+            }
+        }
+        self.active_character_name = stripped_name
+        self.save_config()
+
+    def select_character(self, name):
+        if not name or name not in self.characters:
+            raise ValueError("Character not found.")
+        self.active_character_name = name
+        self.save_config()
