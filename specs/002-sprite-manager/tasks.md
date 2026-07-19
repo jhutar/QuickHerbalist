@@ -34,7 +34,7 @@ description: "Task list for Sprite Manager feature implementation"
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
 - [x] T005 [P] Write unit tests for pure configuration parsing functions in `tests/unit/test_config_parser.py`
-- [ ] T006 Implement YAML and Atlas reading/writing functions in `src/quick_herbalist/core/config_parser.py`
+- [x] T006 Implement YAML and Atlas reading/writing functions in `src/quick_herbalist/core/config_parser.py`
 
 **Checkpoint**: Foundation ready - config parser is tested and working. User story implementation can now begin.
 
