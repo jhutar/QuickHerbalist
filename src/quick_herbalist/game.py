@@ -362,7 +362,7 @@ class Stone(MovingWidget):
         image = get_asset_path("stone.png")
         x = 800 + random.randint(100, 300)
         y = random.randint(0, 600 - 64)
-        super().__init__(image, (64, 64), x, y, **kwargs)
+        super().__init__(image, (64, 53), x, y, **kwargs)
 
 
 class GameView(Widget):
