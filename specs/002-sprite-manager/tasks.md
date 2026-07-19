@@ -22,7 +22,7 @@ description: "Task list for Sprite Manager feature implementation"
 
 - [x] T001 Add `pyyaml` dependency to the project using `uv add pyyaml`
 - [x] T002 [P] Create `src/quick_herbalist/core/` directory structure with `__init__.py`
-- [ ] T003 [P] Create `src/quick_herbalist/tools/sprite_editor/ui/` directory structure with `__init__.py`
+- [x] T003 [P] Create `src/quick_herbalist/tools/sprite_editor/ui/` directory structure with `__init__.py`
 - [ ] T004 [P] Register the `manage-sprites` CLI script entry point in `pyproject.toml`
 
 ---
