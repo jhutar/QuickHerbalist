@@ -51,7 +51,7 @@ description: "Task list for Sprite Manager feature implementation"
 - [x] T007 [P] [US1] Create GUI application entry point in `src/quick_herbalist/tools/sprite_editor/__main__.py`
 - [x] T008 [P] [US1] Create basic Kivy App class in `src/quick_herbalist/tools/sprite_editor/app.py`
 - [x] T009 [US1] Implement sprite preview widget with zoom (+/-) in `src/quick_herbalist/tools/sprite_editor/ui/preview.py`
-- [ ] T010 [US1] Implement frame sequence and duration editor in `src/quick_herbalist/tools/sprite_editor/ui/sequence_editor.py`
+- [x] T010 [US1] Implement frame sequence and duration editor in `src/quick_herbalist/tools/sprite_editor/ui/sequence_editor.py`
 - [ ] T011 [US1] Implement main layout bringing preview and sequence editor together in `src/quick_herbalist/tools/sprite_editor/ui/main_layout.py`
 - [ ] T012 [US1] Wire GUI save actions to `config_parser.py` to write `assets/sprites.yaml` and `assets/sprites.atlas`
 
