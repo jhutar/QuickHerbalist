@@ -694,7 +694,7 @@ Builder.load_string("""
             id: name_input
             multiline: False
             font_size: 24
-            size_hint: (0.6, 0.15)
+            size_hint: (0.6, 0.25)
             pos_hint: {'center_x': 0.5}
         Label:
             id: error_label
