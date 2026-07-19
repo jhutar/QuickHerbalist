@@ -50,6 +50,8 @@ class SequenceEditorWidget(BoxLayout):
     A widget that allows editing the sequence of frames for a sprite.
     """
     frames = ListProperty([])  # List of dicts: {'atlas_id': str, 'duration': int}
+    sprite_name = ObjectProperty(None)
+    on_save_callback = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super().__init__(orientation='vertical', **kwargs)
@@ -96,5 +98,7 @@ class SequenceEditorWidget(BoxLayout):
         ]
 
     def save_sequence(self, instance):
-        # This will be implemented later
-        print(f"Saving sequence: {self.frames}")
+        if self.on_save_callback:
+            self.on_save_callback(self.sprite_name, self.frames)
+        else:
+            print(f"No save callback provided. Saving sequence: {self.frames}")

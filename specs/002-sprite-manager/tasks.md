@@ -53,7 +53,7 @@ description: "Task list for Sprite Manager feature implementation"
 - [x] T009 [US1] Implement sprite preview widget with zoom (+/-) in `src/quick_herbalist/tools/sprite_editor/ui/preview.py`
 - [x] T010 [US1] Implement frame sequence and duration editor in `src/quick_herbalist/tools/sprite_editor/ui/sequence_editor.py`
 - [x] T011 [US1] Implement main layout bringing preview and sequence editor together in `src/quick_herbalist/tools/sprite_editor/ui/main_layout.py`
-- [ ] T012 [US1] Wire GUI save actions to `config_parser.py` to write `assets/sprites.yaml` and `assets/sprites.atlas`
+- [x] T012 [US1] Wire GUI save actions to `config_parser.py` to write `assets/sprites.yaml` and `assets/sprites.atlas`
 
 **Checkpoint**: At this point, User Story 1 should be fully functional. Developers can create/edit sprites via GUI.
 
