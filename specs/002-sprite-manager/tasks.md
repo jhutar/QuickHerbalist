@@ -67,12 +67,12 @@ description: "Task list for Sprite Manager feature implementation"
 
 ### Tests for User Story 2
 
-- [ ] T013 [P] [US2] Write unit tests for SpriteManager and AnimatedSprite widget in `tests/unit/test_sprite_manager.py`
+- [x] T013 [P] [US2] Write unit tests for SpriteManager and AnimatedSprite widget in `tests/unit/test_sprite_manager.py`
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] Implement custom autonomous Kivy widget `AnimatedSprite` in `src/quick_herbalist/core/animated_sprite.py`
-- [ ] T015 [US2] Implement `SpriteManager` class to load configs and return widgets in `src/quick_herbalist/core/sprite_manager.py`
+- [x] T014 [US2] Implement custom autonomous Kivy widget `AnimatedSprite` in `src/quick_herbalist/core/animated_sprite.py`
+- [x] T015 [US2] Implement `SpriteManager` class to load configs and return widgets in `src/quick_herbalist/core/sprite_manager.py`
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently. The game can render what the GUI creates.
 
