@@ -10,6 +10,7 @@ dependencies = [
 ]
 
 [project.scripts]
+manage-sprites = "quick_herbalist.tools.sprite_editor:main"
 quick-herbalist = "quick_herbalist.game:main"
 
 [build-system]
