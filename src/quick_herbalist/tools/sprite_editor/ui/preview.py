@@ -6,29 +6,33 @@ from kivy.uix.scrollview import ScrollView
 from kivy.properties import NumericProperty, ObjectProperty, ListProperty
 from kivy.clock import Clock
 
+
 class SpritePreviewWidget(BoxLayout):
     """
     A widget that displays an animated preview of a sprite and allows zooming.
     """
+
     zoom_level = NumericProperty(1.0)
     sprite_name = ObjectProperty(None)
     frames = ListProperty([])  # List of dicts: {'image': str, 'duration': int}
 
     def __init__(self, **kwargs):
-        super().__init__(orientation='vertical', **kwargs)
+        super().__init__(orientation="vertical", **kwargs)
         self._setup_ui()
-        Clock.schedule_interval(self._animate, 1/24.0)
+        Clock.schedule_interval(self._animate, 1 / 24.0)
 
     def _setup_ui(self):
         # Zoom controls
-        zoom_controls = BoxLayout(size_hint_y=None, height='40dp', orientation='horizontal')
-        zoom_controls.add_widget(Button(text='- Zoom', on_release=self.zoom_out))
-        zoom_controls.add_widget(Button(text='100%', on_release=self.reset_zoom))
-        zoom_controls.add_widget(Button(text='+ Zoom', on_release=self.zoom_in))
+        zoom_controls = BoxLayout(
+            size_hint_y=None, height="40dp", orientation="horizontal"
+        )
+        zoom_controls.add_widget(Button(text="- Zoom", on_release=self.zoom_out))
+        zoom_controls.add_widget(Button(text="100%", on_release=self.reset_zoom))
+        zoom_controls.add_widget(Button(text="+ Zoom", on_release=self.zoom_in))
         self.add_widget(zoom_controls)
 
         # Zoom level label
-        self.zoom_label = Label(text="Zoom: 100%", size_hint_y=None, height='20dp')
+        self.zoom_label = Label(text="Zoom: 100%", size_hint_y=None, height="20dp")
         self.add_widget(self.zoom_label)
 
         # ScrollView for zooming

@@ -6,7 +6,7 @@
 
 ## Summary
 
-Build a two-part Sprite Management system: 
+Build a two-part Sprite Management system:
 1. `SpriteManager`: A game runtime class that loads relational skinny YAML and standard Kivy `.atlas` JSON files to return fully functional, autonomously animating Kivy UI widgets.
 2. **Standalone GUI**: A developer CLI application that abstracts the `.atlas` complexity, allowing users to visually create and edit sprites and frame-level durations using non-destructive references to source images in the `assets/` directory.
 

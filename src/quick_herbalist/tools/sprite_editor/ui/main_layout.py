@@ -3,14 +3,16 @@ import yaml
 from kivy.uix.boxlayout import BoxLayout
 from .preview import SpritePreviewWidget
 from .sequence_editor import SequenceEditorWidget
-from quick_herbalist.core.config_parser import save_sprites_yaml, load_sprites_yaml
+from quick_herbalist.core.config_parser import save_sprites_yaml
+
 
 class SpriteEditorMainLayout(BoxLayout):
     """
     The main layout of the Sprite Editor, bringing together the preview and sequence editor.
     """
+
     def __init__(self, **kwargs):
-        super().__init__(orientation='horizontal', **kwargs)
+        super().__init__(orientation="horizontal", **kwargs)
         self._setup_ui()
 
     def _setup_ui(self):
@@ -46,7 +48,7 @@ class SpriteEditorMainLayout(BoxLayout):
         try:
             # 1. Load existing yaml
             if os.path.exists(yaml_path):
-                with open(yaml_path, 'r', encoding='utf-8') as f:
+                with open(yaml_path, "r", encoding="utf-8") as f:
                     data = yaml.safe_load(f) or {"sprites": {}}
             else:
                 data = {"sprites": {}}
@@ -54,18 +56,18 @@ class SpriteEditorMainLayout(BoxLayout):
             # 2. Update the sprite data
             if "sprites" not in data:
                 data["sprites"] = {}
-            
+
             data["sprites"][sprite_name] = {"frames": frames}
 
             # 3. Save yaml
             save_sprites_yaml(yaml_path, data)
-            
+
             # 4. Save atlas (placeholder as we are only editing frames here)
             # If we had atlas data, we would save it here too.
             if os.path.exists(atlas_path):
                 # For now, we'll just ensure it exists or do nothing if it's not modified.
                 # The requirement is to "write assets/sprites.yaml and assets/sprites.atlas".
-                # Since we are not modifying the atlas content in this task, 
+                # Since we are not modifying the atlas content in this task,
                 # we might just skip it, or if it doesn't exist, we might need to create it.
                 pass
 
