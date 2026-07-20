@@ -27,4 +27,9 @@ check-all:
 	pre-commit run --all-files
 
 test:
+	@echo "==> Checking help for quick-herbalist..."
+	uv run quick-herbalist --help
+	@echo "==> Checking help for manage-sprites..."
+	uv run manage-sprites --help
+	@echo "==> Running pytest..."
 	PYTHONPATH=src pytest -v
