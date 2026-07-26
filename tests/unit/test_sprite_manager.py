@@ -27,6 +27,9 @@ class RealWidget:
     def remove_widget(self, *args, **kwargs):
         pass
 
+    def bind(self, *args, **kwargs):
+        pass
+
 
 kivy_widget_module.Widget = RealWidget
 

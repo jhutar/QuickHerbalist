@@ -24,6 +24,11 @@ from kivy.lang import Builder  # noqa: E402
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
+from quick_herbalist.core.sprite_manager import SpriteManager  # noqa: E402
+
+sprite_manager = SpriteManager()
+
+
 def get_asset_path(filename):
     return os.path.join(BASE_DIR, "assets", filename)
 
@@ -261,13 +266,17 @@ class Background(Widget):
 
         self.tiles = []
 
+        # Retrieve grass texture region from SpriteManager
+        grass_sprite = sprite_manager.get("grass_sprite")
+        grass_texture = grass_sprite.rect.texture
+
         with self.canvas:
             for r in range(self.rows):
                 for c in range(self.cols):
                     x = c * self.tile_width
                     y = r * self.tile_height
                     rect = Rectangle(
-                        source=get_asset_path("grass.png"),
+                        texture=grass_texture,
                         pos=(x, y),
                         size=(self.tile_width, self.tile_height),
                     )
@@ -295,31 +304,19 @@ class Player(Widget):
         self.size = (64, 64)
         self.pos = (800 // 8 - 32, 600 // 2 - 32)
 
-        self.sprites = [
-            get_asset_path("hero1.png"),
-            get_asset_path("hero2.png"),
-            get_asset_path("hero1.png"),
-            get_asset_path("hero3.png"),
-        ]
-        self.index = 0
-        self.animation_speed = 0.1
-        self.anim_time = 0.0
+        self.sprite = sprite_manager.get("hero_sprite")
+        self.sprite.pos = self.pos
+        self.sprite.size = self.size
+        self.add_widget(self.sprite)
 
-        with self.canvas:
-            self.rect = Rectangle(
-                source=self.sprites[self.index], pos=self.pos, size=self.size
-            )
-        self.bind(pos=self.update_rect)
+        self.bind(pos=self.update_sprite_pos)
 
-    def update_rect(self, *args):
-        self.rect.pos = self.pos
+    def update_sprite_pos(self, *args):
+        self.sprite.pos = self.pos
 
     def animate(self, dt):
-        self.anim_time += dt
-        if self.anim_time >= self.animation_speed:
-            self.anim_time = 0.0
-            self.index = (self.index + 1) % len(self.sprites)
-            self.rect.source = self.sprites[self.index]
+        # Frame animation is handled autonomously by AnimatedSprite
+        pass
 
     def move_by(self, dy):
         new_y = self.y + dy
@@ -331,16 +328,20 @@ class Player(Widget):
 
 
 class MovingWidget(Widget):
-    def __init__(self, image_path, size, x, y, **kwargs):
+    def __init__(self, sprite_name, size, x, y, **kwargs):
         super().__init__(**kwargs)
         self.size = size
         self.pos = (x, y)
-        with self.canvas:
-            self.rect = Rectangle(source=image_path, pos=self.pos, size=self.size)
-        self.bind(pos=self.update_rect)
 
-    def update_rect(self, *args):
-        self.rect.pos = self.pos
+        self.sprite = sprite_manager.get(sprite_name)
+        self.sprite.pos = self.pos
+        self.sprite.size = self.size
+        self.add_widget(self.sprite)
+
+        self.bind(pos=self.update_sprite_pos)
+
+    def update_sprite_pos(self, *args):
+        self.sprite.pos = self.pos
 
     def update(self, game_speed):
         self.x -= game_speed
@@ -351,18 +352,16 @@ class MovingWidget(Widget):
 
 class Flower(MovingWidget):
     def __init__(self, **kwargs):
-        image = get_asset_path("flower1.png")
         x = 800 + random.randint(50, 200)
         y = random.randint(0, 600 - 32)
-        super().__init__(image, (32, 32), x, y, **kwargs)
+        super().__init__("flower_sprite", (32, 32), x, y, **kwargs)
 
 
 class Stone(MovingWidget):
     def __init__(self, **kwargs):
-        image = get_asset_path("stone.png")
         x = 800 + random.randint(100, 300)
         y = random.randint(0, 600 - 64)
-        super().__init__(image, (64, 53), x, y, **kwargs)
+        super().__init__("stone_prite", (64, 53), x, y, **kwargs)
 
 
 class GameView(Widget):

@@ -17,3 +17,7 @@ sprites:
     frames:
     - atlas_id: flower_sprite_0
       duration_ms: 250
+  grass_sprite:
+    frames:
+    - atlas_id: grass_sprite_0
+      duration_ms: 250

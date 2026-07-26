@@ -22,10 +22,14 @@ class AnimatedSprite(Widget):
 
         with self.canvas:
             Color(1, 1, 1, 1)
-            self.rect = Rectangle(size=self.size)
+            self.rect = Rectangle(pos=self.pos, size=self.size)
 
+        self.bind(pos=self.update_rect)
         self._load_frame(0)
         self._event = Clock.schedule_interval(self.update, 0.01)
+
+    def update_rect(self, *args):
+        self.rect.pos = self.pos
 
     def _load_frame(self, index):
         frame_info = self.frames_data[index]
@@ -47,7 +51,8 @@ class AnimatedSprite(Widget):
         self.rect.texture = core_img.texture.get_region(
             region[0], region[1], region[2], region[3]
         )
-        self.rect.size = (region[2], region[3])
+        self.size = (region[2], region[3])
+        self.rect.size = self.size
 
     def update(self, dt):
         self.current_time += dt * 1000
