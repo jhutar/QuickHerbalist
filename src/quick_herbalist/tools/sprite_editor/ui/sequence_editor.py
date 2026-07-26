@@ -18,6 +18,7 @@ class SelectableTextInput(TextInput):
     """
 
     def __init__(self, **kwargs):
+        kwargs.setdefault("write_tab", False)
         super().__init__(**kwargs)
         self.bind(focus=self.on_focus)
 
