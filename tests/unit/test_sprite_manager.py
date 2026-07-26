@@ -140,3 +140,31 @@ def test_sprite_manager_default_paths(monkeypatch):
                 assert sm.atlas_path == "/dummy/assets/sprites.atlas"
                 mock_get_asset_path.assert_any_call("sprites.yaml")
                 mock_get_asset_path.assert_any_call("sprites.atlas")
+
+
+def test_real_assets_integrity_and_instantiation():
+    import os
+    from quick_herbalist.core.config_parser import get_asset_path, validate_configs
+
+    yaml_path = get_asset_path("sprites.yaml")
+    atlas_path = get_asset_path("sprites.atlas")
+
+    # 1. Assert both files exist
+    assert os.path.exists(yaml_path), f"sprites.yaml does not exist at {yaml_path}"
+    assert os.path.exists(atlas_path), f"sprites.atlas does not exist at {atlas_path}"
+
+    # 2. Assert they are consistent and valid
+    assert validate_configs(yaml_path, atlas_path) is True, (
+        "Project configurations in assets/ are inconsistent!"
+    )
+
+    # 3. Assert SpriteManager successfully instantiates and loads them by default
+    sm = SpriteManager()
+    assert sm.yaml_path == yaml_path
+    assert sm.atlas_path == atlas_path
+
+    # 4. Assert we can query all defined sprites and receive valid widgets
+    for sprite_name in sm.sprites_data.get("sprites", {}).keys():
+        sprite = sm.get(sprite_name)
+        assert sprite is not None
+        assert sprite.sprite_name == sprite_name
