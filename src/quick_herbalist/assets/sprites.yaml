@@ -9,3 +9,11 @@ sprites:
       duration_ms: 250
     - atlas_id: hero_sprite_3
       duration_ms: 250
+  stone_prite:
+    frames:
+    - atlas_id: stone_prite_0
+      duration_ms: 250
+  flower_sprite:
+    frames:
+    - atlas_id: flower_sprite_0
+      duration_ms: 250

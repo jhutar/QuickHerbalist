@@ -24,5 +24,21 @@
       64,
       64
     ]
+  },
+  "flower1.png": {
+    "flower_sprite_0": [
+      0,
+      0,
+      32,
+      32
+    ]
+  },
+  "stone.png": {
+    "stone_prite_0": [
+      0,
+      0,
+      64,
+      64
+    ]
   }
 }
