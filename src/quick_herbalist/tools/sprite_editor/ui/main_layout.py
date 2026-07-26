@@ -1,4 +1,3 @@
-import os
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
@@ -6,22 +5,14 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.textinput import TextInput
 from .preview import SpritePreviewWidget
 from .sequence_editor import SequenceEditorWidget
-from quick_herbalist.core.config_parser import (
-    load_sprites_yaml,
-    load_sprites_atlas,
-    save_sprites_yaml,
-    save_sprites_atlas,
-    get_asset_path,
-)
+from quick_herbalist.core.config_parser import ConfigStitcher, get_asset_path
 
 
 class SpriteEditorMainLayout(BoxLayout):
     """
     The main layout of the Sprite Editor.
-    Brings together:
-    1. Left Sidebar: Sprite list, creation, deletion.
-    2. Middle Section: Frame Sequence and Duration Editor.
-    3. Right Section: Animated Preview with Zoom.
+    Delegates all domain-level config parsing, file reads/writes,
+    and schema coordinate mapping to the ConfigStitcher.
     """
 
     def __init__(self, **kwargs):
@@ -29,31 +20,12 @@ class SpriteEditorMainLayout(BoxLayout):
         self.yaml_path = get_asset_path("sprites.yaml")
         self.atlas_path = get_asset_path("sprites.atlas")
 
-        # Load configurations safely on startup
-        self.sprites_yaml_data = {}
-        self.sprites_atlas_data = {}
-        self._load_configs()
-
+        # Initialize the domain ConfigStitcher controller
+        self.stitcher = ConfigStitcher(self.yaml_path, self.atlas_path)
         self.selected_sprite = ""
 
         self._setup_ui()
         self._populate_sprite_list()
-
-    def _load_configs(self):
-        try:
-            if os.path.exists(self.yaml_path):
-                self.sprites_yaml_data = load_sprites_yaml(self.yaml_path)
-            if not self.sprites_yaml_data or "sprites" not in self.sprites_yaml_data:
-                self.sprites_yaml_data = {"sprites": {}}
-
-            if os.path.exists(self.atlas_path):
-                self.sprites_atlas_data = load_sprites_atlas(self.atlas_path)
-            if not self.sprites_atlas_data:
-                self.sprites_atlas_data = {}
-        except Exception as e:
-            print(f"Error loading configurations: {e}")
-            self.sprites_yaml_data = {"sprites": {}}
-            self.sprites_atlas_data = {}
 
     def _setup_ui(self):
         # 1. Left Sidebar (Sprite List and creation)
@@ -113,8 +85,7 @@ class SpriteEditorMainLayout(BoxLayout):
 
     def _populate_sprite_list(self):
         self.sprite_list_container.clear_widgets()
-        sprites = self.sprites_yaml_data.get("sprites", {})
-        for name in sorted(sprites.keys()):
+        for name in self.stitcher.get_sprite_list():
             btn = Button(text=name, size_hint_y=None, height="35dp")
             btn.bind(on_release=lambda instance, n=name: self.select_sprite(n))
             if name == self.selected_sprite:
@@ -125,45 +96,8 @@ class SpriteEditorMainLayout(BoxLayout):
         self.selected_sprite = name
         self._populate_sprite_list()
 
-        # Build fully loaded frames for this sprite
-        frames = []
-        sprite_entry = self.sprites_yaml_data.get("sprites", {}).get(name, {})
-        yaml_frames = sprite_entry.get("frames", [])
-
-        for frame in yaml_frames:
-            atlas_id = frame.get("atlas_id", "")
-            duration = frame.get("duration_ms", 250)
-
-            # Find this atlas_id region in atlas_data
-            image_filename = ""
-            x, y, w, h = 0, 0, 32, 32
-            found = False
-
-            for img_name, regions in self.sprites_atlas_data.items():
-                if isinstance(regions, dict) and atlas_id in regions:
-                    region = regions[atlas_id]
-                    if isinstance(region, list) and len(region) == 4:
-                        image_filename = img_name
-                        x, y, w, h = region
-                        found = True
-                        break
-
-            if not found:
-                # Default fallback if the atlas ID doesn't exist in atlas
-                image_filename = "test_hero.png"
-                x, y, w, h = 0, 0, 32, 32
-
-            frames.append(
-                {
-                    "atlas_id": atlas_id,
-                    "duration": duration,
-                    "image": image_filename,
-                    "x": x,
-                    "y": y,
-                    "w": w,
-                    "h": h,
-                }
-            )
+        # Build fully loaded frames for this sprite via the stitcher
+        frames = self.stitcher.get_sprite_frames(name)
 
         self.editor.set_sprite_name(name)
         self.editor.load_frames(frames)
@@ -179,16 +113,9 @@ class SpriteEditorMainLayout(BoxLayout):
         name = self.new_sprite_input.text.strip()
         if not name:
             return
-        if name in self.sprites_yaml_data["sprites"]:
-            print(f"Sprite '{name}' already exists.")
+        if not self.stitcher.create_sprite(name):
+            print(f"Sprite '{name}' already exists or is invalid.")
             return
-
-        # Add empty sprite
-        self.sprites_yaml_data["sprites"][name] = {"frames": []}
-        try:
-            save_sprites_yaml(self.yaml_path, self.sprites_yaml_data)
-        except Exception as e:
-            print(f"Error saving yaml: {e}")
 
         self.new_sprite_input.text = ""
         self.select_sprite(name)
@@ -197,33 +124,7 @@ class SpriteEditorMainLayout(BoxLayout):
         if not self.selected_sprite:
             return
 
-        # 1. Gather all atlas_ids of this sprite to clean them from atlas too
-        sprite_entry = self.sprites_yaml_data["sprites"].get(self.selected_sprite, {})
-        atlas_ids_to_remove = {
-            f.get("atlas_id")
-            for f in sprite_entry.get("frames", [])
-            if f.get("atlas_id")
-        }
-
-        # 2. Delete from yaml data
-        self.sprites_yaml_data["sprites"].pop(self.selected_sprite, None)
-
-        # 3. Clean up corresponding atlas regions
-        for img_name, regions in list(self.sprites_atlas_data.items()):
-            if isinstance(regions, dict):
-                for aid in list(regions.keys()):
-                    if aid in atlas_ids_to_remove:
-                        regions.pop(aid)
-                # If an image has no regions left, optionally remove the image entry
-                if not regions:
-                    self.sprites_atlas_data.pop(img_name)
-
-        # 4. Save both configurations
-        try:
-            save_sprites_yaml(self.yaml_path, self.sprites_yaml_data)
-            save_sprites_atlas(self.atlas_path, self.sprites_atlas_data)
-        except Exception as e:
-            print(f"Error saving configurations after deleting sprite: {e}")
+        self.stitcher.delete_sprite(self.selected_sprite)
 
         self.selected_sprite = ""
         self.editor.set_sprite_name("")
@@ -238,45 +139,8 @@ class SpriteEditorMainLayout(BoxLayout):
             return
 
         try:
-            # 1. Clean up old atlas mappings for this sprite to prevent leaking orphaned IDs
-            old_sprite_entry = self.sprites_yaml_data["sprites"].get(sprite_name, {})
-            old_atlas_ids = {
-                f.get("atlas_id")
-                for f in old_sprite_entry.get("frames", [])
-                if f.get("atlas_id")
-            }
-            for img_name, regions in list(self.sprites_atlas_data.items()):
-                if isinstance(regions, dict):
-                    for aid in list(regions.keys()):
-                        if aid in old_atlas_ids:
-                            regions.pop(aid)
-                    if not regions:
-                        self.sprites_atlas_data.pop(img_name)
-
-            # 2. Re-populate YAML frames representation
-            yaml_frames = []
-            for frame in frames:
-                yaml_frames.append(
-                    {"atlas_id": frame["atlas_id"], "duration_ms": frame["duration"]}
-                )
-            self.sprites_yaml_data["sprites"][sprite_name] = {"frames": yaml_frames}
-
-            # 3. Re-populate Atlas mapping
-            for frame in frames:
-                image = frame["image"]
-                atlas_id = frame["atlas_id"]
-                x, y, w, h = frame["x"], frame["y"], frame["w"], frame["h"]
-
-                self.sprites_atlas_data.setdefault(image, {})
-                self.sprites_atlas_data[image][atlas_id] = [x, y, w, h]
-
-            # 4. Write back both files
-            save_sprites_yaml(self.yaml_path, self.sprites_yaml_data)
-            save_sprites_atlas(self.atlas_path, self.sprites_atlas_data)
-
-            print(
-                f"Successfully saved sprite '{sprite_name}' to {self.yaml_path} and {self.atlas_path}"
-            )
+            self.stitcher.save_sprite_frames(sprite_name, frames)
+            print(f"Successfully saved sprite '{sprite_name}' via ConfigStitcher")
             self.select_sprite(sprite_name)
         except Exception as e:
             print(f"Error saving sprite {sprite_name}: {e}")

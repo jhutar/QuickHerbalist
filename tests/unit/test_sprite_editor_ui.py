@@ -212,7 +212,7 @@ def test_main_layout_load_and_select_sprite(mock_get_asset_path):
         layout = SpriteEditorMainLayout()
 
         # Verify initial loaded state
-        assert "hero_run" in layout.sprites_yaml_data["sprites"]
+        assert "hero_run" in layout.stitcher.sprites_yaml_data["sprites"]
 
         # Select sprite
         layout.select_sprite("hero_run")
@@ -279,12 +279,12 @@ def test_main_layout_create_and_delete_sprite(mock_get_asset_path):
         layout.new_sprite_input.text = "new_sprite"
         layout.create_sprite(None)
 
-        assert "new_sprite" in layout.sprites_yaml_data["sprites"]
+        assert "new_sprite" in layout.stitcher.sprites_yaml_data["sprites"]
         assert layout.selected_sprite == "new_sprite"
 
         # Delete selected sprite
         layout.delete_sprite(None)
-        assert "new_sprite" not in layout.sprites_yaml_data["sprites"]
+        assert "new_sprite" not in layout.stitcher.sprites_yaml_data["sprites"]
         assert layout.selected_sprite == ""
 
 
