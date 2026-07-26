@@ -1,1 +1,28 @@
-{"test_hero.png": {"test_frame_0": [0, 0, 32, 32], "test_frame_1": [32, 0, 32, 32]}}
+{
+  "hero.png": {
+    "hero_frame_0": [
+      0,
+      0,
+      64,
+      64
+    ],
+    "hero_frame_1": [
+      64,
+      0,
+      64,
+      64
+    ],
+    "hero_sprite_2": [
+      128,
+      0,
+      64,
+      64
+    ],
+    "hero_sprite_3": [
+      64,
+      0,
+      64,
+      64
+    ]
+  }
+}
