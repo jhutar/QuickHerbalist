@@ -42,7 +42,7 @@ for i in "${!TASKS_ARRAY[@]}"; do
     CURR_ID="${TASKS_ARRAY[$i]}"
     PREV_ID="None"
     NEXT_ID="None"
-    
+
     if [[ $i -gt 0 ]]; then
         PREV_ID="${TASKS_ARRAY[$i-1]}"
     fi
@@ -80,7 +80,7 @@ You are an expert software engineer running in YOLO mode. Your mission is to imp
 - Stage ONLY the files modified for this task and commit with:
   \`git commit --trailer \"Generated-by:$YOLO_MODEL\" -m \"feat: Spec $(basename "$SPEC_DIR") task $CURR_ID\"\`
 "
-    
+
     # 1. Initial Agent Invocation
     $AGENT_CMD --print "$PROMPT"
 
@@ -90,12 +90,12 @@ You are an expert software engineer running in YOLO mode. Your mission is to imp
         ERRORS=""
 
         echo "##### $(date --utc -Ins) Validating state for $CURR_ID (Attempt $attempt) #####"
-        
+
         # Check A: Was the task marked as complete?
         if grep -q "\[ \] $CURR_ID" "$TASKS_FILE"; then
             ERRORS+="* Task $CURR_ID was not marked as completed ([x]) in $TASKS_FILE.\n"
         fi
-        
+
         # Check B: Do the linters pass?
         if ! make check-all > /tmp/yolo_lint_out.txt 2>&1; then
             ERRORS+="* Code quality checks (make check-all) failed:\n$(cat /tmp/yolo_lint_out.txt)\n\n"
@@ -120,9 +120,9 @@ You are an expert software engineer running in YOLO mode. Your mission is to imp
         # 3. Agent Re-invocation (Self-Correction via --continue)
         echo -e "##### $(date --utc -Ins) Validation failed. Errors found:\n$ERRORS"
         echo "##### Re-running agent with --continue to fix the issues. #####"
-        
+
         FEEDBACK="Your previous execution left the repository in an incomplete or broken state. Please fix the following errors:\n\n$ERRORS\n\nEnsure you write correct code, fix all tests and linters, mark the task as complete in $TASKS_FILE, and cleanly commit ALL changes with trailer 'Generated-by:$YOLO_MODEL'."
-        
+
         $AGENT_CMD --continue --print "$FEEDBACK"
     done
 
