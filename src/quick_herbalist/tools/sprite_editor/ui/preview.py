@@ -49,6 +49,12 @@ class SpritePreviewWidget(BoxLayout):
         self.scroll_view.add_widget(self.image)
         self.add_widget(self.scroll_view)
 
+        # Debug label for currently animated Atlas ID
+        self.debug_label = Label(
+            text="Current Atlas ID: None", size_hint_y=None, height="30dp", bold=True
+        )
+        self.add_widget(self.debug_label)
+
     def zoom_in(self, instance=None):
         levels = [0.25, 0.5, 1.0, 2.0, 4.0]
         try:
@@ -105,9 +111,12 @@ class SpritePreviewWidget(BoxLayout):
     def _load_current_frame_texture(self):
         if not self.frames:
             self.image.texture = None
+            self.debug_label.text = "Current Atlas ID: None"
             return
 
         frame_info = self.frames[self.current_frame_index % len(self.frames)]
+        atlas_id = frame_info.get("atlas_id", "")
+        self.debug_label.text = f"Current Atlas ID: {atlas_id}"
         image_filename = frame_info.get("image", "")
         x = int(frame_info.get("x", 0))
         y = int(frame_info.get("y", 0))

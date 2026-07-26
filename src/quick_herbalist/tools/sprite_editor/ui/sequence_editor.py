@@ -35,12 +35,21 @@ class FrameCard(BoxLayout):
     """
 
     def __init__(
-        self, index, frame_data, is_selected, on_select, on_remove, on_change, **kwargs
+        self,
+        index,
+        frame_data,
+        is_selected,
+        on_select,
+        on_remove,
+        on_change,
+        on_move_up,
+        on_move_down,
+        **kwargs,
     ):
         super().__init__(
             orientation="vertical",
             size_hint_y=None,
-            height="120dp" if is_selected else "35dp",
+            height="155dp" if is_selected else "35dp",
             spacing=5,
             **kwargs,
         )
@@ -50,13 +59,15 @@ class FrameCard(BoxLayout):
         self.on_select_cb = on_select
         self.on_remove_cb = on_remove
         self.on_change_cb = on_change
+        self.on_move_up_cb = on_move_up
+        self.on_move_down_cb = on_move_down
 
         self._setup_ui()
 
     def _setup_ui(self):
         self.clear_widgets()
 
-        # Row 1: Header (acting as select / fold trigger) + Delete
+        # Row 1: Header (acting as select / fold trigger) + Reorder (Up/Down) + Delete
         row1 = BoxLayout(
             orientation="horizontal", size_hint_y=None, height="30dp", spacing=5
         )
@@ -64,10 +75,10 @@ class FrameCard(BoxLayout):
         atlas_id_disp = self.frame_data.get("atlas_id", "Unsaved")
         header_text = f"Frame #{self.index} ({atlas_id_disp})"
 
-        # Color matching selection status
+        # Clickable header button to select
         self.select_btn = Button(
             text=header_text,
-            size_hint_x=0.7,
+            size_hint_x=0.5,
             background_color=[0.2, 0.6, 1, 1]
             if self.is_selected
             else [0.3, 0.3, 0.3, 1],
@@ -76,6 +87,17 @@ class FrameCard(BoxLayout):
         self.select_btn.bind(on_release=self._on_select_clicked)
         row1.add_widget(self.select_btn)
 
+        # Move Up button
+        up_btn = Button(text="▲", size_hint_x=0.1)
+        up_btn.bind(on_release=self._on_move_up_clicked)
+        row1.add_widget(up_btn)
+
+        # Move Down button
+        down_btn = Button(text="▼", size_hint_x=0.1)
+        down_btn.bind(on_release=self._on_move_down_clicked)
+        row1.add_widget(down_btn)
+
+        # Delete button
         remove_btn = Button(
             text="Delete", size_hint_x=0.3, background_color=[0.8, 0.2, 0.2, 1]
         )
@@ -93,7 +115,6 @@ class FrameCard(BoxLayout):
         )
         row2.add_widget(Label(text="Atlas ID:", size_hint_x=0.2))
 
-        # Display Atlas ID as read-only label
         self.atlas_id_label = Label(
             text=str(self.frame_data.get("atlas_id", "")),
             size_hint_x=0.4,
@@ -114,72 +135,73 @@ class FrameCard(BoxLayout):
         row2.add_widget(self.duration_input)
         self.add_widget(row2)
 
-        # Row 3: Image + Browse + Status Indicator + X + Y + W + H
+        # Row 3: Image + Browse + Status Indicator (on a separate row)
         row3 = BoxLayout(
             orientation="horizontal", size_hint_y=None, height="35dp", spacing=5
         )
-        row3.add_widget(Label(text="Img:", size_hint_x=0.1))
+        row3.add_widget(Label(text="Img:", size_hint_x=0.2))
 
-        # Image Text Input
         self.image_input = SelectableTextInput(
             text=str(self.frame_data.get("image", "test_hero.png")),
             multiline=False,
-            size_hint_x=0.2,
+            size_hint_x=0.5,
         )
         self.image_input.bind(text=self._on_text_changed)
         row3.add_widget(self.image_input)
 
-        # File Chooser Browse button
-        browse_btn = Button(text="...", size_hint_x=0.1)
+        browse_btn = Button(text="...", size_hint_x=0.15)
         browse_btn.bind(on_release=self._open_file_chooser)
         row3.add_widget(browse_btn)
 
-        # Validation status label [✔] / [❌]
-        self.status_label = Label(text="", size_hint_x=0.08, bold=True)
+        self.status_label = Label(text="", size_hint_x=0.15, bold=True)
         row3.add_widget(self.status_label)
+        self.add_widget(row3)
 
-        # Coordinates
-        row3.add_widget(Label(text="X:", size_hint_x=0.04))
+        # Row 4: Dimensions/Coordinates (on a separate row)
+        row4 = BoxLayout(
+            orientation="horizontal", size_hint_y=None, height="35dp", spacing=5
+        )
+        row4.add_widget(Label(text="X:", size_hint_x=0.1))
         self.x_input = SelectableTextInput(
             text=str(self.frame_data.get("x", 0)),
             multiline=False,
             input_filter="int",
-            size_hint_x=0.08,
+            size_hint_x=0.15,
         )
         self.x_input.bind(text=self._on_text_changed)
-        row3.add_widget(self.x_input)
+        row4.add_widget(self.x_input)
 
-        row3.add_widget(Label(text="Y:", size_hint_x=0.04))
+        row4.add_widget(Label(text="Y:", size_hint_x=0.1))
         self.y_input = SelectableTextInput(
             text=str(self.frame_data.get("y", 0)),
             multiline=False,
             input_filter="int",
-            size_hint_x=0.08,
+            size_hint_x=0.15,
         )
         self.y_input.bind(text=self._on_text_changed)
-        row3.add_widget(self.y_input)
+        row4.add_widget(self.y_input)
 
-        row3.add_widget(Label(text="W:", size_hint_x=0.04))
+        row4.add_widget(Label(text="W:", size_hint_x=0.1))
         self.w_input = SelectableTextInput(
             text=str(self.frame_data.get("w", 32)),
             multiline=False,
             input_filter="int",
-            size_hint_x=0.08,
+            size_hint_x=0.15,
         )
         self.w_input.bind(text=self._on_text_changed)
-        row3.add_widget(self.w_input)
+        row4.add_widget(self.w_input)
 
-        row3.add_widget(Label(text="H:", size_hint_x=0.04))
+        row4.add_widget(Label(text="H:", size_hint_x=0.1))
         self.h_input = SelectableTextInput(
             text=str(self.frame_data.get("h", 32)),
             multiline=False,
             input_filter="int",
-            size_hint_x=0.08,
+            size_hint_x=0.15,
         )
         self.h_input.bind(text=self._on_text_changed)
-        row3.add_widget(self.h_input)
+        row4.add_widget(self.h_input)
+        self.add_widget(row4)
 
-        self.add_widget(row3)
         self._update_status_indicator()
 
     def _update_status_indicator(self):
@@ -200,7 +222,6 @@ class FrameCard(BoxLayout):
     def _open_file_chooser(self, instance):
         content = BoxLayout(orientation="vertical", spacing=10, padding=10)
 
-        # Root the file chooser in the assets/ directory specifically
         assets_dir = get_asset_path("")
         if assets_dir.endswith(os.sep):
             assets_dir = assets_dir[:-1]
@@ -242,6 +263,14 @@ class FrameCard(BoxLayout):
         if self.on_remove_cb:
             self.on_remove_cb(self.index)
 
+    def _on_move_up_clicked(self, instance):
+        if self.on_move_up_cb:
+            self.on_move_up_cb(self.index)
+
+    def _on_move_down_clicked(self, instance):
+        if self.on_move_down_cb:
+            self.on_move_down_cb(self.index)
+
     def _on_text_changed(self, instance, text):
         if not self.is_selected:
             return
@@ -249,7 +278,6 @@ class FrameCard(BoxLayout):
         self._update_status_indicator()
 
         if self.on_change_cb:
-            # Parse coordinate values safely
             try:
                 dur = int(self.duration_input.text) if self.duration_input.text else 250
             except ValueError:
@@ -353,6 +381,8 @@ class SequenceEditorWidget(BoxLayout):
                 on_select=self.select_frame,
                 on_remove=self.remove_frame,
                 on_change=self.change_frame,
+                on_move_up=self.move_frame_up,
+                on_move_down=self.move_frame_down,
             )
             self.container.add_widget(card)
 
@@ -409,6 +439,42 @@ class SequenceEditorWidget(BoxLayout):
             # Adjust selection index
             if self.selected_frame_index >= len(self.frames):
                 self.selected_frame_index = len(self.frames) - 1
+            self.refresh_ui()
+            if self.frames_changed_callback:
+                self.frames_changed_callback(self.frames)
+
+    def move_frame_up(self, index):
+        if index > 0:
+            frames_copy = list(self.frames)
+            frames_copy[index], frames_copy[index - 1] = (
+                frames_copy[index - 1],
+                frames_copy[index],
+            )
+            self.frames = frames_copy
+
+            if self.selected_frame_index == index:
+                self.selected_frame_index = index - 1
+            elif self.selected_frame_index == index - 1:
+                self.selected_frame_index = index
+
+            self.refresh_ui()
+            if self.frames_changed_callback:
+                self.frames_changed_callback(self.frames)
+
+    def move_frame_down(self, index):
+        if index < len(self.frames) - 1:
+            frames_copy = list(self.frames)
+            frames_copy[index], frames_copy[index + 1] = (
+                frames_copy[index + 1],
+                frames_copy[index],
+            )
+            self.frames = frames_copy
+
+            if self.selected_frame_index == index:
+                self.selected_frame_index = index + 1
+            elif self.selected_frame_index == index + 1:
+                self.selected_frame_index = index
+
             self.refresh_ui()
             if self.frames_changed_callback:
                 self.frames_changed_callback(self.frames)

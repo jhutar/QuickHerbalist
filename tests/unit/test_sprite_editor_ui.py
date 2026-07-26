@@ -369,3 +369,50 @@ def test_save_button_triggers_on_save_callback(mock_get_asset_path):
 
         assert yaml_data["sprites"]["hero_run"]["frames"][0]["duration_ms"] == 500
         assert atlas_data["hero.png"]["frame_0"] == [0, 0, 32, 32]
+
+
+def test_sequence_editor_reorder_frames():
+    editor = SequenceEditorWidget()
+    editor.set_sprite_name("hero_run")
+
+    initial_frames = [
+        {
+            "atlas_id": "frame_0",
+            "duration": 100,
+            "image": "hero.png",
+            "x": 0,
+            "y": 0,
+            "w": 32,
+            "h": 32,
+        },
+        {
+            "atlas_id": "frame_1",
+            "duration": 200,
+            "image": "hero.png",
+            "x": 32,
+            "y": 0,
+            "w": 32,
+            "h": 32,
+        },
+        {
+            "atlas_id": "frame_2",
+            "duration": 300,
+            "image": "hero.png",
+            "x": 64,
+            "y": 0,
+            "w": 32,
+            "h": 32,
+        },
+    ]
+    editor.load_frames(initial_frames)
+    assert len(editor.frames) == 3
+
+    # Move index 1 (frame_1) up
+    editor.move_frame_up(1)
+    assert editor.frames[0]["atlas_id"] == "frame_1"
+    assert editor.frames[1]["atlas_id"] == "frame_0"
+
+    # Move index 1 (now frame_0) down
+    editor.move_frame_down(1)
+    assert editor.frames[1]["atlas_id"] == "frame_2"
+    assert editor.frames[2]["atlas_id"] == "frame_0"
