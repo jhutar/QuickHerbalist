@@ -331,3 +331,41 @@ def test_main_layout_save_sprite(mock_get_asset_path):
         assert "hero.png" in atlas_data
         assert "frame_1" in atlas_data["hero.png"]
         assert atlas_data["hero.png"]["frame_1"] == [32, 0, 32, 32]
+
+
+def test_save_button_triggers_on_save_callback(mock_get_asset_path):
+    yaml_path, atlas_path = mock_get_asset_path
+    with patch(
+        "quick_herbalist.tools.sprite_editor.ui.main_layout.get_asset_path"
+    ) as mock_gap:
+        mock_gap.side_effect = lambda filename: (
+            yaml_path if "yaml" in filename else atlas_path
+        )
+
+        layout = SpriteEditorMainLayout()
+        layout.select_sprite("hero_run")
+
+        # Modify frames
+        layout.editor.frames = [
+            {
+                "atlas_id": "frame_0",
+                "duration": 500,
+                "image": "hero.png",
+                "x": 0,
+                "y": 0,
+                "w": 32,
+                "h": 32,
+            }
+        ]
+
+        # Trigger button save
+        layout.editor.save_sequence(None)
+
+        # Read back from yaml and atlas to confirm
+        with open(yaml_path, "r") as f:
+            yaml_data = yaml.safe_load(f)
+        with open(atlas_path, "r") as f:
+            atlas_data = json.load(f)
+
+        assert yaml_data["sprites"]["hero_run"]["frames"][0]["duration_ms"] == 500
+        assert atlas_data["hero.png"]["frame_0"] == [0, 0, 32, 32]

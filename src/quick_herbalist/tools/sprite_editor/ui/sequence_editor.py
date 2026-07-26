@@ -296,8 +296,8 @@ class SequenceEditorWidget(BoxLayout):
         []
     )  # List of dicts: {'atlas_id': str, 'duration': int, 'image': str, 'x': int, 'y': int, 'w': int, 'h': int}
     sprite_name = StringProperty("")
-    on_save_callback = ObjectProperty(None)
-    on_frames_changed_callback = ObjectProperty(None)
+    save_callback = ObjectProperty(None)
+    frames_changed_callback = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super().__init__(orientation="vertical", **kwargs)
@@ -363,8 +363,8 @@ class SequenceEditorWidget(BoxLayout):
     def change_frame(self, index, updated_data):
         if 0 <= index < len(self.frames):
             self.frames[index] = updated_data
-            if self.on_frames_changed_callback:
-                self.on_frames_changed_callback(self.frames)
+            if self.frames_changed_callback:
+                self.frames_changed_callback(self.frames)
 
     def add_frame(self, instance):
         if not self.sprite_name:
@@ -400,8 +400,8 @@ class SequenceEditorWidget(BoxLayout):
         self.frames.append(new_frame)
         self.selected_frame_index = len(self.frames) - 1
         self.refresh_ui()
-        if self.on_frames_changed_callback:
-            self.on_frames_changed_callback(self.frames)
+        if self.frames_changed_callback:
+            self.frames_changed_callback(self.frames)
 
     def remove_frame(self, index):
         if 0 <= index < len(self.frames):
@@ -410,9 +410,9 @@ class SequenceEditorWidget(BoxLayout):
             if self.selected_frame_index >= len(self.frames):
                 self.selected_frame_index = len(self.frames) - 1
             self.refresh_ui()
-            if self.on_frames_changed_callback:
-                self.on_frames_changed_callback(self.frames)
+            if self.frames_changed_callback:
+                self.frames_changed_callback(self.frames)
 
     def save_sequence(self, instance):
-        if self.on_save_callback:
-            self.on_save_callback(self.sprite_name, self.frames)
+        if self.save_callback:
+            self.save_callback(self.sprite_name, self.frames)

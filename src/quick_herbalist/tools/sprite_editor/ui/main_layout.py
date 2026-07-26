@@ -101,8 +101,8 @@ class SpriteEditorMainLayout(BoxLayout):
 
         # 2. Middle Editor Section
         self.editor = SequenceEditorWidget(
-            on_save_callback=self.on_save_callback,
-            on_frames_changed_callback=self.on_frames_changed,
+            save_callback=self.on_save_callback,
+            frames_changed_callback=self.on_frames_changed,
             size_hint_x=0.5,
         )
         self.add_widget(self.editor)
