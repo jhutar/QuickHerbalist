@@ -1,3 +1,4 @@
+import os
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
@@ -5,12 +6,32 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.scrollview import ScrollView
 from kivy.properties import ListProperty, ObjectProperty, StringProperty
 from kivy.uix.gridlayout import GridLayout
+from kivy.clock import Clock
+from kivy.uix.popup import Popup
+from kivy.uix.filechooser import FileChooserListView
+from quick_herbalist.core.config_parser import get_asset_path
+
+
+class SelectableTextInput(TextInput):
+    """
+    Custom TextInput that automatically selects all of its content when focused.
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.bind(focus=self.on_focus)
+
+    def on_focus(self, instance, value):
+        if value:
+            # We schedule selection slightly later to allow focus transit to complete
+            Clock.schedule_once(lambda dt: self.select_all(), 0.05)
 
 
 class FrameCard(BoxLayout):
     """
     A widget representing a single frame card in the sequence editor.
     Allows editing all frame and region properties.
+    Supports folding/unfolding dynamically (Accordion UX).
     """
 
     def __init__(
@@ -19,7 +40,7 @@ class FrameCard(BoxLayout):
         super().__init__(
             orientation="vertical",
             size_hint_y=None,
-            height="120dp",
+            height="120dp" if is_selected else "35dp",
             spacing=5,
             **kwargs,
         )
@@ -33,16 +54,25 @@ class FrameCard(BoxLayout):
         self._setup_ui()
 
     def _setup_ui(self):
-        # Row 1: Header + Select + Delete
+        self.clear_widgets()
+
+        # Row 1: Header (acting as select / fold trigger) + Delete
         row1 = BoxLayout(
             orientation="horizontal", size_hint_y=None, height="30dp", spacing=5
         )
-        row1.add_widget(Label(text=f"Frame #{self.index}", size_hint_x=0.3, bold=True))
 
-        select_text = "[Selected]" if self.is_selected else "Select"
-        self.select_btn = Button(text=select_text, size_hint_x=0.4)
-        if self.is_selected:
-            self.select_btn.background_color = [0.2, 0.8, 0.2, 1]
+        atlas_id_disp = self.frame_data.get("atlas_id", "Unsaved")
+        header_text = f"Frame #{self.index} ({atlas_id_disp})"
+
+        # Color matching selection status
+        self.select_btn = Button(
+            text=header_text,
+            size_hint_x=0.7,
+            background_color=[0.2, 0.6, 1, 1]
+            if self.is_selected
+            else [0.3, 0.3, 0.3, 1],
+            bold=self.is_selected,
+        )
         self.select_btn.bind(on_release=self._on_select_clicked)
         row1.add_widget(self.select_btn)
 
@@ -53,21 +83,28 @@ class FrameCard(BoxLayout):
         row1.add_widget(remove_btn)
         self.add_widget(row1)
 
-        # Row 2: Atlas ID + Duration
+        # Folded state does not render input fields to avoid UI bloat
+        if not self.is_selected:
+            return
+
+        # Row 2: Atlas ID (read-only Label) + Duration
         row2 = BoxLayout(
             orientation="horizontal", size_hint_y=None, height="35dp", spacing=5
         )
         row2.add_widget(Label(text="Atlas ID:", size_hint_x=0.2))
-        self.atlas_id_input = TextInput(
+
+        # Display Atlas ID as read-only label
+        self.atlas_id_label = Label(
             text=str(self.frame_data.get("atlas_id", "")),
-            multiline=False,
             size_hint_x=0.4,
+            halign="left",
+            valign="middle",
         )
-        self.atlas_id_input.bind(text=self._on_text_changed)
-        row2.add_widget(self.atlas_id_input)
+        self.atlas_id_label.bind(size=self.atlas_id_label.setter("text_size"))
+        row2.add_widget(self.atlas_id_label)
 
         row2.add_widget(Label(text="Dur (ms):", size_hint_x=0.2))
-        self.duration_input = TextInput(
+        self.duration_input = SelectableTextInput(
             text=str(self.frame_data.get("duration", 250)),
             multiline=False,
             input_filter="int",
@@ -77,61 +114,125 @@ class FrameCard(BoxLayout):
         row2.add_widget(self.duration_input)
         self.add_widget(row2)
 
-        # Row 3: Image + X + Y + W + H
+        # Row 3: Image + Browse + Status Indicator + X + Y + W + H
         row3 = BoxLayout(
             orientation="horizontal", size_hint_y=None, height="35dp", spacing=5
         )
-        row3.add_widget(Label(text="Img:", size_hint_x=0.15))
-        self.image_input = TextInput(
+        row3.add_widget(Label(text="Img:", size_hint_x=0.1))
+
+        # Image Text Input
+        self.image_input = SelectableTextInput(
             text=str(self.frame_data.get("image", "test_hero.png")),
             multiline=False,
-            size_hint_x=0.25,
+            size_hint_x=0.2,
         )
         self.image_input.bind(text=self._on_text_changed)
         row3.add_widget(self.image_input)
 
+        # File Chooser Browse button
+        browse_btn = Button(text="...", size_hint_x=0.1)
+        browse_btn.bind(on_release=self._open_file_chooser)
+        row3.add_widget(browse_btn)
+
+        # Validation status label [✔] / [❌]
+        self.status_label = Label(text="", size_hint_x=0.08, bold=True)
+        row3.add_widget(self.status_label)
+
         # Coordinates
-        row3.add_widget(Label(text="X:", size_hint_x=0.06))
-        self.x_input = TextInput(
+        row3.add_widget(Label(text="X:", size_hint_x=0.04))
+        self.x_input = SelectableTextInput(
             text=str(self.frame_data.get("x", 0)),
             multiline=False,
             input_filter="int",
-            size_hint_x=0.1,
+            size_hint_x=0.08,
         )
         self.x_input.bind(text=self._on_text_changed)
         row3.add_widget(self.x_input)
 
-        row3.add_widget(Label(text="Y:", size_hint_x=0.06))
-        self.y_input = TextInput(
+        row3.add_widget(Label(text="Y:", size_hint_x=0.04))
+        self.y_input = SelectableTextInput(
             text=str(self.frame_data.get("y", 0)),
             multiline=False,
             input_filter="int",
-            size_hint_x=0.1,
+            size_hint_x=0.08,
         )
         self.y_input.bind(text=self._on_text_changed)
         row3.add_widget(self.y_input)
 
-        row3.add_widget(Label(text="W:", size_hint_x=0.06))
-        self.w_input = TextInput(
+        row3.add_widget(Label(text="W:", size_hint_x=0.04))
+        self.w_input = SelectableTextInput(
             text=str(self.frame_data.get("w", 32)),
             multiline=False,
             input_filter="int",
-            size_hint_x=0.1,
+            size_hint_x=0.08,
         )
         self.w_input.bind(text=self._on_text_changed)
         row3.add_widget(self.w_input)
 
-        row3.add_widget(Label(text="H:", size_hint_x=0.06))
-        self.h_input = TextInput(
+        row3.add_widget(Label(text="H:", size_hint_x=0.04))
+        self.h_input = SelectableTextInput(
             text=str(self.frame_data.get("h", 32)),
             multiline=False,
             input_filter="int",
-            size_hint_x=0.1,
+            size_hint_x=0.08,
         )
         self.h_input.bind(text=self._on_text_changed)
         row3.add_widget(self.h_input)
 
         self.add_widget(row3)
+        self._update_status_indicator()
+
+    def _update_status_indicator(self):
+        img_name = self.image_input.text.strip()
+        if not img_name:
+            self.status_label.text = "[❌]"
+            self.status_label.color = [1, 0, 0, 1]
+            return
+
+        full_path = get_asset_path(img_name)
+        if os.path.exists(full_path):
+            self.status_label.text = "[✔]"
+            self.status_label.color = [0, 1, 0, 1]
+        else:
+            self.status_label.text = "[❌]"
+            self.status_label.color = [1, 0, 0, 1]
+
+    def _open_file_chooser(self, instance):
+        content = BoxLayout(orientation="vertical", spacing=10, padding=10)
+
+        # Root the file chooser in the assets/ directory specifically
+        assets_dir = get_asset_path("")
+        if assets_dir.endswith(os.sep):
+            assets_dir = assets_dir[:-1]
+
+        file_chooser = FileChooserListView(
+            path=assets_dir, filters=["*.png", "*.jpg", "*.jpeg"]
+        )
+        content.add_widget(file_chooser)
+
+        btn_layout = BoxLayout(size_hint_y=None, height="40dp", spacing=10)
+        select_btn = Button(text="Select")
+        cancel_btn = Button(text="Cancel")
+
+        btn_layout.add_widget(select_btn)
+        btn_layout.add_widget(cancel_btn)
+        content.add_widget(btn_layout)
+
+        popup = Popup(
+            title="Choose Image File from Assets", content=content, size_hint=(0.9, 0.9)
+        )
+
+        def on_select(btn_instance):
+            if file_chooser.selection:
+                selected_path = file_chooser.selection[0]
+                filename = os.path.basename(selected_path)
+                self.image_input.text = filename
+                self._on_text_changed(None, filename)
+            popup.dismiss()
+
+        select_btn.bind(on_release=on_select)
+        cancel_btn.bind(on_release=popup.dismiss)
+        popup.open()
 
     def _on_select_clicked(self, instance):
         if self.on_select_cb:
@@ -142,6 +243,11 @@ class FrameCard(BoxLayout):
             self.on_remove_cb(self.index)
 
     def _on_text_changed(self, instance, text):
+        if not self.is_selected:
+            return
+
+        self._update_status_indicator()
+
         if self.on_change_cb:
             # Parse coordinate values safely
             try:
@@ -170,7 +276,7 @@ class FrameCard(BoxLayout):
                 h = 32
 
             updated_data = {
-                "atlas_id": self.atlas_id_input.text,
+                "atlas_id": self.frame_data.get("atlas_id", ""),
                 "duration": dur,
                 "image": self.image_input.text,
                 "x": x,

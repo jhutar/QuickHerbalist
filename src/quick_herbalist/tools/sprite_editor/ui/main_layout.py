@@ -173,6 +173,7 @@ class SpriteEditorMainLayout(BoxLayout):
     def on_frames_changed(self, updated_frames):
         # Dynamically push updated frames to the preview
         self.preview.frames = list(updated_frames)
+        self.preview.force_refresh()
 
     def create_sprite(self, instance):
         name = self.new_sprite_input.text.strip()
@@ -184,6 +185,11 @@ class SpriteEditorMainLayout(BoxLayout):
 
         # Add empty sprite
         self.sprites_yaml_data["sprites"][name] = {"frames": []}
+        try:
+            save_sprites_yaml(self.yaml_path, self.sprites_yaml_data)
+        except Exception as e:
+            print(f"Error saving yaml: {e}")
+
         self.new_sprite_input.text = ""
         self.select_sprite(name)
 

@@ -1,10 +1,9 @@
 import sys
-import os
 import json
 import yaml
 import pytest
 from unittest.mock import MagicMock, patch
-import types
+
 
 # 1. Setup descriptor properties to mock Kivy properties before importing UI elements
 class MockProperty:
@@ -154,6 +153,9 @@ sys.modules["kivy.uix.image"].Image = Image
 sys.modules["kivy.uix.popup"] = MagicMock()
 sys.modules["kivy.uix.popup"].Popup = Popup
 
+sys.modules["kivy.uix.filechooser"] = MagicMock()
+sys.modules["kivy.uix.filechooser"].FileChooserListView = MockWidget
+
 sys.modules["kivy.app"] = MagicMock()
 sys.modules["kivy.app"].App = App
 
@@ -166,8 +168,8 @@ sys.modules["kivy.core.image"].Image = MockCoreImage
 
 
 # 2. Import components under test now that mocks are active
-from quick_herbalist.tools.sprite_editor.ui.main_layout import SpriteEditorMainLayout
-from quick_herbalist.tools.sprite_editor.ui.sequence_editor import SequenceEditorWidget, FrameCard
+from quick_herbalist.tools.sprite_editor.ui.main_layout import SpriteEditorMainLayout  # noqa: E402
+from quick_herbalist.tools.sprite_editor.ui.sequence_editor import SequenceEditorWidget  # noqa: E402
 
 
 @pytest.fixture
@@ -200,18 +202,22 @@ sprites:
 
 def test_main_layout_load_and_select_sprite(mock_get_asset_path):
     yaml_path, atlas_path = mock_get_asset_path
-    with patch("quick_herbalist.tools.sprite_editor.ui.main_layout.get_asset_path") as mock_gap:
-        mock_gap.side_effect = lambda filename: yaml_path if "yaml" in filename else atlas_path
+    with patch(
+        "quick_herbalist.tools.sprite_editor.ui.main_layout.get_asset_path"
+    ) as mock_gap:
+        mock_gap.side_effect = lambda filename: (
+            yaml_path if "yaml" in filename else atlas_path
+        )
 
         layout = SpriteEditorMainLayout()
-        
+
         # Verify initial loaded state
         assert "hero_run" in layout.sprites_yaml_data["sprites"]
-        
+
         # Select sprite
         layout.select_sprite("hero_run")
         assert layout.selected_sprite == "hero_run"
-        
+
         # Verify editor loaded frames correctly
         assert len(layout.editor.frames) == 1
         assert layout.editor.frames[0]["atlas_id"] == "frame_0"
@@ -227,18 +233,26 @@ def test_sequence_editor_add_frame_auto_advance(mock_get_asset_path):
     # Rule 4: Selected frame auto-advance on add frame
     editor = SequenceEditorWidget()
     editor.set_sprite_name("hero_run")
-    
+
     initial_frames = [
-        {"atlas_id": "frame_0", "duration": 100, "image": "hero.png", "x": 10, "y": 20, "w": 32, "h": 64}
+        {
+            "atlas_id": "frame_0",
+            "duration": 100,
+            "image": "hero.png",
+            "x": 10,
+            "y": 20,
+            "w": 32,
+            "h": 64,
+        }
     ]
     editor.load_frames(initial_frames)
-    
+
     # Select the first frame
     editor.select_frame(0)
-    
+
     # Add frame
     editor.add_frame(None)
-    
+
     # Assert second frame is added and auto-advanced
     assert len(editor.frames) == 2
     new_frame = editor.frames[1]
@@ -252,18 +266,22 @@ def test_sequence_editor_add_frame_auto_advance(mock_get_asset_path):
 
 def test_main_layout_create_and_delete_sprite(mock_get_asset_path):
     yaml_path, atlas_path = mock_get_asset_path
-    with patch("quick_herbalist.tools.sprite_editor.ui.main_layout.get_asset_path") as mock_gap:
-        mock_gap.side_effect = lambda filename: yaml_path if "yaml" in filename else atlas_path
+    with patch(
+        "quick_herbalist.tools.sprite_editor.ui.main_layout.get_asset_path"
+    ) as mock_gap:
+        mock_gap.side_effect = lambda filename: (
+            yaml_path if "yaml" in filename else atlas_path
+        )
 
         layout = SpriteEditorMainLayout()
-        
+
         # Create new sprite
         layout.new_sprite_input.text = "new_sprite"
         layout.create_sprite(None)
-        
+
         assert "new_sprite" in layout.sprites_yaml_data["sprites"]
         assert layout.selected_sprite == "new_sprite"
-        
+
         # Delete selected sprite
         layout.delete_sprite(None)
         assert "new_sprite" not in layout.sprites_yaml_data["sprites"]
@@ -272,38 +290,44 @@ def test_main_layout_create_and_delete_sprite(mock_get_asset_path):
 
 def test_main_layout_save_sprite(mock_get_asset_path):
     yaml_path, atlas_path = mock_get_asset_path
-    with patch("quick_herbalist.tools.sprite_editor.ui.main_layout.get_asset_path") as mock_gap:
-        mock_gap.side_effect = lambda filename: yaml_path if "yaml" in filename else atlas_path
+    with patch(
+        "quick_herbalist.tools.sprite_editor.ui.main_layout.get_asset_path"
+    ) as mock_gap:
+        mock_gap.side_effect = lambda filename: (
+            yaml_path if "yaml" in filename else atlas_path
+        )
 
         layout = SpriteEditorMainLayout()
         layout.select_sprite("hero_run")
-        
+
         # Modify and add frame in sequence editor
-        layout.editor.frames.append({
-            "atlas_id": "frame_1",
-            "duration": 150,
-            "image": "hero.png",
-            "x": 32,
-            "y": 0,
-            "w": 32,
-            "h": 32
-        })
-        
+        layout.editor.frames.append(
+            {
+                "atlas_id": "frame_1",
+                "duration": 150,
+                "image": "hero.png",
+                "x": 32,
+                "y": 0,
+                "w": 32,
+                "h": 32,
+            }
+        )
+
         # Trigger save
         layout.on_save_callback("hero_run", layout.editor.frames)
-        
+
         # Read back from yaml and atlas to confirm
         with open(yaml_path, "r") as f:
             yaml_data = yaml.safe_load(f)
         with open(atlas_path, "r") as f:
             atlas_data = json.load(f)
-            
+
         assert "hero_run" in yaml_data["sprites"]
         frames = yaml_data["sprites"]["hero_run"]["frames"]
         assert len(frames) == 2
         assert frames[1]["atlas_id"] == "frame_1"
         assert frames[1]["duration_ms"] == 150
-        
+
         assert "hero.png" in atlas_data
         assert "frame_1" in atlas_data["hero.png"]
         assert atlas_data["hero.png"]["frame_1"] == [32, 0, 32, 32]

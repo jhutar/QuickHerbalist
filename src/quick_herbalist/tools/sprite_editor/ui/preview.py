@@ -141,3 +141,8 @@ class SpritePreviewWidget(BoxLayout):
         self.current_frame_index = 0
         self.anim_time = 0.0
         self._load_current_frame_texture()
+
+    def force_refresh(self):
+        self.anim_time = 0.0
+        self._load_current_frame_texture()
+        self._update_zoom_ui()
