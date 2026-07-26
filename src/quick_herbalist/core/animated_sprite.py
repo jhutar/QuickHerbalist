@@ -47,7 +47,9 @@ class AnimatedSprite(Widget):
         if img_name is None or region is None:
             raise ValueError(f"Atlas ID '{atlas_id}' not found")
 
-        core_img = CoreImage(img_name)
+        from quick_herbalist.core.config_parser import get_asset_path
+
+        core_img = CoreImage(get_asset_path(img_name))
         self.rect.texture = core_img.texture.get_region(
             region[0], region[1], region[2], region[3]
         )
