@@ -4,6 +4,10 @@ set -euo pipefail
 SPEC_DIR=${1:-""}
 AGENT_CMD=${2:-"../agent-in-container/run-pi.sh"}
 
+# Configurable options via environment variables
+YOLO_MODEL="${YOLO_MODEL:-google/gemma-4-26B-A4B-it-qat-q4_0-gguf}"
+MAX_RETRIES="${MAX_RETRIES:-3}"
+
 if [[ -z "$SPEC_DIR" || ! -d "$SPEC_DIR" ]]; then
     echo "Usage: $0 <path-to-spec-dir> [path-to-agent-cmd]"
     echo "Example: $0 specs/002-sprite-manager"
@@ -13,6 +17,13 @@ fi
 TASKS_FILE="$SPEC_DIR/tasks.md"
 if [[ ! -f "$TASKS_FILE" ]]; then
     echo "Error: $TASKS_FILE not found."
+    exit 1
+fi
+
+# Pre-flight Check: Ensure the git working directory is completely clean before starting.
+if [[ -n $(git status --porcelain) ]]; then
+    echo "FATAL: Git working directory is not clean. Please commit or stash existing changes before running the YOLO loop."
+    git status --porcelain
     exit 1
 fi
 
@@ -67,19 +78,61 @@ You are an expert software engineer running in YOLO mode. Your mission is to imp
 - Once tests and linters pass, edit \`$TASKS_FILE\` to change the checkbox for $CURR_ID from \`[ ]\` to \`[x]\`.
 - Run \`git diff\` to self-review. Ensure no debug code is left.
 - Stage ONLY the files modified for this task and commit with:
-  \`git commit --trailer \"Generated-by:google/gemma-4-26B-A4B-it-qat-q4_0-gguf\" -m \"feat: Spec $(basename "$SPEC_DIR") task $CURR_ID\"\`
+  \`git commit --trailer \"Generated-by:$YOLO_MODEL\" -m \"feat: Spec $(basename "$SPEC_DIR") task $CURR_ID\"\`
 "
     
-    # Execute the local agent with the prompt
+    # 1. Initial Agent Invocation
     $AGENT_CMD --print "$PROMPT"
 
-    # Circuit Breaker: Verify the task was actually marked as completed
-    if grep -q "\[ \] $CURR_ID" "$TASKS_FILE"; then
-        echo "##### $(date --utc -Ins) FATAL: $CURR_ID not marked as completed ([x]) in $TASKS_FILE. Agent failed. Stopping execution loop. #####"
+    # 2. Outer Validation Loop (Make sure the agent actually succeeded and left a clean state)
+    SUCCESS=false
+    for attempt in $(seq 1 "$MAX_RETRIES"); do
+        ERRORS=""
+
+        echo "##### $(date --utc -Ins) Validating state for $CURR_ID (Attempt $attempt) #####"
+        
+        # Check A: Was the task marked as complete?
+        if grep -q "\[ \] $CURR_ID" "$TASKS_FILE"; then
+            ERRORS+="* Task $CURR_ID was not marked as completed ([x]) in $TASKS_FILE.\n"
+        fi
+        
+        # Check B: Do the linters pass?
+        if ! make check-all > /tmp/yolo_lint_out.txt 2>&1; then
+            ERRORS+="* Code quality checks (make check-all) failed:\n$(cat /tmp/yolo_lint_out.txt)\n\n"
+        fi
+
+        # Check C: Do the tests pass?
+        if ! make test > /tmp/yolo_test_out.txt 2>&1; then
+            ERRORS+="* Tests (make test) failed:\n$(cat /tmp/yolo_test_out.txt)\n\n"
+        fi
+
+        # Check D: Is the Git working directory clean?
+        if [[ -n $(git status --porcelain) ]]; then
+            ERRORS+="* Git working directory is not clean. You must stage and commit ALL files changed or created:\n$(git status --porcelain)\n\n"
+        fi
+
+        # If no errors accumulated, we are good to proceed to the next task.
+        if [[ -z "$ERRORS" ]]; then
+            SUCCESS=true
+            break
+        fi
+
+        # 3. Agent Re-invocation (Self-Correction via --continue)
+        echo -e "##### $(date --utc -Ins) Validation failed. Errors found:\n$ERRORS"
+        echo "##### Re-running agent with --continue to fix the issues. #####"
+        
+        FEEDBACK="Your previous execution left the repository in an incomplete or broken state. Please fix the following errors:\n\n$ERRORS\n\nEnsure you write correct code, fix all tests and linters, mark the task as complete in $TASKS_FILE, and cleanly commit ALL changes with trailer 'Generated-by:$YOLO_MODEL'."
+        
+        $AGENT_CMD --continue --print "$FEEDBACK"
+    done
+
+    # Circuit Breaker: If we exhausted retries and it still fails
+    if [[ "$SUCCESS" != "true" ]]; then
+        echo "##### $(date --utc -Ins) FATAL: $CURR_ID could not be completed successfully after $MAX_RETRIES validation attempts. Halting pipeline. #####"
         exit 1
     fi
 
-    echo "##### $(date --utc -Ins) Finished $CURR_ID #####"
+    echo "##### $(date --utc -Ins) Finished and Validated $CURR_ID #####"
 done
 
 echo "All pending tasks completed successfully!"
