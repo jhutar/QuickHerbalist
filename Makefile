@@ -28,8 +28,8 @@ check-all:
 
 test:
 	@echo "==> Checking help for quick-herbalist..."
-	uv run quick-herbalist --help
+	uv run quick-herbalist --help >/dev/null
 	@echo "==> Checking help for manage-sprites..."
-	uv run manage-sprites --help
+	uv run manage-sprites --help >/dev/null
 	@echo "==> Running pytest..."
 	PYTHONPATH=src pytest -v
