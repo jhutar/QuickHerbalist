@@ -86,12 +86,12 @@ description: "Task list for Sprite Manager feature implementation"
 
 ### Tests for User Story 3
 
-- [ ] T016 [P] [US3] Add validation logic tests to `tests/unit/test_config_parser.py`
+- [x] T016 [P] [US3] Add validation logic tests to `tests/unit/test_config_parser.py`
 
 ### Implementation for User Story 3
 
-- [ ] T017 [US3] Add configuration integrity validation function to `src/quick_herbalist/core/config_parser.py`
-- [ ] T018 [US3] Implement warning popup dialogue in `src/quick_herbalist/tools/sprite_editor/app.py` triggered on startup failure
+- [x] T017 [US3] Add configuration integrity validation function to `src/quick_herbalist/core/config_parser.py`
+- [x] T018 [US3] Implement warning popup dialogue in `src/quick_herbalist/tools/sprite_editor/app.py` triggered on startup failure
 
 **Checkpoint**: All user stories should now be independently functional. Configurations are strictly validated.
 
@@ -101,8 +101,8 @@ description: "Task list for Sprite Manager feature implementation"
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T019 [P] Execute Scenario 1 and 2 from `specs/002-sprite-manager/quickstart.md` manually to verify end-to-end integration
-- [ ] T020 Review type hints and PEP8 formatting using `pre-commit run --all-files`
+- [x] T019 [P] Execute Scenario 1 and 2 from `specs/002-sprite-manager/quickstart.md` manually to verify end-to-end integration
+- [x] T020 Review type hints and PEP8 formatting using `pre-commit run --all-files`
 
 ---
 

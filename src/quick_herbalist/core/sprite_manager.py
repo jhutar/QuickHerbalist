@@ -1,11 +1,19 @@
-from quick_herbalist.core.config_parser import load_sprites_yaml, load_sprites_atlas
+from quick_herbalist.core.config_parser import (
+    load_sprites_yaml,
+    load_sprites_atlas,
+    get_asset_path,
+)
 from quick_herbalist.core.animated_sprite import AnimatedSprite
 
 
 class SpriteManager:
-    def __init__(self, yaml_path: str, atlas_path: str):
-        self.yaml_path = yaml_path
-        self.atlas_path = atlas_path
+    def __init__(self, yaml_path: str = None, atlas_path: str = None):
+        self.yaml_path = (
+            yaml_path if yaml_path is not None else get_asset_path("sprites.yaml")
+        )
+        self.atlas_path = (
+            atlas_path if atlas_path is not None else get_asset_path("sprites.atlas")
+        )
         self.sprites_data = {}
         self.atlas_data = {}
         self.load()

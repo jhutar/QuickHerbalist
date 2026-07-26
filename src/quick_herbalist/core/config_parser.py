@@ -1,6 +1,14 @@
 import yaml
 import json
+import os
 from typing import Any, Dict
+
+
+def get_asset_path(filename: str) -> str:
+    """Returns the absolute path to an asset file in the assets directory."""
+    core_dir = os.path.dirname(os.path.abspath(__file__))
+    pkg_dir = os.path.dirname(core_dir)
+    return os.path.join(pkg_dir, "assets", filename)
 
 
 def load_sprites_yaml(path: str) -> Dict[str, Any]:

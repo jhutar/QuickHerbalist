@@ -5,18 +5,14 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from quick_herbalist.tools.sprite_editor.ui.main_layout import SpriteEditorMainLayout
-from quick_herbalist.core.config_parser import validate_configs
+from quick_herbalist.core.config_parser import validate_configs, get_asset_path
 
 
 class SpriteEditorApp(App):
     def build(self):
-        # Paths to configuration files
-        self.yaml_path = os.path.join(
-            "src", "quick_herbalist", "assets", "sprites.yaml"
-        )
-        self.atlas_path = os.path.join(
-            "src", "quick_herbalist", "assets", "sprites.atlas"
-        )
+        # Use get_asset_path for finding configurations robustly by convention
+        self.yaml_path = get_asset_path("sprites.yaml")
+        self.atlas_path = get_asset_path("sprites.atlas")
 
         # Check configuration integrity on startup
         self._check_config_integrity()

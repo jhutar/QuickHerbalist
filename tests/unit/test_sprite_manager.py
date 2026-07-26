@@ -121,3 +121,19 @@ def test_animated_sprite_update(dummy_configs):
     assert sprite.current_frame_index == 1
     sprite.update(0.2)
     assert sprite.current_frame_index == 0
+
+
+def test_sprite_manager_default_paths(monkeypatch):
+    from unittest.mock import patch
+
+    with patch(
+        "quick_herbalist.core.sprite_manager.get_asset_path"
+    ) as mock_get_asset_path:
+        mock_get_asset_path.side_effect = lambda filename: f"/dummy/assets/{filename}"
+        with patch("quick_herbalist.core.sprite_manager.load_sprites_yaml"):
+            with patch("quick_herbalist.core.sprite_manager.load_sprites_atlas"):
+                sm = SpriteManager()
+                assert sm.yaml_path == "/dummy/assets/sprites.yaml"
+                assert sm.atlas_path == "/dummy/assets/sprites.atlas"
+                mock_get_asset_path.assert_any_call("sprites.yaml")
+                mock_get_asset_path.assert_any_call("sprites.atlas")
