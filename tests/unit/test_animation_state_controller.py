@@ -53,7 +53,7 @@ kivy_clock_module.Clock.schedule_interval = MagicMock()
 kivy_core_image_module.Image = MagicMock()
 
 # Now import the class safely
-from quick_herbalist.core.animated_sprite import AnimationStateController
+from quick_herbalist.core.animated_sprite import AnimationStateController  # noqa: E402
 
 
 def test_controller_initialization():
