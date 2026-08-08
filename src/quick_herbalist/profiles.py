@@ -8,32 +8,29 @@ logger = logging.getLogger(__name__)
 
 class ProfileManager:
     def __init__(self, config_dir=None):
-        if config_dir:
-            self.config_dir = config_dir
-        else:
-            # Attempt to resolve from running Kivy App
-            try:
-                from kivy.app import App
-
-                kivy_app = App.get_running_app()
-                if kivy_app and kivy_app.user_data_dir:
-                    self.config_dir = kivy_app.user_data_dir
-                else:
-                    self.config_dir = self._get_fallback_config_dir()
-            except (ImportError, AttributeError) as e:
-                logger.debug("Kivy not available, using fallback config dir: %s", e)
-                self.config_dir = self._get_fallback_config_dir()
-
-        # Ensure directory exists
+        self.config_dir = self._resolve_config_dir(config_dir)
         os.makedirs(self.config_dir, exist_ok=True)
         self.config_path = os.path.join(self.config_dir, "config.yaml")
-
         self.active_character_name = None
         self.settings = {"fps": 60, "win_distance": 1000.0, "game_speed_start": 3.0}
         self.characters = {}
-
-        # Load configuration on initialization
         self.load_config()
+
+    def _resolve_config_dir(self, explicit_dir):
+        if explicit_dir:
+            return explicit_dir
+        return self._try_kivy_dir() or self._get_fallback_config_dir()
+
+    def _try_kivy_dir(self):
+        try:
+            from kivy.app import App
+
+            app = App.get_running_app()
+            if app and app.user_data_dir:
+                return app.user_data_dir
+        except (ImportError, AttributeError):
+            pass
+        return None
 
     def _get_fallback_config_dir(self):
         # Resolve standard OS-specific config directory
