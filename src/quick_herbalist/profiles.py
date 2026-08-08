@@ -38,71 +38,40 @@ class ProfileManager:
     def load_config(self):
         """Load configuration from file or apply defaults."""
         if not os.path.exists(self.config_path):
+            logger.info("Configuration file does not exist")
             self._apply_default_config()
-            self.save_config()
             return
 
-        data = self._parse_config_file()
-        if data is None:
-            self._apply_default_config()
-            self.save_config()
-            return
-        self._apply_loaded_data(data)
-
-    def _parse_config_file(self):
-        """Parse YAML config file. Re-raise all exceptions for caller handling."""
         try:
             with open(self.config_path, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
                 if not isinstance(data, dict):
-                    raise ValueError("Configuration data must be a dictionary.")
+                    logger.error("Configuration data must be a dictionary")
+                    self._apply_default_config()
+                    return
         except yaml.YAMLError as e:
             logger.error("YAML parse error in config file: %s", e)
-            return None
-        except PermissionError as e:
-            logger.error("Permission denied reading config file: %s", e)
-            raise
-        except OSError as e:
-            logger.error("OS error reading config file: %s", e)
-            raise
-        except ValueError:
-            raise
-        except Exception as e:
-            logger.error("Unexpected error loading config: %s", e)
-            raise
+            self._apply_default_config()
+            return
 
-        return data
+        self._apply_loaded_data(data)
 
     def _apply_loaded_data(self, data):
         """Apply loaded configuration data to instance attributes."""
         self.active_character_name = data.get("active_character")
 
-        loaded_settings = data.get("settings")
-        if loaded_settings is None:
-            loaded_settings = {}
-        elif not isinstance(loaded_settings, dict):
-            logger.warning(
-                "Config 'settings' is corrupted (got %s), will raise error",
-                type(loaded_settings).__name__,
-            )
-            raise ValueError(
-                f"Config 'settings' must be a dict, got {type(loaded_settings).__name__}"
-            )
         self.settings = copy.deepcopy(self.get_default_config()["settings"])
-        self.settings.update(loaded_settings)
+        if isinstance(data.get("settings"), dict):
+            self.settings.update(data.get("settings"))
+        else:
+            logger.error(f"Config 'settings' is corrupted (got {type(data.get("settings")).__name__})")
 
+        self.characters = copy.deepcopy(self.get_default_config()["characters"])
         loaded_characters = data.get("characters")
-        if loaded_characters is None:
-            loaded_characters = {}
-        elif not isinstance(loaded_characters, dict):
-            logger.warning(
-                "Config 'characters' is corrupted (got %s), will raise error",
-                type(loaded_characters).__name__,
-            )
-            raise ValueError(
-                f"Config 'characters' must be a dict, got {type(loaded_characters).__name__}"
-            )
-        self.characters = copy.deepcopy(loaded_characters)
+        if isinstance(data.get("characters"), dict):
+            self.characters.update(data.get("characters"))
+        else:
+            logger.error(f"Config 'characters' is corrupted (got {type(data.get("characters")).__name__})")
 
     def _apply_default_config(self):
         """Apply default configuration to instance attributes."""
@@ -111,6 +80,8 @@ class ProfileManager:
         # Deep-copy to avoid sharing mutable defaults
         self.settings = copy.deepcopy(defaults["settings"])
         self.characters = copy.deepcopy(defaults["characters"])
+
+        self.save_config()
 
     def save_config(self):
         """Save configuration to YAML file."""
@@ -125,14 +96,13 @@ class ProfileManager:
     @property
     def active_character(self):
         """Get currently active character or None."""
-        if self.active_character_name and self.active_character_name in self.characters:
-            return self.characters[self.active_character_name]
-        return None
+        return self.characters.get(self.active_character_name)
 
     def create_character(self, name):
         """Create new character with given name."""
         if not name or not isinstance(name, str):
             raise ValueError("Name cannot be empty.")
+
         stripped_name = name.strip()
         if not stripped_name:
             raise ValueError("Name cannot be empty.")
@@ -145,6 +115,7 @@ class ProfileManager:
             "levels_completed": 0,
             "inventory": {"flower": 0},
         }
+
         self.active_character_name = stripped_name
         self.save_config()
 
@@ -152,6 +123,7 @@ class ProfileManager:
         """Select existing character by name."""
         if not name or name not in self.characters:
             raise ValueError("Character not found.")
+
         self.active_character_name = name
         self.save_config()
 
@@ -165,7 +137,6 @@ class ProfileManager:
 
         char = self.characters[self.active_character_name]
         char["levels_completed"] = char.get("levels_completed", 0) + 1
-
         self.save_config()
 
     def add_flowers(self, flower_count):
