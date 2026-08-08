@@ -74,6 +74,8 @@ class ProfileManager:
 
         data = self._parse_config_file()
         if data is None:
+            self._apply_default_config()
+            self.save_config()
             return
         self._apply_loaded_data(data)
 
@@ -86,7 +88,7 @@ class ProfileManager:
                     raise ValueError("Configuration data must be a dictionary.")
         except yaml.YAMLError as e:
             logger.error("YAML parse error in config file: %s", e)
-            raise
+            return None
         except PermissionError as e:
             logger.error("Permission denied reading config file: %s", e)
             raise
