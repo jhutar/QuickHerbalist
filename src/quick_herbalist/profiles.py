@@ -22,40 +22,10 @@ class ProfileManager:
         """Resolve config directory from explicit path or platform defaults."""
         if explicit_dir:
             return explicit_dir
-        return self._try_kivy_dir() or self._get_fallback_config_dir()
 
-    def _try_kivy_dir(self):
-        """Try to get config dir from running Kivy app."""
-        try:
-            from kivy.app import App
-
-            app = App.get_running_app()
-            if app and app.user_data_dir:
-                return app.user_data_dir
-        except (ImportError, AttributeError):
-            pass
-        return None
-
-    def _get_fallback_config_dir(self):
-        """Get OS-specific fallback config directory."""
-        # Resolve standard OS-specific config directory
-        home = os.path.expanduser("~")
-        if os.name == "nt":  # Windows
-            appdata = os.environ.get(
-                "APPDATA", os.path.join(home, "AppData", "Roaming")
-            )
-            return os.path.join(appdata, "quickherbalist")
-        elif os.name == "posix":  # macOS / Linux
-            # Follow XDG on Linux, default to Library on macOS if preferred,
-            # but simple ~/.config/quickherbalist or ~/.quickherbalist is highly standard.
-            if os.uname().sysname == "Darwin":
-                return os.path.join(
-                    home, "Library", "Application Support", "quickherbalist"
-                )
-            else:
-                return os.path.join(home, ".config", "quickherbalist")
-        else:
-            return os.path.join(home, ".quickherbalist")
+        from kivy.app import App
+        app = App.get_running_app()
+        return app.user_data_dir
 
     def get_default_config(self):
         """Return default configuration dictionary."""
