@@ -1,3 +1,4 @@
+import copy
 import os
 import yaml
 
@@ -81,19 +82,21 @@ class ProfileManager:
         loaded_settings = data.get("settings", {})
         if not isinstance(loaded_settings, dict):
             loaded_settings = {}
-        for key, val in self.get_default_config()["settings"].items():
-            self.settings[key] = loaded_settings.get(key, val)
+        # Deep-copy merged settings into a fresh dict
+        self.settings = copy.deepcopy(self.get_default_config()["settings"])
+        self.settings.update(loaded_settings)
 
-        # Retrieve characters
-        self.characters = data.get("characters", {})
+        # Deep-copy characters to isolate from loaded data
+        self.characters = copy.deepcopy(data.get("characters", {}))
         if not isinstance(self.characters, dict):
             self.characters = {}
 
     def _apply_default_config(self):
         defaults = self.get_default_config()
         self.active_character_name = defaults["active_character"]
-        self.settings = defaults["settings"]
-        self.characters = defaults["characters"]
+        # Deep-copy to avoid sharing mutable defaults
+        self.settings = copy.deepcopy(defaults["settings"])
+        self.characters = copy.deepcopy(defaults["characters"])
 
     def save_config(self):
         data = {
