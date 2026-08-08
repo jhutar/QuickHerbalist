@@ -27,6 +27,7 @@ Yes: "Bug in auth middleware. Token expiry check use `<` not `<=`. Fix:"
 - Error Handling: Fail fast and explicitly. Catch specific errors, and add meaningful log messages.
 - No Guessing: Do not guess missing values or fix bad inputs. Do not use code that handles edge cases by guessing.
 - Consistency: Match the existing style, formatting, and patterns of the surrounding codebase.
+- Documentation: Every class, method or function have at least 1 line long docstring.
 
 ## Workflow Instructions
 1. Analyze first: Before writing any code, outline a brief, step-by-step implementation plan. If anything is ambiguous, ask clarifying questions first.
