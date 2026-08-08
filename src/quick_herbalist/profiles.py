@@ -105,15 +105,32 @@ class ProfileManager:
         """Apply loaded configuration data to instance attributes."""
         self.active_character_name = data.get("active_character")
 
-        loaded_settings = data.get("settings", {})
-        if not isinstance(loaded_settings, dict):
+        loaded_settings = data.get("settings")
+        if loaded_settings is None:
             loaded_settings = {}
+        elif not isinstance(loaded_settings, dict):
+            logger.warning(
+                "Config 'settings' is corrupted (got %s), will raise error",
+                type(loaded_settings).__name__,
+            )
+            raise ValueError(
+                f"Config 'settings' must be a dict, got {type(loaded_settings).__name__}"
+            )
         self.settings = copy.deepcopy(self.get_default_config()["settings"])
         self.settings.update(loaded_settings)
 
-        self.characters = copy.deepcopy(data.get("characters", {}))
-        if not isinstance(self.characters, dict):
-            self.characters = {}
+        loaded_characters = data.get("characters")
+        if loaded_characters is None:
+            loaded_characters = {}
+        elif not isinstance(loaded_characters, dict):
+            logger.warning(
+                "Config 'characters' is corrupted (got %s), will raise error",
+                type(loaded_characters).__name__,
+            )
+            raise ValueError(
+                f"Config 'characters' must be a dict, got {type(loaded_characters).__name__}"
+            )
+        self.characters = copy.deepcopy(loaded_characters)
 
     def _apply_default_config(self):
         """Apply default configuration to instance attributes."""
