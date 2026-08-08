@@ -7,6 +7,8 @@ logger = logging.getLogger(__name__)
 
 
 class ProfileManager:
+    """Manage game profiles, settings, and character data."""
+
     def __init__(self, config_dir=None):
         self.config_dir = self._resolve_config_dir(config_dir)
         os.makedirs(self.config_dir, exist_ok=True)
@@ -17,11 +19,13 @@ class ProfileManager:
         self.load_config()
 
     def _resolve_config_dir(self, explicit_dir):
+        """Resolve config directory from explicit path or platform defaults."""
         if explicit_dir:
             return explicit_dir
         return self._try_kivy_dir() or self._get_fallback_config_dir()
 
     def _try_kivy_dir(self):
+        """Try to get config dir from running Kivy app."""
         try:
             from kivy.app import App
 
@@ -33,6 +37,7 @@ class ProfileManager:
         return None
 
     def _get_fallback_config_dir(self):
+        """Get OS-specific fallback config directory."""
         # Resolve standard OS-specific config directory
         home = os.path.expanduser("~")
         if os.name == "nt":  # Windows
@@ -53,6 +58,7 @@ class ProfileManager:
             return os.path.join(home, ".quickherbalist")
 
     def get_default_config(self):
+        """Return default configuration dictionary."""
         return {
             "active_character": None,
             "settings": {"fps": 60, "win_distance": 1000.0, "game_speed_start": 3.0},
@@ -60,6 +66,7 @@ class ProfileManager:
         }
 
     def load_config(self):
+        """Load configuration from file or apply defaults."""
         if not os.path.exists(self.config_path):
             self._apply_default_config()
             self.save_config()
@@ -71,6 +78,7 @@ class ProfileManager:
         self._apply_loaded_data(data)
 
     def _parse_config_file(self):
+        """Parse YAML config file with error handling."""
         try:
             with open(self.config_path, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
@@ -98,6 +106,7 @@ class ProfileManager:
         return data
 
     def _apply_loaded_data(self, data):
+        """Apply loaded configuration data to instance attributes."""
         self.active_character_name = data.get("active_character")
 
         loaded_settings = data.get("settings", {})
@@ -111,6 +120,7 @@ class ProfileManager:
             self.characters = {}
 
     def _apply_default_config(self):
+        """Apply default configuration to instance attributes."""
         defaults = self.get_default_config()
         self.active_character_name = defaults["active_character"]
         # Deep-copy to avoid sharing mutable defaults
@@ -118,6 +128,7 @@ class ProfileManager:
         self.characters = copy.deepcopy(defaults["characters"])
 
     def save_config(self):
+        """Save configuration to YAML file."""
         data = {
             "active_character": self.active_character_name,
             "settings": self.settings,
@@ -128,11 +139,13 @@ class ProfileManager:
 
     @property
     def active_character(self):
+        """Get currently active character or None."""
         if self.active_character_name and self.active_character_name in self.characters:
             return self.characters[self.active_character_name]
         return None
 
     def create_character(self, name):
+        """Create new character with given name."""
         if not name or not isinstance(name, str):
             raise ValueError("Name cannot be empty.")
         stripped_name = name.strip()
@@ -151,12 +164,14 @@ class ProfileManager:
         self.save_config()
 
     def select_character(self, name):
+        """Select existing character by name."""
         if not name or name not in self.characters:
             raise ValueError("Character not found.")
         self.active_character_name = name
         self.save_config()
 
     def complete_level(self):
+        """Increment levels completed for active character."""
         if (
             not self.active_character_name
             or self.active_character_name not in self.characters
@@ -169,6 +184,7 @@ class ProfileManager:
         self.save_config()
 
     def add_flowers(self, flower_count):
+        """Add flowers to active character inventory."""
         if (
             not self.active_character_name
             or self.active_character_name not in self.characters
