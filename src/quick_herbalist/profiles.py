@@ -68,6 +68,12 @@ class ProfileManager:
             self.save_config()
             return
 
+        data = self._parse_config_file()
+        if data is None:
+            return
+        self._apply_loaded_data(data)
+
+    def _parse_config_file(self):
         try:
             with open(self.config_path, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
@@ -77,7 +83,7 @@ class ProfileManager:
             logger.error("YAML parse error in config file: %s", e)
             self._apply_default_config()
             self.save_config()
-            return
+            return None
         except PermissionError as e:
             logger.error("Permission denied reading config file: %s", e)
             raise
@@ -90,20 +96,19 @@ class ProfileManager:
             logger.error("Unexpected error loading config: %s", e)
             self._apply_default_config()
             self.save_config()
-            return
+            return None
 
-        # Safe extraction of data with robust defaults
+        return data
+
+    def _apply_loaded_data(self, data):
         self.active_character_name = data.get("active_character")
 
-        # Merge settings with default to handle missing fields gracefully
         loaded_settings = data.get("settings", {})
         if not isinstance(loaded_settings, dict):
             loaded_settings = {}
-        # Deep-copy merged settings into a fresh dict
         self.settings = copy.deepcopy(self.get_default_config()["settings"])
         self.settings.update(loaded_settings)
 
-        # Deep-copy characters to isolate from loaded data
         self.characters = copy.deepcopy(data.get("characters", {}))
         if not isinstance(self.characters, dict):
             self.characters = {}
