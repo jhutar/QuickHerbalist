@@ -78,7 +78,7 @@ class ProfileManager:
         self._apply_loaded_data(data)
 
     def _parse_config_file(self):
-        """Parse YAML config file with error handling."""
+        """Parse YAML config file. Re-raise all exceptions for caller handling."""
         try:
             with open(self.config_path, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
@@ -86,9 +86,7 @@ class ProfileManager:
                     raise ValueError("Configuration data must be a dictionary.")
         except yaml.YAMLError as e:
             logger.error("YAML parse error in config file: %s", e)
-            self._apply_default_config()
-            self.save_config()
-            return None
+            raise
         except PermissionError as e:
             logger.error("Permission denied reading config file: %s", e)
             raise
@@ -99,9 +97,7 @@ class ProfileManager:
             raise
         except Exception as e:
             logger.error("Unexpected error loading config: %s", e)
-            self._apply_default_config()
-            self.save_config()
-            return None
+            raise
 
         return data
 
