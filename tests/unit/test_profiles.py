@@ -178,6 +178,36 @@ def test_profile_manager_add_rewards_no_active_character(temp_config_dir):
         pm.add_rewards(10)
 
 
+def test_profile_manager_add_rewards_invalid_flower_count(temp_config_dir):
+    pm = ProfileManager(config_dir=temp_config_dir)
+
+    pm.create_character("HerbalistMax")
+
+    # Reject zero
+    with pytest.raises(ValueError, match="flower_count must be a positive integer"):
+        pm.add_rewards(0)
+
+    # Reject negative
+    with pytest.raises(ValueError, match="flower_count must be a positive integer"):
+        pm.add_rewards(-1)
+
+    # Reject string
+    with pytest.raises(ValueError, match="flower_count must be an integer"):
+        pm.add_rewards("five")
+
+    # Reject float
+    with pytest.raises(ValueError, match="flower_count must be an integer"):
+        pm.add_rewards(3.5)
+
+    # Reject None
+    with pytest.raises(ValueError, match="flower_count must be an integer"):
+        pm.add_rewards(None)
+
+    # Reject boolean
+    with pytest.raises(ValueError, match="flower_count must be an integer"):
+        pm.add_rewards(True)
+
+
 def test_profile_manager_add_rewards_success(temp_config_dir):
     pm = ProfileManager(config_dir=temp_config_dir)
 

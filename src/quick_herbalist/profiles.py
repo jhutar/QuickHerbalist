@@ -141,6 +141,11 @@ class ProfileManager:
         ):
             raise ValueError("No active character selected.")
 
+        if not isinstance(flower_count, int) or isinstance(flower_count, bool):
+            raise ValueError("flower_count must be an integer.")
+        if flower_count <= 0:
+            raise ValueError("flower_count must be a positive integer.")
+
         char = self.characters[self.active_character_name]
         char["levels_completed"] = char.get("levels_completed", 0) + 1
 
