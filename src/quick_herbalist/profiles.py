@@ -1,6 +1,9 @@
 import copy
+import logging
 import os
 import yaml
+
+logger = logging.getLogger(__name__)
 
 
 class ProfileManager:
@@ -17,7 +20,8 @@ class ProfileManager:
                     self.config_dir = kivy_app.user_data_dir
                 else:
                     self.config_dir = self._get_fallback_config_dir()
-            except Exception:
+            except (ImportError, AttributeError) as e:
+                logger.debug("Kivy not available, using fallback config dir: %s", e)
                 self.config_dir = self._get_fallback_config_dir()
 
         # Ensure directory exists
@@ -69,8 +73,21 @@ class ProfileManager:
                 data = yaml.safe_load(f)
                 if not isinstance(data, dict):
                     raise ValueError("Configuration data must be a dictionary.")
-        except Exception:
-            # File is corrupted or parsing failed, fallback to defaults
+        except yaml.YAMLError as e:
+            logger.error("YAML parse error in config file: %s", e)
+            self._apply_default_config()
+            self.save_config()
+            return
+        except PermissionError as e:
+            logger.error("Permission denied reading config file: %s", e)
+            raise
+        except OSError as e:
+            logger.error("OS error reading config file: %s", e)
+            raise
+        except ValueError:
+            raise
+        except Exception as e:
+            logger.error("Unexpected error loading config: %s", e)
             self._apply_default_config()
             self.save_config()
             return
