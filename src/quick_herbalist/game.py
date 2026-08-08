@@ -546,7 +546,8 @@ class GameView(Widget):
         self.stop_game()
         app = App.get_running_app()
         if app and hasattr(app, "profile_manager") and app.profile_manager:
-            app.profile_manager.add_rewards(self.score)
+            app.profile_manager.complete_level()
+            app.profile_manager.add_flowers(self.score)
         won_screen = app.root.get_screen("game_won")
         won_screen.score = self.score
         app.root.current = "game_won"

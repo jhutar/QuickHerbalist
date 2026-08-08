@@ -170,62 +170,79 @@ def test_profile_manager_select_character_not_found(temp_config_dir):
 # --- User Story 2 (US2) Test Cases ---
 
 
-def test_profile_manager_add_rewards_no_active_character(temp_config_dir):
+def test_profile_manager_complete_level_no_active_character(temp_config_dir):
     pm = ProfileManager(config_dir=temp_config_dir)
 
-    # Add rewards with no active character
     with pytest.raises(ValueError, match="No active character selected"):
-        pm.add_rewards(10)
+        pm.complete_level()
 
 
-def test_profile_manager_add_rewards_invalid_flower_count(temp_config_dir):
+def test_profile_manager_add_flowers_no_active_character(temp_config_dir):
+    pm = ProfileManager(config_dir=temp_config_dir)
+
+    with pytest.raises(ValueError, match="No active character selected"):
+        pm.add_flowers(10)
+
+
+def test_profile_manager_add_flowers_invalid_flower_count(temp_config_dir):
     pm = ProfileManager(config_dir=temp_config_dir)
 
     pm.create_character("HerbalistMax")
 
     # Reject zero
     with pytest.raises(ValueError, match="flower_count must be a positive integer"):
-        pm.add_rewards(0)
+        pm.add_flowers(0)
 
     # Reject negative
     with pytest.raises(ValueError, match="flower_count must be a positive integer"):
-        pm.add_rewards(-1)
+        pm.add_flowers(-1)
 
     # Reject string
     with pytest.raises(ValueError, match="flower_count must be an integer"):
-        pm.add_rewards("five")
+        pm.add_flowers("five")
 
     # Reject float
     with pytest.raises(ValueError, match="flower_count must be an integer"):
-        pm.add_rewards(3.5)
+        pm.add_flowers(3.5)
 
     # Reject None
     with pytest.raises(ValueError, match="flower_count must be an integer"):
-        pm.add_rewards(None)
+        pm.add_flowers(None)
 
     # Reject boolean
     with pytest.raises(ValueError, match="flower_count must be an integer"):
-        pm.add_rewards(True)
+        pm.add_flowers(True)
 
 
-def test_profile_manager_add_rewards_success(temp_config_dir):
+def test_profile_manager_complete_level_success(temp_config_dir):
     pm = ProfileManager(config_dir=temp_config_dir)
 
     pm.create_character("HerbalistMax")
 
-    # Add first reward
-    pm.add_rewards(5)
+    pm.complete_level()
     char = pm.characters["HerbalistMax"]
     assert char["levels_completed"] == 1
-    assert char["inventory"]["flower"] == 5
 
-    # Add second reward
-    pm.add_rewards(12)
+    pm.complete_level()
     assert char["levels_completed"] == 2
-    assert char["inventory"]["flower"] == 17
 
-    # Assert written to config file
     pm2 = ProfileManager(config_dir=temp_config_dir)
     char2 = pm2.characters["HerbalistMax"]
     assert char2["levels_completed"] == 2
+
+
+def test_profile_manager_add_flowers_success(temp_config_dir):
+    pm = ProfileManager(config_dir=temp_config_dir)
+
+    pm.create_character("HerbalistMax")
+
+    pm.add_flowers(5)
+    char = pm.characters["HerbalistMax"]
+    assert char["inventory"]["flower"] == 5
+
+    pm.add_flowers(12)
+    assert char["inventory"]["flower"] == 17
+
+    pm2 = ProfileManager(config_dir=temp_config_dir)
+    char2 = pm2.characters["HerbalistMax"]
     assert char2["inventory"]["flower"] == 17

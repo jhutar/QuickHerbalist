@@ -159,7 +159,19 @@ class ProfileManager:
         self.active_character_name = name
         self.save_config()
 
-    def add_rewards(self, flower_count):
+    def complete_level(self):
+        if (
+            not self.active_character_name
+            or self.active_character_name not in self.characters
+        ):
+            raise ValueError("No active character selected.")
+
+        char = self.characters[self.active_character_name]
+        char["levels_completed"] = char.get("levels_completed", 0) + 1
+
+        self.save_config()
+
+    def add_flowers(self, flower_count):
         if (
             not self.active_character_name
             or self.active_character_name not in self.characters
@@ -172,8 +184,6 @@ class ProfileManager:
             raise ValueError("flower_count must be a positive integer.")
 
         char = self.characters[self.active_character_name]
-        char["levels_completed"] = char.get("levels_completed", 0) + 1
-
         if "inventory" not in char or not isinstance(char["inventory"], dict):
             char["inventory"] = {}
         char["inventory"]["flower"] = char["inventory"].get("flower", 0) + flower_count
