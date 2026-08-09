@@ -431,7 +431,7 @@ class Stone(MovingWidget):
         """Initialize stone at random position."""
         x = 800 + random.randint(100, 300)
         y = random.randint(0, 600 - 64)
-        super().__init__("stone_prite", (64, 53), x, y, **kwargs)
+        super().__init__("stone_sprite", (64, 53), x, y, **kwargs)
 
 
 class GameView(Widget):
