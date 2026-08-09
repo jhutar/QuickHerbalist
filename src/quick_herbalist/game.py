@@ -1,6 +1,7 @@
+import gettext
+import logging
 import os
 import random
-import gettext
 
 # Kivy setup (force window size before other imports)
 from kivy.config import Config
@@ -19,6 +20,8 @@ from kivy.clock import Clock  # noqa: E402
 from kivy.graphics import Rectangle  # noqa: E402
 from kivy.core.window import Window  # noqa: E402
 from kivy.lang import Builder  # noqa: E402
+
+logger = logging.getLogger(__name__)
 
 # --- Správa cest k prostředkům (assets / locales) ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -625,8 +628,11 @@ class GameView(Widget):
         self.stop_game()
         app = App.get_running_app()
         if app and hasattr(app, "profile_manager") and app.profile_manager:
-            app.profile_manager.complete_level()
-            app.profile_manager.add_flowers(self.score)
+            try:
+                app.profile_manager.complete_level()
+                app.profile_manager.add_flowers(self.score)
+            except Exception as e:
+                logger.error("Failed to save profile on win: %s", e)
         won_screen = app.root.get_screen("game_won")
         won_screen.score = self.score
         app.root.current = "game_won"
