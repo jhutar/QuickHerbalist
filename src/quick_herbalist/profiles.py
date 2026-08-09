@@ -71,7 +71,6 @@ class ProfileManager:
             )
 
         self.characters = copy.deepcopy(self.get_default_config()["characters"])
-        loaded_characters = data.get("characters")
         if isinstance(data.get("characters"), dict):
             self.characters.update(data.get("characters"))
         else:
