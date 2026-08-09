@@ -450,6 +450,7 @@ class GameView(Widget):
             self.win_distance = 1000.0
             self.game_speed = 3.0
 
+        self.max_speed = 15.0  # Cap game speed to prevent unbounded growth
         self.score = 0
         self.distance = 0.0
         self.stone_interval = 3.0
@@ -569,7 +570,7 @@ class GameView(Widget):
         frame_factor = dt * 60
         self.hero.animate(dt)
 
-        self.game_speed += 0.001 * frame_factor
+        self.game_speed = min(self.game_speed + 0.001 * frame_factor, self.max_speed)
         self.distance += (self.game_speed / 10) * frame_factor
 
         # Check Win Condition
