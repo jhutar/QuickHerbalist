@@ -22,6 +22,7 @@ class SpritePreviewWidget(BoxLayout):
     )  # List of dicts: {'atlas_id': str, 'duration': int, 'image': str, 'x': int, 'y': int, 'w': int, 'h': int}
 
     def __init__(self, **kwargs):
+        """Initialize the widget with zoom controls, scroll view, and animation loop."""
         super().__init__(orientation="vertical", **kwargs)
         self.current_frame_index = 0
         self.anim_time = 0.0
@@ -29,6 +30,7 @@ class SpritePreviewWidget(BoxLayout):
         Clock.schedule_interval(self._animate, 1 / 30.0)
 
     def _setup_ui(self):
+        """Build the widget UI: zoom controls, label, scroll view, and debug info."""
         # Zoom controls
         zoom_controls = BoxLayout(
             size_hint_y=None, height="40dp", orientation="horizontal"
@@ -56,6 +58,7 @@ class SpritePreviewWidget(BoxLayout):
         self.add_widget(self.debug_label)
 
     def zoom_in(self, instance=None):
+        """Increment zoom level to the next preset value."""
         levels = [0.25, 0.5, 1.0, 2.0, 4.0]
         try:
             idx = levels.index(self.zoom_level)
@@ -66,6 +69,7 @@ class SpritePreviewWidget(BoxLayout):
         self._update_zoom_ui()
 
     def zoom_out(self, instance=None):
+        """Decrement zoom level to the previous preset value."""
         levels = [0.25, 0.5, 1.0, 2.0, 4.0]
         try:
             idx = levels.index(self.zoom_level)
@@ -76,10 +80,12 @@ class SpritePreviewWidget(BoxLayout):
         self._update_zoom_ui()
 
     def reset_zoom(self, instance=None):
+        """Reset zoom to 100% (1.0 factor)."""
         self.zoom_level = 1.0
         self._update_zoom_ui()
 
     def _update_zoom_ui(self):
+        """Update the zoom label text and image size to match current zoom level."""
         self.zoom_label.text = f"Zoom: {int(self.zoom_level * 100)}%"
         if self.frames and self.current_frame_index < len(self.frames):
             frame_info = self.frames[self.current_frame_index]
@@ -90,6 +96,7 @@ class SpritePreviewWidget(BoxLayout):
             self.image.size = (256 * self.zoom_level, 256 * self.zoom_level)
 
     def _animate(self, dt):
+        """Advance animation by dt seconds and swap frames on duration boundary."""
         if not self.frames:
             self.image.texture = None
             return
@@ -109,6 +116,7 @@ class SpritePreviewWidget(BoxLayout):
             self._load_current_frame_texture()
 
     def _load_current_frame_texture(self):
+        """Load the texture for the current frame index into the image widget."""
         if not self.frames:
             self.image.texture = None
             self.debug_label.text = "Current Atlas ID: None"
@@ -147,11 +155,13 @@ class SpritePreviewWidget(BoxLayout):
             self.image.texture = None
 
     def on_frames(self, instance, value):
+        """Callback when frames property changes; reset animation and reload frame."""
         self.current_frame_index = 0
         self.anim_time = 0.0
         self._load_current_frame_texture()
 
     def force_refresh(self):
+        """Reset animation timer and reload current frame texture."""
         self.anim_time = 0.0
         self._load_current_frame_texture()
         self._update_zoom_ui()
