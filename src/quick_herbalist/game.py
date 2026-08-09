@@ -30,10 +30,12 @@ sprite_manager = SpriteManager()
 
 
 def get_asset_path(filename):
+    """Return absolute path to an asset file."""
     return os.path.join(BASE_DIR, "assets", filename)
 
 
 def get_locales_dir():
+    """Return absolute path to the locales directory."""
     return os.path.join(BASE_DIR, "locales")
 
 
@@ -44,13 +46,17 @@ _ = gettext.gettext
 
 
 class KeyboardScreen(Screen):
+    """Base screen class with keyboard support."""
+
     def on_enter(self):
+        """Handle screen entry and request keyboard."""
         self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
         self._keyboard.bind(
             on_key_down=self._on_keyboard_down, on_key_up=self._on_keyboard_up
         )
 
     def on_leave(self):
+        """Handle screen exit and unbind keyboard."""
         if self._keyboard:
             self._keyboard.unbind(
                 on_key_down=self._on_keyboard_down, on_key_up=self._on_keyboard_up
@@ -58,17 +64,23 @@ class KeyboardScreen(Screen):
             self._keyboard = None
 
     def _keyboard_closed(self):
+        """Callback when keyboard is closed."""
         self._keyboard = None
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        """Handle key down event."""
         return False
 
     def _on_keyboard_up(self, keyboard, keycode):
+        """Handle key up event."""
         return False
 
 
 class MenuScreen(KeyboardScreen):
+    """Main menu screen."""
+
     def on_pre_enter(self):
+        """Initialize menu labels and buttons before entering."""
         app = App.get_running_app()
         self.ids.title.text = _("Quick Herbalist")
         self.ids.subtitle.text = _("Press 's' to start")
@@ -83,6 +95,7 @@ class MenuScreen(KeyboardScreen):
         self.ids.quit_btn.text = _("Quit")
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        """Handle menu keyboard shortcuts."""
         key = keycode[1]
         if key == "s":
             self.start_game()
@@ -102,11 +115,15 @@ class MenuScreen(KeyboardScreen):
         return False
 
     def start_game(self):
+        """Switch to game screen."""
         self.manager.current = "game"
 
 
 class NewCharacterScreen(Screen):
+    """Screen for creating a new character."""
+
     def on_pre_enter(self):
+        """Initialize character creation UI."""
         self.ids.title.text = _("Enter Character Name")
         self.ids.name_input.text = ""
         self.ids.error_label.text = ""
@@ -123,6 +140,7 @@ class NewCharacterScreen(Screen):
             self.ids.back_btn.text = _("Back to Menu")
 
     def confirm(self):
+        """Create new character with input name."""
         app = App.get_running_app()
         name = self.ids.name_input.text
         try:
@@ -138,11 +156,15 @@ class NewCharacterScreen(Screen):
                 self.ids.error_label.text = _(err_msg)
 
     def back_to_menu(self):
+        """Return to main menu."""
         self.manager.current = "menu"
 
 
 class LoadCharacterScreen(KeyboardScreen):
+    """Screen for loading existing characters."""
+
     def on_pre_enter(self):
+        """Populate character list before entering."""
         self.ids.title.text = _("Select Character")
         self.ids.back_btn.text = _("Back to Menu")
 
@@ -155,14 +177,17 @@ class LoadCharacterScreen(KeyboardScreen):
             self.ids.list_layout.add_widget(btn)
 
     def select_and_return(self, btn):
+        """Select character and return to menu."""
         app = App.get_running_app()
         app.profile_manager.select_character(btn.text)
         self.manager.current = "menu"
 
     def back_to_menu(self):
+        """Return to main menu."""
         self.manager.current = "menu"
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        """Handle keyboard shortcuts for load screen."""
         key = keycode[1]
         if key in ("escape", "q"):
             self.back_to_menu()
@@ -171,15 +196,19 @@ class LoadCharacterScreen(KeyboardScreen):
 
 
 class GameWonScreen(KeyboardScreen):
+    """Screen shown when level is completed."""
+
     score = 0
 
     def on_pre_enter(self):
+        """Initialize level completion UI."""
         self.ids.title.text = _("LEVEL COMPLETED!")
         self.ids.score_lbl.text = _("Collected Flowers: ") + str(self.score)
         self.ids.restart_btn.text = _("Play Again")
         self.ids.menu_btn.text = _("Main Menu")
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        """Handle keyboard shortcuts for win screen."""
         key = keycode[1]
         if key in ("escape", "q"):
             self.manager.current = "menu"
@@ -187,14 +216,19 @@ class GameWonScreen(KeyboardScreen):
         return False
 
     def restart_game(self):
+        """Restart game."""
         self.manager.current = "game"
 
     def goto_menu(self):
+        """Go to main menu."""
         self.manager.current = "menu"
 
 
 class PotionsScreen(KeyboardScreen):
+    """Screen for potion crafting (placeholder)."""
+
     def on_pre_enter(self):
+        """Initialize potions screen UI."""
         self.ids.title.text = _("Potion Crafting")
         self.ids.desc.text = _(
             "Placeholder Screen: Future crafting system will be here!"
@@ -202,6 +236,7 @@ class PotionsScreen(KeyboardScreen):
         self.ids.back_btn.text = _("Back to Menu")
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        """Handle keyboard shortcuts for potions screen."""
         key = keycode[1]
         if key in ("escape", "q"):
             self.manager.current = "menu"
@@ -210,7 +245,10 @@ class PotionsScreen(KeyboardScreen):
 
 
 class QuitScreen(KeyboardScreen):
+    """Screen asking user if they want to quit."""
+
     def on_pre_enter(self):
+        """Initialize quit confirmation UI."""
         self.ids.title.text = _("Do you want to quit?")
         self.ids.cont_lbl.text = _("Press 's' to continue")
         self.ids.quit_lbl.text = _("Press 'q' to quit")
@@ -218,6 +256,7 @@ class QuitScreen(KeyboardScreen):
         self.ids.quit_btn.text = _("Quit")
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        """Handle keyboard shortcuts for quit screen."""
         key = keycode[1]
         if key == "s":
             self.resume_game()
@@ -228,14 +267,18 @@ class QuitScreen(KeyboardScreen):
         return False
 
     def resume_game(self):
+        """Return to game."""
         self.manager.current = "game"
 
 
 class GameOverScreen(KeyboardScreen):
+    """Screen shown when player hits a stone."""
+
     score = 0
     distance = 0
 
     def on_pre_enter(self):
+        """Initialize game over UI."""
         self.ids.title.text = _("GAME OVER!")
         self.ids.score_lbl.text = _("Collected: ") + str(self.score)
         self.ids.distance_lbl.text = _("Distance: ") + str(int(self.distance))
@@ -243,6 +286,7 @@ class GameOverScreen(KeyboardScreen):
         self.ids.menu_btn.text = _("Main Menu")
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        """Handle keyboard shortcuts for game over screen."""
         key = keycode[1]
         if key in ("escape", "q"):
             App.get_running_app().stop()
@@ -250,14 +294,19 @@ class GameOverScreen(KeyboardScreen):
         return False
 
     def restart_game(self):
+        """Restart game."""
         self.manager.current = "game"
 
     def goto_menu(self):
+        """Go to main menu."""
         self.manager.current = "menu"
 
 
 class Background(Widget):
+    """Animated background with scrolling tiles."""
+
     def __init__(self, **kwargs):
+        """Initialize background with grass tiles."""
         super().__init__(**kwargs)
         self.tile_width = 128
         self.tile_height = 128
@@ -283,6 +332,7 @@ class Background(Widget):
                     self.tiles.append({"pos": [x, y], "rect": rect})
 
     def update(self, game_speed):
+        """Update tile positions for scrolling effect."""
         for tile in self.tiles:
             tile["pos"][0] -= game_speed
 
@@ -299,7 +349,10 @@ class Background(Widget):
 
 
 class Player(Widget):
+    """Player character widget."""
+
     def __init__(self, **kwargs):
+        """Initialize player with hero sprite."""
         super().__init__(**kwargs)
         self.size = (64, 64)
         self.pos = (800 // 8 - 32, 600 // 2 - 32)
@@ -312,13 +365,16 @@ class Player(Widget):
         self.bind(pos=self.update_sprite_pos)
 
     def update_sprite_pos(self, *args):
+        """Sync sprite position with widget position."""
         self.sprite.pos = self.pos
 
     def animate(self, dt):
+        """Handle player animation (stub)."""
         # Frame animation is handled autonomously by AnimatedSprite
         pass
 
     def move_by(self, dy):
+        """Move player vertically within bounds."""
         new_y = self.y + dy
         if new_y < 0:
             new_y = 0
@@ -328,7 +384,10 @@ class Player(Widget):
 
 
 class MovingWidget(Widget):
+    """Base class for moving game objects."""
+
     def __init__(self, sprite_name, size, x, y, **kwargs):
+        """Initialize moving widget with sprite."""
         super().__init__(**kwargs)
         self.size = size
         self.pos = (x, y)
@@ -341,9 +400,11 @@ class MovingWidget(Widget):
         self.bind(pos=self.update_sprite_pos)
 
     def update_sprite_pos(self, *args):
+        """Sync sprite position with widget position."""
         self.sprite.pos = self.pos
 
     def update(self, game_speed):
+        """Update horizontal position and check if off-screen."""
         self.x -= game_speed
         if self.x + self.width < 0:
             return False
@@ -351,21 +412,30 @@ class MovingWidget(Widget):
 
 
 class Flower(MovingWidget):
+    """Flower object to be collected."""
+
     def __init__(self, **kwargs):
+        """Initialize flower at random position."""
         x = 800 + random.randint(50, 200)
         y = random.randint(0, 600 - 32)
         super().__init__("flower_sprite", (32, 32), x, y, **kwargs)
 
 
 class Stone(MovingWidget):
+    """Stone object that causes game over."""
+
     def __init__(self, **kwargs):
+        """Initialize stone at random position."""
         x = 800 + random.randint(100, 300)
         y = random.randint(0, 600 - 64)
         super().__init__("stone_prite", (64, 53), x, y, **kwargs)
 
 
 class GameView(Widget):
+    """Game view widget managing the game scene."""
+
     def __init__(self, **kwargs):
+        """Initialize game view with widgets and labels."""
         super().__init__(**kwargs)
         self.active = True
 
@@ -435,17 +505,20 @@ class GameView(Widget):
         self.update_labels()
 
     def start_game(self):
+        """Start the game loop and spawning timers."""
         Clock.schedule_interval(self.update, 1.0 / 60)
         Clock.schedule_interval(self.spawn_flower, 1.0)
         self.schedule_next_stone()
 
     def stop_game(self):
+        """Stop the game loop and all timers."""
         self.active = False
         Clock.unschedule(self.update)
         Clock.unschedule(self.spawn_flower)
         Clock.unschedule(self.spawn_stone)
 
     def spawn_flower(self, dt):
+        """Spawn a flower at a random position."""
         if not self.active:
             return
         flower = Flower()
@@ -453,9 +526,11 @@ class GameView(Widget):
         self.flowers.append(flower)
 
     def schedule_next_stone(self):
+        """Schedule the next stone spawn."""
         Clock.schedule_once(self.spawn_stone, self.stone_interval)
 
     def spawn_stone(self, dt):
+        """Spawn a stone and schedule the next one."""
         if not self.active:
             return
         stone = Stone()
@@ -470,6 +545,7 @@ class GameView(Widget):
         self.schedule_next_stone()
 
     def update_labels(self):
+        """Update score, distance, and character name labels."""
         app = App.get_running_app()
         active_name = (
             app.profile_manager.active_character_name
@@ -483,6 +559,7 @@ class GameView(Widget):
         self.distance_label.text = _("Distance: ") + str(int(self.distance))
 
     def update(self, dt):
+        """Update game state each frame."""
         if not self.active:
             return
 
@@ -535,6 +612,7 @@ class GameView(Widget):
         self.update_labels()
 
     def game_over(self):
+        """Handle game over: stop game and show game over screen."""
         self.stop_game()
         app = App.get_running_app()
         go_screen = app.root.get_screen("game_over")
@@ -543,6 +621,7 @@ class GameView(Widget):
         app.root.current = "game_over"
 
     def game_won(self):
+        """Handle win: stop game, update profile, show win screen."""
         self.stop_game()
         app = App.get_running_app()
         if app and hasattr(app, "profile_manager") and app.profile_manager:
@@ -553,20 +632,24 @@ class GameView(Widget):
         app.root.current = "game_won"
 
     def on_touch_down(self, touch):
+        """Handle touch down for touch-based movement."""
         self.touch_active = True
         self.target_y = touch.y
         return True
 
     def on_touch_move(self, touch):
+        """Handle touch move for touch-based movement."""
         if self.touch_active:
             self.target_y = touch.y
         return True
 
     def on_touch_up(self, touch):
+        """Handle touch up to stop touch-based movement."""
         self.touch_active = False
         return True
 
     def on_keyboard_down(self, key):
+        """Handle keyboard key down for player movement."""
         if key in ("up", "w"):
             self.moving_up = True
             return True
@@ -576,6 +659,7 @@ class GameView(Widget):
         return False
 
     def on_keyboard_up(self, key):
+        """Handle keyboard key up for player movement."""
         if key in ("up", "w"):
             self.moving_up = False
             return True
@@ -586,7 +670,10 @@ class GameView(Widget):
 
 
 class GameScreen(Screen):
+    """Screen displaying the game view."""
+
     def on_enter(self):
+        """Initialize game view and request keyboard on entry."""
         self.game_view = GameView()
         self.add_widget(self.game_view)
         self.game_view.start_game()
@@ -597,6 +684,7 @@ class GameScreen(Screen):
         )
 
     def on_leave(self):
+        """Stop game and release keyboard on leave."""
         if self._keyboard:
             self._keyboard.unbind(
                 on_key_down=self._on_keyboard_down, on_key_up=self._on_keyboard_up
@@ -606,9 +694,11 @@ class GameScreen(Screen):
         self.remove_widget(self.game_view)
 
     def _keyboard_closed(self):
+        """Callback when keyboard is closed."""
         self._keyboard = None
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        """Handle keyboard shortcuts for the game screen."""
         key = keycode[1]
         if key in ("escape", "q"):
             self.manager.current = "quit"
@@ -616,6 +706,7 @@ class GameScreen(Screen):
         return self.game_view.on_keyboard_down(key)
 
     def _on_keyboard_up(self, keyboard, keycode):
+        """Handle keyboard key up events."""
         key = keycode[1]
         return self.game_view.on_keyboard_up(key)
 
@@ -877,7 +968,10 @@ Builder.load_string("""
 
 
 class QuickHerbalistApp(App):
+    """Main application for Quick Herbalist game."""
+
     def build(self):
+        """Build the app with screen manager and all screens."""
         self.profile_manager = ProfileManager()
 
         sm = ScreenManager()
@@ -900,6 +994,7 @@ class QuickHerbalistApp(App):
 
 
 def main():
+    """Entry point: run the Quick Herbalist app."""
     QuickHerbalistApp().run()
 
 
