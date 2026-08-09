@@ -12,11 +12,13 @@ class AnimationStateController:
     """
 
     def __init__(self, frames_data: list[dict] = None):
+        """Initialize with optional frames data and reset animation state."""
         self.frames_data = frames_data or []
         self.current_frame_index = 0
         self.current_time = 0.0  # in ms
 
     def set_frames(self, frames_data: list[dict]):
+        """Replace current frames and reset animation state."""
         self.frames_data = frames_data or []
         self.current_frame_index = 0
         self.current_time = 0.0
@@ -46,6 +48,7 @@ class AnimationStateController:
 
 class AnimatedSprite(Widget):
     def __init__(self, sprite_name, sprites_data, atlas_data, **kwargs):
+        """Create widget with sprite name, sprite data dict, and atlas data dict."""
         super().__init__(**kwargs)
         self.sprite_name = sprite_name
         self.sprites_data = sprites_data
@@ -77,9 +80,11 @@ class AnimatedSprite(Widget):
         return self.controller.current_time
 
     def update_rect(self, *args):
+        """Keep the texture rectangle synced with widget position."""
         self.rect.pos = self.pos
 
     def _load_frame(self, index):
+        """Load frame texture from atlas by index and update widget size."""
         frame_info = self.frames_data[index]
         atlas_id = frame_info["atlas_id"]
 
@@ -105,5 +110,6 @@ class AnimatedSprite(Widget):
         self.rect.size = self.size
 
     def update(self, dt):
+        """Clock callback that ticks the controller and reloads frame on change."""
         if self.controller.tick(dt):
             self._load_frame(self.controller.current_frame_index)
