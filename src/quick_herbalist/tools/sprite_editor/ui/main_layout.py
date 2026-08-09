@@ -16,6 +16,7 @@ class SpriteEditorMainLayout(BoxLayout):
     """
 
     def __init__(self, **kwargs):
+        """Initialize the main layout with paths, stitcher, and UI components."""
         super().__init__(orientation="horizontal", spacing=10, padding=10, **kwargs)
         self.yaml_path = get_asset_path("sprites.yaml")
         self.atlas_path = get_asset_path("sprites.atlas")
@@ -28,6 +29,7 @@ class SpriteEditorMainLayout(BoxLayout):
         self._populate_sprite_list()
 
     def _setup_ui(self):
+        """Build and attach the three-section UI: sidebar, editor, preview."""
         # 1. Left Sidebar (Sprite List and creation)
         sidebar = BoxLayout(
             orientation="vertical", size_hint_x=None, width="200dp", spacing=10
@@ -84,6 +86,7 @@ class SpriteEditorMainLayout(BoxLayout):
         self.add_widget(self.preview)
 
     def _populate_sprite_list(self):
+        """Refresh sidebar button list from stitcher sprite names."""
         self.sprite_list_container.clear_widgets()
         for name in self.stitcher.get_sprite_list():
             btn = Button(text=name, size_hint_y=None, height="35dp")
@@ -93,6 +96,7 @@ class SpriteEditorMainLayout(BoxLayout):
             self.sprite_list_container.add_widget(btn)
 
     def select_sprite(self, name):
+        """Load frames for a sprite and update editor and preview widgets."""
         self.selected_sprite = name
         self._populate_sprite_list()
 
@@ -105,11 +109,12 @@ class SpriteEditorMainLayout(BoxLayout):
         self.preview.frames = frames
 
     def on_frames_changed(self, updated_frames):
-        # Dynamically push updated frames to the preview
+        """Push updated frames to the preview widget when editor changes."""
         self.preview.frames = list(updated_frames)
         self.preview.force_refresh()
 
     def create_sprite(self, instance):
+        """Create a new sprite from the input field and select it."""
         name = self.new_sprite_input.text.strip()
         if not name:
             return
@@ -121,6 +126,7 @@ class SpriteEditorMainLayout(BoxLayout):
         self.select_sprite(name)
 
     def delete_sprite(self, instance):
+        """Delete the currently selected sprite and clear editor/preview."""
         if not self.selected_sprite:
             return
 
@@ -134,6 +140,7 @@ class SpriteEditorMainLayout(BoxLayout):
         self._populate_sprite_list()
 
     def on_save_callback(self, sprite_name, frames):
+        """Persist frames back to yaml/atlas via the ConfigStitcher."""
         if not sprite_name:
             print("No sprite name specified. Cannot save.")
             return

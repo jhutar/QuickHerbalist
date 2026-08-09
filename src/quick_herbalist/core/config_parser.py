@@ -104,6 +104,7 @@ class ConfigStitcher:
     """
 
     def __init__(self, yaml_path: str = None, atlas_path: str = None):
+        """Initialize ConfigStitcher with optional custom paths, defaults to assets dir."""
         self.yaml_path = (
             yaml_path if yaml_path is not None else get_asset_path("sprites.yaml")
         )
@@ -115,8 +116,7 @@ class ConfigStitcher:
         self.load_configs()
 
     def load_configs(self):
-        import os
-
+        """Load sprites YAML and Atlas JSON from configured paths."""
         if os.path.exists(self.yaml_path):
             self.sprites_yaml_data = load_sprites_yaml(self.yaml_path)
         if not self.sprites_yaml_data or "sprites" not in self.sprites_yaml_data:
@@ -128,6 +128,7 @@ class ConfigStitcher:
             self.sprites_atlas_data = {}
 
     def get_sprite_list(self) -> list[str]:
+        """Return sorted list of all registered sprite names."""
         return sorted(self.sprites_yaml_data.get("sprites", {}).keys())
 
     def get_sprite_frames(self, sprite_name: str) -> list[dict]:
@@ -173,6 +174,7 @@ class ConfigStitcher:
         return frames
 
     def create_sprite(self, sprite_name: str) -> bool:
+        """Create a new empty sprite entry. Returns True on success, False if name invalid or duplicate."""
         if not sprite_name or sprite_name in self.sprites_yaml_data["sprites"]:
             return False
         self.sprites_yaml_data["sprites"][sprite_name] = {"frames": []}
@@ -180,6 +182,7 @@ class ConfigStitcher:
         return True
 
     def delete_sprite(self, sprite_name: str):
+        """Delete a sprite and its associated atlas regions."""
         if sprite_name not in self.sprites_yaml_data["sprites"]:
             return
 
@@ -208,6 +211,7 @@ class ConfigStitcher:
         save_sprites_atlas(self.atlas_path, self.sprites_atlas_data)
 
     def save_sprite_frames(self, sprite_name: str, frames: list[dict]):
+        """Update sprite frames in both YAML and Atlas, then persist both files."""
         # Clean up old atlas mappings
         old_sprite_entry = self.sprites_yaml_data["sprites"].get(sprite_name, {})
         old_atlas_ids = {
