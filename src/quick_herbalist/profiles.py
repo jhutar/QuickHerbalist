@@ -10,6 +10,7 @@ class ProfileManager:
     """Manage game profiles, settings, and character data."""
 
     def __init__(self, config_dir=None):
+        """Initialize ProfileManager with config directory and load configuration."""
         self.config_dir = self._resolve_config_dir(config_dir)
         os.makedirs(self.config_dir, exist_ok=True)
         self.config_path = os.path.join(self.config_dir, "config.yaml")
@@ -24,6 +25,7 @@ class ProfileManager:
             return explicit_dir
 
         from kivy.app import App
+
         app = App.get_running_app()
         return app.user_data_dir
 
@@ -57,21 +59,25 @@ class ProfileManager:
         self._apply_loaded_data(data)
 
     def _apply_loaded_data(self, data):
-        """Apply loaded configuration data to instance attributes."""
+        """Apply loaded configuration data to instance attributes with defaults for corrupted keys."""
         self.active_character_name = data.get("active_character")
 
         self.settings = copy.deepcopy(self.get_default_config()["settings"])
         if isinstance(data.get("settings"), dict):
             self.settings.update(data.get("settings"))
         else:
-            logger.error(f"Config 'settings' is corrupted (got {type(data.get("settings")).__name__})")
+            logger.error(
+                f"Config 'settings' is corrupted (got {type(data.get('settings')).__name__})"
+            )
 
         self.characters = copy.deepcopy(self.get_default_config()["characters"])
         loaded_characters = data.get("characters")
         if isinstance(data.get("characters"), dict):
             self.characters.update(data.get("characters"))
         else:
-            logger.error(f"Config 'characters' is corrupted (got {type(data.get("characters")).__name__})")
+            logger.error(
+                f"Config 'characters' is corrupted (got {type(data.get('characters')).__name__})"
+            )
 
     def _apply_default_config(self):
         """Apply default configuration to instance attributes."""
