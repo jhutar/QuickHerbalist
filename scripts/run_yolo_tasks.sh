@@ -2,10 +2,10 @@
 set -euo pipefail
 
 SPEC_DIR=${1:-""}
-AGENT_CMD=${2:-"../agent-in-container/run-pi.sh"}
+AGENT_CMD=${2:-"$HOME/Checkouts/agent-in-container/run-pi-private.sh"}
 
 # Configurable options via environment variables
-YOLO_MODEL="${YOLO_MODEL:-google/gemma-4-26B-A4B-it-qat-q4_0-gguf}"
+YOLO_MODEL="${YOLO_MODEL:-airouter.ch/Qwen3.8:high}"
 MAX_RETRIES="${MAX_RETRIES:-3}"
 
 if [[ -z "$SPEC_DIR" || ! -d "$SPEC_DIR" ]]; then
@@ -82,7 +82,7 @@ You are an expert software engineer running in YOLO mode. Your mission is to imp
 "
 
     # 1. Initial Agent Invocation
-    $AGENT_CMD --print "$PROMPT"
+    $AGENT_CMD --model "$YOLO_MODEL" --print "$PROMPT"
 
     # 2. Outer Validation Loop (Make sure the agent actually succeeded and left a clean state)
     SUCCESS=false
@@ -123,7 +123,7 @@ You are an expert software engineer running in YOLO mode. Your mission is to imp
 
         FEEDBACK="Your previous execution left the repository in an incomplete or broken state. Please fix the following errors:\n\n$ERRORS\n\nEnsure you write correct code, fix all tests and linters, mark the task as complete in $TASKS_FILE, and cleanly commit ALL changes with trailer 'Generated-by:$YOLO_MODEL'."
 
-        $AGENT_CMD --continue --print "$FEEDBACK"
+        $AGENT_CMD --model "$YOLO_MODEL" --continue --print "$FEEDBACK"
     done
 
     # Circuit Breaker: If we exhausted retries and it still fails
