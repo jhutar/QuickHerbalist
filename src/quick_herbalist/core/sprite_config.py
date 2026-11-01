@@ -191,15 +191,12 @@ class SpriteConfig:
         """
         old_entry = self.sprites_data["sprites"].get(sprite_name, {})
         old_atlas_ids = {
-            f.get("atlas_id")
-            for f in old_entry.get("frames", [])
-            if f.get("atlas_id")
+            f.get("atlas_id") for f in old_entry.get("frames", []) if f.get("atlas_id")
         }
         self._remove_atlas_ids(old_atlas_ids)
 
         yaml_frames = [
-            {"atlas_id": f["atlas_id"], "duration_ms": f["duration_ms"]}
-            for f in frames
+            {"atlas_id": f["atlas_id"], "duration_ms": f["duration_ms"]} for f in frames
         ]
         self.sprites_data["sprites"][sprite_name] = {"frames": yaml_frames}
 

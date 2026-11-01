@@ -23,6 +23,10 @@ class AnimationStateController:
         self.current_frame_index = 0
         self.current_time = 0.0
 
+    def reset_time(self):
+        """Reset accumulated time without changing the frame index."""
+        self.current_time = 0.0
+
     def tick(self, dt: float) -> bool:
         """
         Advances animation time by dt (in seconds).

@@ -7,6 +7,7 @@ from kivy.uix.scrollview import ScrollView
 from kivy.properties import NumericProperty, ObjectProperty, ListProperty
 from kivy.clock import Clock
 from kivy.core.image import Image as CoreImage
+from quick_herbalist.core.animated_sprite import AnimationStateController
 from quick_herbalist.core.config_parser import get_asset_path
 
 
@@ -24,8 +25,8 @@ class SpritePreviewWidget(BoxLayout):
     def __init__(self, **kwargs):
         """Initialize the widget with zoom controls, scroll view, and animation loop."""
         super().__init__(orientation="vertical", **kwargs)
-        self.current_frame_index = 0
-        self.anim_time = 0.0
+        # Delegate clock-ticks and frame transitions to the shared controller
+        self.controller = AnimationStateController([])
         self._setup_ui()
         Clock.schedule_interval(self._animate, 1 / 30.0)
 
@@ -95,24 +96,18 @@ class SpritePreviewWidget(BoxLayout):
         else:
             self.image.size = (256 * self.zoom_level, 256 * self.zoom_level)
 
+    @property
+    def current_frame_index(self):
+        """Index of the frame currently shown, delegated to the controller."""
+        return self.controller.current_frame_index
+
     def _animate(self, dt):
-        """Advance animation by dt seconds and swap frames on duration boundary."""
+        """Clock callback that ticks the controller and reloads frame on change."""
         if not self.frames:
             self.image.texture = None
             return
 
-        self.anim_time += dt * 1000
-        frame_info = self.frames[self.current_frame_index % len(self.frames)]
-        duration = frame_info.get("duration_ms", 250)
-
-        # If we edited frames, index might be out of range
-        if self.current_frame_index >= len(self.frames):
-            self.current_frame_index = 0
-            self.anim_time = 0.0
-
-        if self.anim_time >= duration:
-            self.anim_time = 0.0
-            self.current_frame_index = (self.current_frame_index + 1) % len(self.frames)
+        if self.controller.tick(dt):
             self._load_current_frame_texture()
 
     def _load_current_frame_texture(self):
@@ -156,12 +151,11 @@ class SpritePreviewWidget(BoxLayout):
 
     def on_frames(self, instance, value):
         """Callback when frames property changes; reset animation and reload frame."""
-        self.current_frame_index = 0
-        self.anim_time = 0.0
+        self.controller.set_frames(value)
         self._load_current_frame_texture()
 
     def force_refresh(self):
         """Reset animation timer and reload current frame texture."""
-        self.anim_time = 0.0
+        self.controller.reset_time()
         self._load_current_frame_texture()
         self._update_zoom_ui()

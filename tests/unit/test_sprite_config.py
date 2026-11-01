@@ -42,9 +42,7 @@ def config(config_files):
 
 
 def test_load_missing_files_yields_empty_config(tmp_path):
-    config = SpriteConfig(
-        str(tmp_path / "none.yaml"), str(tmp_path / "none.atlas")
-    )
+    config = SpriteConfig(str(tmp_path / "none.yaml"), str(tmp_path / "none.atlas"))
     assert config.sprites_data == {"sprites": {}}
     assert config.atlas_data == {}
     assert config.get_sprite_list() == []
@@ -95,9 +93,7 @@ def test_resolve_frames_no_frames(config_files):
 def test_resolve_frames_frame_without_atlas_id(config_files):
     yaml_path, atlas_path = config_files
     with open(yaml_path, "w", encoding="utf-8") as f:
-        yaml.dump(
-            {"sprites": {"hero_run": {"frames": [{"duration_ms": 100}]}}}, f
-        )
+        yaml.dump({"sprites": {"hero_run": {"frames": [{"duration_ms": 100}]}}}, f)
     config = SpriteConfig(yaml_path, atlas_path)
     with pytest.raises(ValueError, match="no atlas_id"):
         config.resolve_frames("hero_run")
@@ -125,9 +121,7 @@ def test_resolve_frames_invalid_region_raises(config_files):
 def test_resolve_frames_missing_duration_ms_raises(config_files):
     yaml_path, atlas_path = config_files
     with open(yaml_path, "w", encoding="utf-8") as f:
-        yaml.dump(
-            {"sprites": {"hero_run": {"frames": [{"atlas_id": "frame_0"}]}}}, f
-        )
+        yaml.dump({"sprites": {"hero_run": {"frames": [{"atlas_id": "frame_0"}]}}}, f)
     config = SpriteConfig(yaml_path, atlas_path)
     with pytest.raises(ValueError, match="duration_ms"):
         config.resolve_frames("hero_run")
@@ -137,8 +131,12 @@ def test_resolve_frames_zero_duration_ms_raises(config_files):
     yaml_path, atlas_path = config_files
     with open(yaml_path, "w", encoding="utf-8") as f:
         yaml.dump(
-            {"sprites": {"hero_run": {"frames": [
-                {"atlas_id": "frame_0", "duration_ms": 0}]}}}, f
+            {
+                "sprites": {
+                    "hero_run": {"frames": [{"atlas_id": "frame_0", "duration_ms": 0}]}
+                }
+            },
+            f,
         )
     config = SpriteConfig(yaml_path, atlas_path)
     with pytest.raises(ValueError, match="duration_ms"):
@@ -204,9 +202,7 @@ def test_validate_malformed_atlas(temp_assets_dir):
 
 def test_validate_sprites_not_dict(temp_assets_dir):
     # sprites is a list, not a dict
-    yaml_path, atlas_path = _write_pair(
-        temp_assets_dir, {"sprites": []}, {}
-    )
+    yaml_path, atlas_path = _write_pair(temp_assets_dir, {"sprites": []}, {})
     assert SpriteConfig.validate(yaml_path, atlas_path) is False
 
 
@@ -280,10 +276,24 @@ def test_delete_unknown_sprite_is_noop(config):
 
 def test_save_sprite_frames_persists_both_files(config):
     frames = [
-        {"atlas_id": "frame_0", "duration_ms": 100,
-         "image": "hero.png", "x": 0, "y": 0, "w": 32, "h": 32},
-        {"atlas_id": "frame_1", "duration_ms": 150,
-         "image": "hero.png", "x": 32, "y": 0, "w": 32, "h": 32},
+        {
+            "atlas_id": "frame_0",
+            "duration_ms": 100,
+            "image": "hero.png",
+            "x": 0,
+            "y": 0,
+            "w": 32,
+            "h": 32,
+        },
+        {
+            "atlas_id": "frame_1",
+            "duration_ms": 150,
+            "image": "hero.png",
+            "x": 32,
+            "y": 0,
+            "w": 32,
+            "h": 32,
+        },
     ]
     config.save_sprite_frames("hero_run", frames)
 
@@ -302,8 +312,15 @@ def test_save_sprite_frames_persists_both_files(config):
 
 def test_save_sprite_frames_removes_old_atlas_ids(config):
     frames = [
-        {"atlas_id": "brand_new", "duration_ms": 100,
-         "image": "other.png", "x": 5, "y": 6, "w": 10, "h": 12},
+        {
+            "atlas_id": "brand_new",
+            "duration_ms": 100,
+            "image": "other.png",
+            "x": 5,
+            "y": 6,
+            "w": 10,
+            "h": 12,
+        },
     ]
     config.save_sprite_frames("hero_run", frames)
 
