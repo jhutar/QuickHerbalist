@@ -19,7 +19,7 @@ class SpritePreviewWidget(BoxLayout):
     sprite_name = ObjectProperty(None)
     frames = ListProperty(
         []
-    )  # List of dicts: {'atlas_id': str, 'duration': int, 'image': str, 'x': int, 'y': int, 'w': int, 'h': int}
+    )  # List of dicts: {'atlas_id': str, 'duration_ms': int, 'image': str, 'x': int, 'y': int, 'w': int, 'h': int}
 
     def __init__(self, **kwargs):
         """Initialize the widget with zoom controls, scroll view, and animation loop."""
@@ -103,7 +103,7 @@ class SpritePreviewWidget(BoxLayout):
 
         self.anim_time += dt * 1000
         frame_info = self.frames[self.current_frame_index % len(self.frames)]
-        duration = frame_info.get("duration", 250)
+        duration = frame_info.get("duration_ms", 250)
 
         # If we edited frames, index might be out of range
         if self.current_frame_index >= len(self.frames):

@@ -127,7 +127,7 @@ class FrameCard(BoxLayout):
 
         row2.add_widget(Label(text="Dur (ms):", size_hint_x=0.2))
         self.duration_input = SelectableTextInput(
-            text=str(self.frame_data.get("duration", 250)),
+            text=str(self.frame_data.get("duration_ms", 250)),
             multiline=False,
             input_filter="int",
             size_hint_x=0.2,
@@ -306,7 +306,7 @@ class FrameCard(BoxLayout):
 
             updated_data = {
                 "atlas_id": self.frame_data.get("atlas_id", ""),
-                "duration": dur,
+                "duration_ms": dur,
                 "image": self.image_input.text,
                 "x": x,
                 "y": y,
@@ -323,7 +323,7 @@ class SequenceEditorWidget(BoxLayout):
 
     frames = ListProperty(
         []
-    )  # List of dicts: {'atlas_id': str, 'duration': int, 'image': str, 'x': int, 'y': int, 'w': int, 'h': int}
+    )  # List of dicts: {'atlas_id': str, 'duration_ms': int, 'image': str, 'x': int, 'y': int, 'w': int, 'h': int}
     sprite_name = StringProperty("")
     save_callback = ObjectProperty(None)
     frames_changed_callback = ObjectProperty(None)
@@ -409,7 +409,7 @@ class SequenceEditorWidget(BoxLayout):
             w = ref_frame.get("w", 32)
             new_frame = {
                 "atlas_id": f"{self.sprite_name}_{len(self.frames)}",
-                "duration": ref_frame.get("duration", 250),
+                "duration_ms": ref_frame.get("duration_ms", 250),
                 "image": ref_frame.get("image", "test_hero.png"),
                 "x": ref_frame.get("x", 0) + w,
                 "y": ref_frame.get("y", 0),
@@ -420,7 +420,7 @@ class SequenceEditorWidget(BoxLayout):
             # Default fallback frame
             new_frame = {
                 "atlas_id": f"{self.sprite_name}_{len(self.frames)}",
-                "duration": 250,
+                "duration_ms": 250,
                 "image": "test_hero.png",
                 "x": 0,
                 "y": 0,

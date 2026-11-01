@@ -47,16 +47,16 @@ class AnimationStateController:
 
 
 class AnimatedSprite(Widget):
-    def __init__(self, sprite_name, sprites_data, atlas_data, **kwargs):
-        """Create widget with sprite name, sprite data dict, and atlas data dict."""
+    """Widget that renders an animated sprite from resolved frame dicts."""
+
+    def __init__(self, sprite_name, frames_data, **kwargs):
+        """Create widget with sprite name and resolved frame dicts.
+
+        Each frame dict: {atlas_id, image, x, y, w, h, duration_ms}.
+        """
         super().__init__(**kwargs)
         self.sprite_name = sprite_name
-        self.sprites_data = sprites_data
-        self.atlas_data = atlas_data
-
-        self.frames_data = (
-            sprites_data.get("sprites", {}).get(sprite_name, {}).get("frames", [])
-        )
+        self.frames_data = frames_data or []
         if not self.frames_data:
             raise ValueError(f"No frames for sprite '{sprite_name}'")
 
@@ -84,29 +84,15 @@ class AnimatedSprite(Widget):
         self.rect.pos = self.pos
 
     def _load_frame(self, index):
-        """Load frame texture from atlas by index and update widget size."""
-        frame_info = self.frames_data[index]
-        atlas_id = frame_info["atlas_id"]
-
-        img_name = None
-        region = None
-
-        for name, regions in self.atlas_data.items():
-            if atlas_id in regions:
-                img_name = name
-                region = regions[atlas_id]
-                break
-
-        if img_name is None or region is None:
-            raise ValueError(f"Atlas ID '{atlas_id}' not found")
-
+        """Load frame texture from the resolved region and update widget size."""
         from quick_herbalist.core.config_parser import get_asset_path
 
-        core_img = CoreImage(get_asset_path(img_name))
+        frame_info = self.frames_data[index]
+        core_img = CoreImage(get_asset_path(frame_info["image"]))
         self.rect.texture = core_img.texture.get_region(
-            region[0], region[1], region[2], region[3]
+            frame_info["x"], frame_info["y"], frame_info["w"], frame_info["h"]
         )
-        self.size = (region[2], region[3])
+        self.size = (frame_info["w"], frame_info["h"])
         self.rect.size = self.size
 
     def update(self, dt):

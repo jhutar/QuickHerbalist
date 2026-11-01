@@ -5,7 +5,8 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from quick_herbalist.tools.sprite_editor.ui.main_layout import SpriteEditorMainLayout
-from quick_herbalist.core.config_parser import validate_configs, get_asset_path
+from quick_herbalist.core.sprite_config import SpriteConfig
+from quick_herbalist.core.config_parser import get_asset_path
 
 
 class SpriteEditorApp(App):
@@ -26,7 +27,7 @@ class SpriteEditorApp(App):
         """Validate sprites.yaml and sprites.atlas consistency; show error popup on mismatch."""
         # If files exist and are invalid, show a warning.
         if os.path.exists(self.yaml_path) and os.path.exists(self.atlas_path):
-            if not validate_configs(self.yaml_path, self.atlas_path):
+            if not SpriteConfig.validate(self.yaml_path, self.atlas_path):
                 self._show_error_popup()
 
     def _show_error_popup(self):

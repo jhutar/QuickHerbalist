@@ -5,24 +5,25 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.textinput import TextInput
 from .preview import SpritePreviewWidget
 from .sequence_editor import SequenceEditorWidget
-from quick_herbalist.core.config_parser import ConfigStitcher, get_asset_path
+from quick_herbalist.core.sprite_config import SpriteConfig
+from quick_herbalist.core.config_parser import get_asset_path
 
 
 class SpriteEditorMainLayout(BoxLayout):
     """
     The main layout of the Sprite Editor.
     Delegates all domain-level config parsing, file reads/writes,
-    and schema coordinate mapping to the ConfigStitcher.
+    and frame resolution to the core SpriteConfig module.
     """
 
     def __init__(self, **kwargs):
-        """Initialize the main layout with paths, stitcher, and UI components."""
+        """Initialize the main layout with paths, sprite config, and UI components."""
         super().__init__(orientation="horizontal", spacing=10, padding=10, **kwargs)
         self.yaml_path = get_asset_path("sprites.yaml")
         self.atlas_path = get_asset_path("sprites.atlas")
 
-        # Initialize the domain ConfigStitcher controller
-        self.stitcher = ConfigStitcher(self.yaml_path, self.atlas_path)
+        # Initialize the core SpriteConfig controller
+        self.config = SpriteConfig(self.yaml_path, self.atlas_path)
         self.selected_sprite = ""
 
         self._setup_ui()
@@ -86,9 +87,9 @@ class SpriteEditorMainLayout(BoxLayout):
         self.add_widget(self.preview)
 
     def _populate_sprite_list(self):
-        """Refresh sidebar button list from stitcher sprite names."""
+        """Refresh sidebar button list from sprite config names."""
         self.sprite_list_container.clear_widgets()
-        for name in self.stitcher.get_sprite_list():
+        for name in self.config.get_sprite_list():
             btn = Button(text=name, size_hint_y=None, height="35dp")
             btn.bind(on_release=lambda instance, n=name: self.select_sprite(n))
             if name == self.selected_sprite:
@@ -100,8 +101,13 @@ class SpriteEditorMainLayout(BoxLayout):
         self.selected_sprite = name
         self._populate_sprite_list()
 
-        # Build fully loaded frames for this sprite via the stitcher
-        frames = self.stitcher.get_sprite_frames(name)
+        # Resolve frames for this sprite via the core config module;
+        # on invalid config show an empty sequence instead of guessing
+        try:
+            frames = self.config.resolve_frames(name)
+        except ValueError as e:
+            print(f"Cannot load frames for sprite '{name}': {e}")
+            frames = []
 
         self.editor.set_sprite_name(name)
         self.editor.load_frames(frames)
@@ -118,7 +124,7 @@ class SpriteEditorMainLayout(BoxLayout):
         name = self.new_sprite_input.text.strip()
         if not name:
             return
-        if not self.stitcher.create_sprite(name):
+        if not self.config.create_sprite(name):
             print(f"Sprite '{name}' already exists or is invalid.")
             return
 
@@ -130,7 +136,7 @@ class SpriteEditorMainLayout(BoxLayout):
         if not self.selected_sprite:
             return
 
-        self.stitcher.delete_sprite(self.selected_sprite)
+        self.config.delete_sprite(self.selected_sprite)
 
         self.selected_sprite = ""
         self.editor.set_sprite_name("")
@@ -140,14 +146,14 @@ class SpriteEditorMainLayout(BoxLayout):
         self._populate_sprite_list()
 
     def on_save_callback(self, sprite_name, frames):
-        """Persist frames back to yaml/atlas via the ConfigStitcher."""
+        """Persist frames back to yaml/atlas via the core SpriteConfig module."""
         if not sprite_name:
             print("No sprite name specified. Cannot save.")
             return
 
         try:
-            self.stitcher.save_sprite_frames(sprite_name, frames)
-            print(f"Successfully saved sprite '{sprite_name}' via ConfigStitcher")
+            self.config.save_sprite_frames(sprite_name, frames)
+            print(f"Successfully saved sprite '{sprite_name}' via SpriteConfig")
             self.select_sprite(sprite_name)
         except Exception as e:
             print(f"Error saving sprite {sprite_name}: {e}")

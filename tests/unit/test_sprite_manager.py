@@ -133,18 +133,17 @@ def test_sprite_manager_default_paths(monkeypatch):
         "quick_herbalist.core.sprite_manager.get_asset_path"
     ) as mock_get_asset_path:
         mock_get_asset_path.side_effect = lambda filename: f"/dummy/assets/{filename}"
-        with patch("quick_herbalist.core.sprite_manager.load_sprites_yaml"):
-            with patch("quick_herbalist.core.sprite_manager.load_sprites_atlas"):
-                sm = SpriteManager()
-                assert sm.yaml_path == "/dummy/assets/sprites.yaml"
-                assert sm.atlas_path == "/dummy/assets/sprites.atlas"
-                mock_get_asset_path.assert_any_call("sprites.yaml")
-                mock_get_asset_path.assert_any_call("sprites.atlas")
+        sm = SpriteManager()
+        assert sm.yaml_path == "/dummy/assets/sprites.yaml"
+        assert sm.atlas_path == "/dummy/assets/sprites.atlas"
+        mock_get_asset_path.assert_any_call("sprites.yaml")
+        mock_get_asset_path.assert_any_call("sprites.atlas")
 
 
 def test_real_assets_integrity_and_instantiation():
     import os
-    from quick_herbalist.core.config_parser import get_asset_path, validate_configs
+    from quick_herbalist.core.config_parser import get_asset_path
+    from quick_herbalist.core.sprite_config import SpriteConfig
 
     yaml_path = get_asset_path("sprites.yaml")
     atlas_path = get_asset_path("sprites.atlas")
@@ -154,7 +153,7 @@ def test_real_assets_integrity_and_instantiation():
     assert os.path.exists(atlas_path), f"sprites.atlas does not exist at {atlas_path}"
 
     # 2. Assert they are consistent and valid
-    assert validate_configs(yaml_path, atlas_path) is True, (
+    assert SpriteConfig.validate(yaml_path, atlas_path) is True, (
         "Project configurations in assets/ are inconsistent!"
     )
 
@@ -164,7 +163,7 @@ def test_real_assets_integrity_and_instantiation():
     assert sm.atlas_path == atlas_path
 
     # 4. Assert we can query all defined sprites and receive valid widgets
-    for sprite_name in sm.sprites_data.get("sprites", {}).keys():
+    for sprite_name in sm.config.get_sprite_list():
         sprite = sm.get(sprite_name)
         assert sprite is not None
         assert sprite.sprite_name == sprite_name

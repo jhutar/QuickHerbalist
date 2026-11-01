@@ -212,7 +212,7 @@ def test_main_layout_load_and_select_sprite(mock_get_asset_path):
         layout = SpriteEditorMainLayout()
 
         # Verify initial loaded state
-        assert "hero_run" in layout.stitcher.sprites_yaml_data["sprites"]
+        assert "hero_run" in layout.config.sprites_data["sprites"]
 
         # Select sprite
         layout.select_sprite("hero_run")
@@ -221,7 +221,7 @@ def test_main_layout_load_and_select_sprite(mock_get_asset_path):
         # Verify editor loaded frames correctly
         assert len(layout.editor.frames) == 1
         assert layout.editor.frames[0]["atlas_id"] == "frame_0"
-        assert layout.editor.frames[0]["duration"] == 100
+        assert layout.editor.frames[0]["duration_ms"] == 100
         assert layout.editor.frames[0]["image"] == "hero.png"
         assert layout.editor.frames[0]["x"] == 0
         assert layout.editor.frames[0]["y"] == 0
@@ -237,7 +237,7 @@ def test_sequence_editor_add_frame_auto_advance(mock_get_asset_path):
     initial_frames = [
         {
             "atlas_id": "frame_0",
-            "duration": 100,
+            "duration_ms": 100,
             "image": "hero.png",
             "x": 10,
             "y": 20,
@@ -257,7 +257,7 @@ def test_sequence_editor_add_frame_auto_advance(mock_get_asset_path):
     assert len(editor.frames) == 2
     new_frame = editor.frames[1]
     assert new_frame["image"] == "hero.png"
-    assert new_frame["duration"] == 100
+    assert new_frame["duration_ms"] == 100
     assert new_frame["x"] == 10 + 32  # Advanced by width
     assert new_frame["y"] == 20
     assert new_frame["w"] == 32
@@ -279,12 +279,12 @@ def test_main_layout_create_and_delete_sprite(mock_get_asset_path):
         layout.new_sprite_input.text = "new_sprite"
         layout.create_sprite(None)
 
-        assert "new_sprite" in layout.stitcher.sprites_yaml_data["sprites"]
+        assert "new_sprite" in layout.config.sprites_data["sprites"]
         assert layout.selected_sprite == "new_sprite"
 
         # Delete selected sprite
         layout.delete_sprite(None)
-        assert "new_sprite" not in layout.stitcher.sprites_yaml_data["sprites"]
+        assert "new_sprite" not in layout.config.sprites_data["sprites"]
         assert layout.selected_sprite == ""
 
 
@@ -304,7 +304,7 @@ def test_main_layout_save_sprite(mock_get_asset_path):
         layout.editor.frames.append(
             {
                 "atlas_id": "frame_1",
-                "duration": 150,
+                "duration_ms": 150,
                 "image": "hero.png",
                 "x": 32,
                 "y": 0,
@@ -349,7 +349,7 @@ def test_save_button_triggers_on_save_callback(mock_get_asset_path):
         layout.editor.frames = [
             {
                 "atlas_id": "frame_0",
-                "duration": 500,
+                "duration_ms": 500,
                 "image": "hero.png",
                 "x": 0,
                 "y": 0,
@@ -378,7 +378,7 @@ def test_sequence_editor_reorder_frames():
     initial_frames = [
         {
             "atlas_id": "frame_0",
-            "duration": 100,
+            "duration_ms": 100,
             "image": "hero.png",
             "x": 0,
             "y": 0,
@@ -387,7 +387,7 @@ def test_sequence_editor_reorder_frames():
         },
         {
             "atlas_id": "frame_1",
-            "duration": 200,
+            "duration_ms": 200,
             "image": "hero.png",
             "x": 32,
             "y": 0,
@@ -396,7 +396,7 @@ def test_sequence_editor_reorder_frames():
         },
         {
             "atlas_id": "frame_2",
-            "duration": 300,
+            "duration_ms": 300,
             "image": "hero.png",
             "x": 64,
             "y": 0,
