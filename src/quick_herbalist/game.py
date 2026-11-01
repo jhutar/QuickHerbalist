@@ -70,8 +70,15 @@ class KeyboardScreen(Screen):
         """Callback when keyboard is closed."""
         self._keyboard = None
 
+    def on_back(self):
+        """Default back behaviour: return to the main menu."""
+        self.manager.current = "menu"
+
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
-        """Handle key down event."""
+        """Handle escape/q as back; return True when the key was handled."""
+        if keycode[1] in ("escape", "q"):
+            self.on_back()
+            return True
         return False
 
     def _on_keyboard_up(self, keyboard, keycode):
@@ -112,10 +119,11 @@ class MenuScreen(KeyboardScreen):
         elif key == "c":
             self.manager.current = "potions"
             return True
-        elif key in ("escape", "q"):
-            App.get_running_app().stop()
-            return True
-        return False
+        return super()._on_keyboard_down(keyboard, keycode, text, modifiers)
+
+    def on_back(self):
+        """Quit the app when leaving the main menu."""
+        App.get_running_app().stop()
 
     def start_game(self):
         """Switch to game screen."""
@@ -189,14 +197,6 @@ class LoadCharacterScreen(KeyboardScreen):
         """Return to main menu."""
         self.manager.current = "menu"
 
-    def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
-        """Handle keyboard shortcuts for load screen."""
-        key = keycode[1]
-        if key in ("escape", "q"):
-            self.back_to_menu()
-            return True
-        return False
-
 
 class GameWonScreen(KeyboardScreen):
     """Screen shown when level is completed."""
@@ -209,14 +209,6 @@ class GameWonScreen(KeyboardScreen):
         self.ids.score_lbl.text = _("Collected Flowers: ") + str(self.score)
         self.ids.restart_btn.text = _("Play Again")
         self.ids.menu_btn.text = _("Main Menu")
-
-    def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
-        """Handle keyboard shortcuts for win screen."""
-        key = keycode[1]
-        if key in ("escape", "q"):
-            self.manager.current = "menu"
-            return True
-        return False
 
     def restart_game(self):
         """Restart game."""
@@ -238,14 +230,6 @@ class PotionsScreen(KeyboardScreen):
         )
         self.ids.back_btn.text = _("Back to Menu")
 
-    def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
-        """Handle keyboard shortcuts for potions screen."""
-        key = keycode[1]
-        if key in ("escape", "q"):
-            self.manager.current = "menu"
-            return True
-        return False
-
 
 class QuitScreen(KeyboardScreen):
     """Screen asking user if they want to quit."""
@@ -259,15 +243,15 @@ class QuitScreen(KeyboardScreen):
         self.ids.quit_btn.text = _("Quit")
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
-        """Handle keyboard shortcuts for quit screen."""
-        key = keycode[1]
-        if key == "s":
+        """Handle 's' to resume the game; leave escape/q to the base class."""
+        if keycode[1] == "s":
             self.resume_game()
             return True
-        elif key in ("escape", "q"):
-            App.get_running_app().stop()
-            return True
-        return False
+        return super()._on_keyboard_down(keyboard, keycode, text, modifiers)
+
+    def on_back(self):
+        """Quit the app from the quit screen."""
+        App.get_running_app().stop()
 
     def resume_game(self):
         """Return to game."""
@@ -288,13 +272,9 @@ class GameOverScreen(KeyboardScreen):
         self.ids.restart_btn.text = _("Play Again")
         self.ids.menu_btn.text = _("Main Menu")
 
-    def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
-        """Handle keyboard shortcuts for game over screen."""
-        key = keycode[1]
-        if key in ("escape", "q"):
-            App.get_running_app().stop()
-            return True
-        return False
+    def on_back(self):
+        """Quit the app from the game over screen."""
+        App.get_running_app().stop()
 
     def restart_game(self):
         """Restart game."""
