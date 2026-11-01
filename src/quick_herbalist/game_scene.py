@@ -9,24 +9,24 @@ from kivy.graphics import Rectangle
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 
-from quick_herbalist.core.sprite_manager import SpriteManager
 from quick_herbalist.localization import _
 
 logger = logging.getLogger(__name__)
 
-sprite_manager = SpriteManager()
+SCREEN_W = 800
+SCREEN_H = 600
 
 
 class Background(Widget):
     """Animated background with scrolling tiles."""
 
-    def __init__(self, **kwargs):
-        """Initialize background with grass tiles."""
+    def __init__(self, sprite_manager, **kwargs):
+        """Initialize background with grass tiles from the given SpriteManager."""
         super().__init__(**kwargs)
         self.tile_width = 128
         self.tile_height = 128
-        self.cols = int(800 / self.tile_width) + 2
-        self.rows = int(600 / self.tile_height) + 1
+        self.cols = int(SCREEN_W / self.tile_width) + 2
+        self.rows = int(SCREEN_H / self.tile_height) + 1
 
         self.tiles = []
 
@@ -66,11 +66,11 @@ class Background(Widget):
 class Player(Widget):
     """Player character widget."""
 
-    def __init__(self, **kwargs):
-        """Initialize player with hero sprite."""
+    def __init__(self, sprite_manager, **kwargs):
+        """Initialize player with hero sprite from the given SpriteManager."""
         super().__init__(**kwargs)
         self.size = (64, 64)
-        self.pos = (800 // 8 - 32, 600 // 2 - 32)
+        self.pos = (SCREEN_W // 8 - 32, SCREEN_H // 2 - 32)
 
         self.sprite = sprite_manager.get("hero_sprite")
         self.sprite.pos = self.pos
@@ -93,16 +93,16 @@ class Player(Widget):
         new_y = self.y + dy
         if new_y < 0:
             new_y = 0
-        elif new_y + self.height > 600:
-            new_y = 600 - self.height
+        elif new_y + self.height > SCREEN_H:
+            new_y = SCREEN_H - self.height
         self.y = new_y
 
 
 class MovingWidget(Widget):
     """Base class for moving game objects."""
 
-    def __init__(self, sprite_name, size, x, y, **kwargs):
-        """Initialize moving widget with sprite."""
+    def __init__(self, sprite_manager, sprite_name, size, x, y, **kwargs):
+        """Initialize moving widget with a sprite from the given SpriteManager."""
         super().__init__(**kwargs)
         self.size = size
         self.pos = (x, y)
@@ -129,38 +129,34 @@ class MovingWidget(Widget):
 class Flower(MovingWidget):
     """Flower object to be collected."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, sprite_manager, **kwargs):
         """Initialize flower at random position."""
-        x = 800 + random.randint(50, 200)
-        y = random.randint(0, 600 - 32)
+        x = SCREEN_W + random.randint(50, 200)
+        y = random.randint(0, SCREEN_H - 32)
         super().__init__("flower_sprite", (32, 32), x, y, **kwargs)
 
 
 class Stone(MovingWidget):
     """Stone object that causes game over."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, sprite_manager, **kwargs):
         """Initialize stone at random position."""
-        x = 800 + random.randint(100, 300)
-        y = random.randint(0, 600 - 64)
+        x = SCREEN_W + random.randint(100, 300)
+        y = random.randint(0, SCREEN_H - 64)
         super().__init__("stone_sprite", (64, 53), x, y, **kwargs)
 
 
 class GameView(Widget):
     """Game view widget managing the game scene."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, profile_manager, sprite_manager, **kwargs):
         """Initialize game view with widgets and labels."""
         super().__init__(**kwargs)
         self.active = True
-
-        app = App.get_running_app()
-        if app and hasattr(app, "profile_manager") and app.profile_manager:
-            self.win_distance = app.profile_manager.settings.get("win_distance", 1000.0)
-            self.game_speed = app.profile_manager.settings.get("game_speed_start", 3.0)
-        else:
-            self.win_distance = 1000.0
-            self.game_speed = 3.0
+        self.profile_manager = profile_manager
+        self.sprite_manager = sprite_manager
+        self.win_distance = profile_manager.settings.get("win_distance", 1000.0)
+        self.game_speed = profile_manager.settings.get("game_speed_start", 3.0)
 
         self.max_speed = 15.0  # Cap game speed to prevent unbounded growth
         self.score = 0
@@ -175,10 +171,10 @@ class GameView(Widget):
         self.touch_active = False
         self.target_y = 0
 
-        self.background = Background()
+        self.background = Background(self.sprite_manager)
         self.add_widget(self.background)
 
-        self.hero = Player()
+        self.hero = Player(self.sprite_manager)
         self.add_widget(self.hero)
 
         self.score_label = Label(
@@ -237,7 +233,7 @@ class GameView(Widget):
         """Spawn a flower at a random position."""
         if not self.active:
             return
-        flower = Flower()
+        flower = Flower(self.sprite_manager)
         self.add_widget(flower)
         self.flowers.append(flower)
 
@@ -249,7 +245,7 @@ class GameView(Widget):
         """Spawn a stone and schedule the next one."""
         if not self.active:
             return
-        stone = Stone()
+        stone = Stone(self.sprite_manager)
         self.add_widget(stone)
         self.stones.append(stone)
 
@@ -262,12 +258,7 @@ class GameView(Widget):
 
     def update_labels(self):
         """Update score, distance, and character name labels."""
-        app = App.get_running_app()
-        active_name = (
-            app.profile_manager.active_character_name
-            if app and hasattr(app, "profile_manager") and app.profile_manager
-            else None
-        )
+        active_name = self.profile_manager.active_character_name
         self.char_label.text = (
             str(active_name) if active_name else _("No Active Character")
         )
@@ -339,13 +330,12 @@ class GameView(Widget):
     def game_won(self):
         """Handle win: stop game, update profile, show win screen."""
         self.stop_game()
+        try:
+            self.profile_manager.complete_level()
+            self.profile_manager.add_flowers(self.score)
+        except Exception as e:
+            logger.error("Failed to save profile on win: %s", e)
         app = App.get_running_app()
-        if app and hasattr(app, "profile_manager") and app.profile_manager:
-            try:
-                app.profile_manager.complete_level()
-                app.profile_manager.add_flowers(self.score)
-            except Exception as e:
-                logger.error("Failed to save profile on win: %s", e)
         won_screen = app.root.get_screen("game_won")
         won_screen.score = self.score
         app.root.current = "game_won"
@@ -386,5 +376,3 @@ class GameView(Widget):
             self.moving_down = False
             return True
         return False
-
-

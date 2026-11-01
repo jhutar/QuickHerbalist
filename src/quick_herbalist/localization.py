@@ -7,11 +7,6 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def get_asset_path(filename):
-    """Return absolute path to an asset file."""
-    return os.path.join(BASE_DIR, "assets", filename)
-
-
 def get_locales_dir():
     """Return absolute path to the locales directory."""
     return os.path.join(BASE_DIR, "locales")

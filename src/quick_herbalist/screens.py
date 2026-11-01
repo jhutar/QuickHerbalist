@@ -246,12 +246,14 @@ class GameOverScreen(KeyboardScreen):
         """Go to main menu."""
         self.manager.current = "menu"
 
+
 class GameScreen(Screen):
     """Screen displaying the game view."""
 
     def on_enter(self):
         """Initialize game view and request keyboard on entry."""
-        self.game_view = GameView()
+        app = App.get_running_app()
+        self.game_view = GameView(app.profile_manager, app.sprite_manager)
         self.add_widget(self.game_view)
         self.game_view.start_game()
 
@@ -542,5 +544,3 @@ Builder.load_string("""
             font_size: 20
             on_release: root.goto_menu()
 """)
-
-

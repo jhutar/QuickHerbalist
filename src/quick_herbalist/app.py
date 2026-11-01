@@ -10,6 +10,7 @@ Config.set("graphics", "resizable", "0")
 from kivy.app import App  # noqa: E402
 from kivy.uix.screenmanager import ScreenManager  # noqa: E402
 
+from quick_herbalist.core.sprite_manager import SpriteManager  # noqa: E402
 from quick_herbalist.profiles import ProfileManager  # noqa: E402
 from quick_herbalist.screens import (  # noqa: E402
     GameOverScreen,
@@ -29,6 +30,7 @@ class QuickHerbalistApp(App):
     def build(self):
         """Build the app with screen manager and all screens."""
         self.profile_manager = ProfileManager()
+        self.sprite_manager = SpriteManager()
 
         sm = ScreenManager()
         sm.add_widget(MenuScreen(name="menu"))
