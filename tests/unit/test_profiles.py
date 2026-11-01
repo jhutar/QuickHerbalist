@@ -1,7 +1,7 @@
 import os
 import yaml
 import pytest
-from quick_herbalist.profiles import ProfileManager
+from quick_herbalist.profiles import ProfileError, ProfileErrorCode, ProfileManager
 
 
 @pytest.fixture
@@ -121,25 +121,30 @@ def test_profile_manager_create_character_validations(temp_config_dir):
     pm = ProfileManager(config_dir=temp_config_dir)
 
     # Rejects empty name
-    with pytest.raises(ValueError, match="Name cannot be empty"):
+    with pytest.raises(ProfileError) as exc_info:
         pm.create_character("")
+    assert exc_info.value.code is ProfileErrorCode.EMPTY_NAME
 
     # Rejects whitespace-only name
-    with pytest.raises(ValueError, match="Name cannot be empty"):
+    with pytest.raises(ProfileError) as exc_info:
         pm.create_character("   ")
+    assert exc_info.value.code is ProfileErrorCode.EMPTY_NAME
 
     # Rejects None name
-    with pytest.raises(ValueError, match="Name cannot be empty"):
+    with pytest.raises(ProfileError) as exc_info:
         pm.create_character(None)
+    assert exc_info.value.code is ProfileErrorCode.EMPTY_NAME
 
     # Rejects duplicate name
     pm.create_character("UniqueName")
-    with pytest.raises(ValueError, match="Character already exists"):
+    with pytest.raises(ProfileError) as exc_info:
         pm.create_character("UniqueName")
+    assert exc_info.value.code is ProfileErrorCode.DUPLICATE_CHARACTER
 
     # Rejects duplicate name with leading/trailing whitespaces (since it gets stripped)
-    with pytest.raises(ValueError, match="Character already exists"):
+    with pytest.raises(ProfileError) as exc_info:
         pm.create_character(" UniqueName ")
+    assert exc_info.value.code is ProfileErrorCode.DUPLICATE_CHARACTER
 
 
 def test_profile_manager_select_character_success(temp_config_dir):
@@ -163,8 +168,9 @@ def test_profile_manager_select_character_not_found(temp_config_dir):
     pm = ProfileManager(config_dir=temp_config_dir)
 
     # Select non-existent character
-    with pytest.raises(ValueError, match="Character not found"):
+    with pytest.raises(ProfileError) as exc_info:
         pm.select_character("FakeHero")
+    assert exc_info.value.code is ProfileErrorCode.CHARACTER_NOT_FOUND
 
 
 # --- User Story 2 (US2) Test Cases ---
@@ -173,15 +179,17 @@ def test_profile_manager_select_character_not_found(temp_config_dir):
 def test_profile_manager_complete_level_no_active_character(temp_config_dir):
     pm = ProfileManager(config_dir=temp_config_dir)
 
-    with pytest.raises(ValueError, match="No active character selected"):
+    with pytest.raises(ProfileError) as exc_info:
         pm.complete_level()
+    assert exc_info.value.code is ProfileErrorCode.NO_ACTIVE_CHARACTER
 
 
 def test_profile_manager_add_flowers_no_active_character(temp_config_dir):
     pm = ProfileManager(config_dir=temp_config_dir)
 
-    with pytest.raises(ValueError, match="No active character selected"):
+    with pytest.raises(ProfileError) as exc_info:
         pm.add_flowers(10)
+    assert exc_info.value.code is ProfileErrorCode.NO_ACTIVE_CHARACTER
 
 
 def test_profile_manager_add_flowers_invalid_flower_count(temp_config_dir):
@@ -190,28 +198,34 @@ def test_profile_manager_add_flowers_invalid_flower_count(temp_config_dir):
     pm.create_character("HerbalistMax")
 
     # Reject zero
-    with pytest.raises(ValueError, match="flower_count must be a positive integer"):
+    with pytest.raises(ProfileError) as exc_info:
         pm.add_flowers(0)
+    assert exc_info.value.code is ProfileErrorCode.INVALID_FLOWER_COUNT
 
     # Reject negative
-    with pytest.raises(ValueError, match="flower_count must be a positive integer"):
+    with pytest.raises(ProfileError) as exc_info:
         pm.add_flowers(-1)
+    assert exc_info.value.code is ProfileErrorCode.INVALID_FLOWER_COUNT
 
     # Reject string
-    with pytest.raises(ValueError, match="flower_count must be an integer"):
+    with pytest.raises(ProfileError) as exc_info:
         pm.add_flowers("five")
+    assert exc_info.value.code is ProfileErrorCode.INVALID_FLOWER_COUNT
 
     # Reject float
-    with pytest.raises(ValueError, match="flower_count must be an integer"):
+    with pytest.raises(ProfileError) as exc_info:
         pm.add_flowers(3.5)
+    assert exc_info.value.code is ProfileErrorCode.INVALID_FLOWER_COUNT
 
     # Reject None
-    with pytest.raises(ValueError, match="flower_count must be an integer"):
+    with pytest.raises(ProfileError) as exc_info:
         pm.add_flowers(None)
+    assert exc_info.value.code is ProfileErrorCode.INVALID_FLOWER_COUNT
 
     # Reject boolean
-    with pytest.raises(ValueError, match="flower_count must be an integer"):
+    with pytest.raises(ProfileError) as exc_info:
         pm.add_flowers(True)
+    assert exc_info.value.code is ProfileErrorCode.INVALID_FLOWER_COUNT
 
 
 def test_profile_manager_complete_level_success(temp_config_dir):

@@ -8,6 +8,7 @@ from kivy.uix.screenmanager import Screen
 
 from quick_herbalist.game_scene import GameView
 from quick_herbalist.localization import _
+from quick_herbalist.profiles import ProfileError, ProfileErrorCode
 
 
 class KeyboardScreen(Screen):
@@ -119,14 +120,12 @@ class NewCharacterScreen(Screen):
         try:
             app.profile_manager.create_character(name)
             self.manager.current = "menu"
-        except ValueError as e:
-            err_msg = str(e)
-            if "Name cannot be empty" in err_msg:
-                self.ids.error_label.text = _("Name cannot be empty.")
-            elif "Character already exists" in err_msg:
-                self.ids.error_label.text = _("Character already exists.")
-            else:
-                self.ids.error_label.text = _(err_msg)
+        except ProfileError as e:
+            messages = {
+                ProfileErrorCode.EMPTY_NAME: _("Name cannot be empty."),
+                ProfileErrorCode.DUPLICATE_CHARACTER: _("Character already exists."),
+            }
+            self.ids.error_label.text = messages.get(e.code, _(str(e)))
 
     def back_to_menu(self):
         """Return to main menu."""

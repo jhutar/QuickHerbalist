@@ -1,9 +1,29 @@
 import copy
+import enum
 import logging
 import os
 import yaml
 
 logger = logging.getLogger(__name__)
+
+
+class ProfileErrorCode(enum.StrEnum):
+    """Machine codes for profile errors; safe to match on in consumers."""
+
+    EMPTY_NAME = "EMPTY_NAME"
+    DUPLICATE_CHARACTER = "DUPLICATE_CHARACTER"
+    CHARACTER_NOT_FOUND = "CHARACTER_NOT_FOUND"
+    NO_ACTIVE_CHARACTER = "NO_ACTIVE_CHARACTER"
+    INVALID_FLOWER_COUNT = "INVALID_FLOWER_COUNT"
+
+
+class ProfileError(ValueError):
+    """Domain error raised by ProfileManager; code is safe to match on."""
+
+    def __init__(self, code: ProfileErrorCode, message: str):
+        """Create a profile error with a machine code and a free human message."""
+        super().__init__(message)
+        self.code = code
 
 
 class ProfileManager:
@@ -106,14 +126,16 @@ class ProfileManager:
     def create_character(self, name):
         """Create new character with given name."""
         if not name or not isinstance(name, str):
-            raise ValueError("Name cannot be empty.")
+            raise ProfileError(ProfileErrorCode.EMPTY_NAME, "Name cannot be empty.")
 
         stripped_name = name.strip()
         if not stripped_name:
-            raise ValueError("Name cannot be empty.")
+            raise ProfileError(ProfileErrorCode.EMPTY_NAME, "Name cannot be empty.")
 
         if stripped_name in self.characters:
-            raise ValueError("Character already exists.")
+            raise ProfileError(
+                ProfileErrorCode.DUPLICATE_CHARACTER, "Character already exists."
+            )
 
         self.characters[stripped_name] = {
             "name": stripped_name,
@@ -127,7 +149,9 @@ class ProfileManager:
     def select_character(self, name):
         """Select existing character by name."""
         if not name or name not in self.characters:
-            raise ValueError("Character not found.")
+            raise ProfileError(
+                ProfileErrorCode.CHARACTER_NOT_FOUND, "Character not found."
+            )
 
         self.active_character_name = name
         self.save_config()
@@ -138,7 +162,9 @@ class ProfileManager:
             not self.active_character_name
             or self.active_character_name not in self.characters
         ):
-            raise ValueError("No active character selected.")
+            raise ProfileError(
+                ProfileErrorCode.NO_ACTIVE_CHARACTER, "No active character selected."
+            )
 
         char = self.characters[self.active_character_name]
         char["levels_completed"] = char.get("levels_completed", 0) + 1
@@ -150,12 +176,20 @@ class ProfileManager:
             not self.active_character_name
             or self.active_character_name not in self.characters
         ):
-            raise ValueError("No active character selected.")
+            raise ProfileError(
+                ProfileErrorCode.NO_ACTIVE_CHARACTER, "No active character selected."
+            )
 
         if not isinstance(flower_count, int) or isinstance(flower_count, bool):
-            raise ValueError("flower_count must be an integer.")
+            raise ProfileError(
+                ProfileErrorCode.INVALID_FLOWER_COUNT,
+                "flower_count must be an integer.",
+            )
         if flower_count <= 0:
-            raise ValueError("flower_count must be a positive integer.")
+            raise ProfileError(
+                ProfileErrorCode.INVALID_FLOWER_COUNT,
+                "flower_count must be a positive integer.",
+            )
 
         char = self.characters[self.active_character_name]
         if "inventory" not in char or not isinstance(char["inventory"], dict):
