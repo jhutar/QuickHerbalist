@@ -1,24 +1,34 @@
 # QuickHerbalist
 
-QuickHerbalist is a quick 2D items-collecting game built using Kivy.
+A quick 2D items-collecting game built with Kivy.
 
-## How to Run the Game
+## Running
 
-This project uses `uv` for dependency and package management.
+The project uses `uv` for dependency and package management.
 
-To run the game:
+Run the game:
 ```bash
 uv run quick-herbalist
 ```
 
+Run the standalone Sprite Manager GUI:
+```bash
+uv run manage-sprites
+```
+
 ## Development
 
-### How to run tests
+Run tests:
 ```bash
 make test
 ```
 
-### How to run linters and formatting checks
+Run linters and formatting checks:
 ```bash
 make check-all
+```
+
+Automated spec-kit task runner (implements unchecked tasks in a spec's `tasks.md` in sequence):
+```bash
+scripts/run_yolo_tasks.sh specs/<spec-dir>
 ```
