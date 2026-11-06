@@ -28,9 +28,14 @@ jobs:
       run: uv run pytest -v
 
   # macOS builds are unsigned (no Developer ID); fine for a small project.
+  # SDL_VIDEODRIVER=dummy: PyInstaller's kivy hook spawns a child that imports
+  # the SDL2 window module, which inits SDL at import time. Headless runners
+  # need a dummy video driver or the child dies (Linux) or hangs (Windows).
   build:
     needs: sanity
     runs-on: ${{ matrix.os }}
+    env:
+      SDL_VIDEODRIVER: dummy
     strategy:
       fail-fast: false
       matrix:
