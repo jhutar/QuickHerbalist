@@ -10,8 +10,8 @@ help:
 	@echo "  test                 - Run the full pytest suite"
 
 bootstrap:
-	@echo "==> Installing Python 3.11 (via uv)..."
-	uv python install 3.11
+	@echo "==> Installing Python 3.12 (via uv)..."
+	uv python install 3.12
 	@echo "==> Installing pre-commit..."
 	uv tool install pre-commit || uv tool upgrade pre-commit
 	@echo "==> Installing pre-commit hooks..."
@@ -32,4 +32,4 @@ test:
 	@echo "==> Checking help for manage-sprites..."
 	uv run manage-sprites --help >/dev/null
 	@echo "==> Running pytest..."
-	PYTHONPATH=src pytest -v
+	uv run pytest -v
