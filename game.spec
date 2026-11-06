@@ -2,6 +2,15 @@
 """PyInstaller spec for the Quick Herbalist game: onefile, console, with assets and locales bundled."""
 
 import os
+import sys
+
+# Per-OS names so Linux and macOS binaries do not collide in the release.
+if sys.platform == "win32":
+    NAME = "quick-herbalist-windows"
+elif sys.platform == "darwin":
+    NAME = "quick-herbalist-macos"
+else:
+    NAME = "quick-herbalist-linux"
 
 SRC = os.path.join("src", "quick_herbalist")
 
@@ -30,7 +39,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name="quick-herbalist",
+    name=NAME,
     debug=False,
     strip=False,
     upx=False,
