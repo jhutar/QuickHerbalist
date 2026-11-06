@@ -31,3 +31,14 @@ repos:
     rev: v8.30.0
     hooks:
       - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: compile-mo
+        name: compile .po -> .mo
+        language: python
+        entry: python scripts/compile_mo.py
+        additional_dependencies: [polib]
+        files: '\.po$'
+        pass_filenames: true
+        exclude: base\.pot$
