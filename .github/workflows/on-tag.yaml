@@ -28,14 +28,14 @@ jobs:
       run: uv run pytest -v
 
   # macOS builds are unsigned (no Developer ID); fine for a small project.
-  # SDL_VIDEODRIVER=dummy: PyInstaller's kivy hook spawns a child that imports
-  # the SDL2 window module, which inits SDL at import time. Headless runners
-  # need a dummy video driver or the child dies (Linux) or hangs (Windows).
+  # PyInstaller's kivy hook spawns an isolated child that imports the SDL2
+  # window module; Kivy instantiates the window (and GL context) at import
+  # time, so a display is required during the build:
+  # - Linux: xvfb-run (Xvfb + software GL, preinstalled on the runner)
+  # - Windows/macOS: SDL dummy video driver
   build:
     needs: sanity
     runs-on: ${{ matrix.os }}
-    env:
-      SDL_VIDEODRIVER: dummy
     strategy:
       fail-fast: false
       matrix:
@@ -53,7 +53,16 @@ jobs:
     - name: Install dependencies
       run: uv sync --frozen
 
-    - name: Build executable
+    - name: Build executable (Linux, under Xvfb)
+      if: matrix.os == 'ubuntu-latest'
+      env:
+        SDL_VIDEODRIVER: x11
+      run: xvfb-run -a uv run pyinstaller game.spec --clean
+
+    - name: Build executable (Windows, macOS)
+      if: matrix.os != 'ubuntu-latest'
+      env:
+        SDL_VIDEODRIVER: dummy
       run: uv run pyinstaller game.spec --clean
 
     - name: Upload artifact (Windows)
