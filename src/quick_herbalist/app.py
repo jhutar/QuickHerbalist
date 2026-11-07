@@ -15,6 +15,7 @@ from kivy.uix.screenmanager import ScreenManager  # noqa: E402
 from quick_herbalist.core.config_parser import get_asset_path  # noqa: E402
 from quick_herbalist.core.level_config import LevelConfigError, load_levels  # noqa: E402
 from quick_herbalist.core.sprite_manager import SpriteManager  # noqa: E402
+from quick_herbalist.potions import RecipeError, load_recipes  # noqa: E402
 from quick_herbalist.profiles import ProfileManager  # noqa: E402
 from quick_herbalist.screens import (  # noqa: E402
     GameMenuScreen,
@@ -44,6 +45,11 @@ class QuickHerbalistApp(App):
             self.levels = load_levels(get_asset_path("levels.yaml"), self.sprite_manager.names())
         except LevelConfigError as e:
             logger.error("Refusing to start, invalid level definitions:\n%s", e)
+            raise SystemExit(str(e)) from e
+        try:
+            self.recipes = load_recipes(get_asset_path("recipes.yaml"), self.sprite_manager.names())
+        except RecipeError as e:
+            logger.error("Refusing to start, invalid recipe definitions:\n%s", e)
             raise SystemExit(str(e)) from e
 
         sm = ScreenManager()

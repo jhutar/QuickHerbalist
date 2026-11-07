@@ -1,0 +1,12 @@
+# Potion recipe definitions. Strict schema: every recipe needs a unique id,
+# name/description translation keys, a non-empty ingredients mapping (sprite
+# name -> positive count, sprite names must exist in sprites.yaml), and a
+# positive duration in seconds. Unknown ingredient names are load errors.
+recipes:
+  - id: potion_magnetism
+    name_key: potion_magnetism_name
+    description_key: potion_magnetism_description
+    ingredients:
+      flower_sprite: 2
+      flower2_sprite: 1
+    duration_seconds: 30
