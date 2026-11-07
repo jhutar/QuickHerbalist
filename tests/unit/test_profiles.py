@@ -199,11 +199,6 @@ def test_profile_manager_add_flowers_invalid_flower_count(temp_config_dir):
 
     pm.create_character("HerbalistMax")
 
-    # Reject zero
-    with pytest.raises(ProfileError) as exc_info:
-        pm.add_flowers(0)
-    assert exc_info.value.code is ProfileErrorCode.INVALID_FLOWER_COUNT
-
     # Reject negative
     with pytest.raises(ProfileError) as exc_info:
         pm.add_flowers(-1)
@@ -251,6 +246,10 @@ def test_profile_manager_add_flowers_success(temp_config_dir):
     pm = ProfileManager(config_dir=temp_config_dir)
 
     pm.create_character("HerbalistMax")
+
+    # Zero is valid (winning a level without collecting flowers)
+    pm.add_flowers(0)
+    assert pm.characters["HerbalistMax"]["inventory"]["flower"] == 0
 
     pm.add_flowers(5)
     char = pm.characters["HerbalistMax"]

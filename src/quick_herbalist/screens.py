@@ -220,6 +220,8 @@ class GameWonScreen(KeyboardScreen):
 
     def restart_game(self):
         """Start the next level."""
+        app = App.get_running_app()
+        app.selected_level_number = app.profile_manager.next_level_number()
         self.manager.current = "game"
 
     def goto_menu(self):
