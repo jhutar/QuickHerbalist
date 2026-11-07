@@ -167,3 +167,14 @@ def test_real_assets_integrity_and_instantiation():
         sprite = sm.get(sprite_name)
         assert sprite is not None
         assert sprite.sprite_name == sprite_name
+
+
+def test_animated_sprite_keeps_widget_size_on_frame_reload(dummy_configs):
+    """Frame reloads must not clobber a caller-set widget size; the rect follows it."""
+    yaml_path, atlas_path = dummy_configs
+    sm = SpriteManager(yaml_path, atlas_path)
+    sprite = sm.get("hero_run")
+    sprite.size = (48, 48)
+    sprite._load_frame(0)
+    assert sprite.size == (48, 48)
+    assert sprite.rect.size == (48, 48)

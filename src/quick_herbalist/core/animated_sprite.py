@@ -70,6 +70,7 @@ class AnimatedSprite(Widget):
             self.rect = Rectangle(pos=self.pos, size=self.size)
 
         self.bind(pos=self.update_rect)
+        self.bind(size=self.update_rect_size)
         self._load_frame(0)
         self._event = Clock.schedule_interval(self.update, 0.01)
 
@@ -85,16 +86,20 @@ class AnimatedSprite(Widget):
         """Keep the texture rectangle synced with widget position."""
         self.rect.pos = self.pos
 
+    def update_rect_size(self, *args):
+        """Keep the texture rectangle synced with widget size."""
+        self.rect.size = self.size
+
     def _load_frame(self, index):
         """Load frame texture from the resolved region and update widget size."""
         from quick_herbalist.core.config_parser import get_asset_path
 
         frame_info = self.frames_data[index]
         core_img = CoreImage(get_asset_path(frame_info["image"]))
+        # Widget size is owned by the caller; the texture stretches to fit it.
         self.rect.texture = core_img.texture.get_region(
             frame_info["x"], frame_info["y"], frame_info["w"], frame_info["h"]
         )
-        self.size = (frame_info["w"], frame_info["h"])
         self.rect.size = self.size
 
     def update(self, dt):

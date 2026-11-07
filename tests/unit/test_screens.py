@@ -457,3 +457,37 @@ def test_potions_screen_ingredient_strip_skips_unknown_sprites():
     app.sprite_manager.get.assert_any_call("flower_sprite")
     app.sprite_manager.get.assert_any_call("flower2_sprite")
     assert not any(c.args and c.args[0] == "flower" for c in app.sprite_manager.get.call_args_list)
+
+
+def test_potions_screen_recipe_book_uses_book_background_image():
+    """Recipe book background loads recipes.png stretched over the book panel."""
+    from quick_herbalist.core.config_parser import get_asset_path
+
+    _setup_potions_app([_recipe()])
+
+    screen = PotionsScreen()
+    screen.on_pre_enter()
+
+    assert screen.ids.book_img.source == get_asset_path("recipes.png")
+
+
+def test_potions_screen_empty_potion_strip_shows_placeholder():
+    """With no potions brewed, the potion strip shows a placeholder label."""
+    _setup_potions_app([_recipe()], potions={})
+
+    screen = PotionsScreen()
+    screen.on_pre_enter()
+
+    assert screen.ids.potion_strip.add_widget.call_count == 1
+
+
+def test_potions_screen_ingredient_chip_labels_show_count():
+    """Each ingredient chip shows the sprite name with its count like 'name (2x)'"""
+    kivy_uix_label_module.Label.reset_mock()
+    _setup_potions_app([_recipe()], inventory={"flower_sprite": 2})
+
+    screen = PotionsScreen()
+    screen.on_pre_enter()
+
+    texts = [c.kwargs.get("text") for c in kivy_uix_label_module.Label.call_args_list]
+    assert "flower_sprite (2x)" in texts
