@@ -1,5 +1,7 @@
 """All menu/flow screens plus their KV definitions."""
 
+import logging
+
 from kivy.app import App
 from kivy.core.window import Window
 from kivy.factory import Factory
@@ -16,6 +18,8 @@ from quick_herbalist.game_scene import GameView
 from quick_herbalist.localization import _
 from quick_herbalist.potions import match_recipe
 from quick_herbalist.profiles import ProfileError, ProfileErrorCode
+
+logger = logging.getLogger(__name__)
 
 
 class KeyboardScreen(Screen):
@@ -408,14 +412,21 @@ class PotionsScreen(KeyboardScreen):
         self._render_recipe_book()
 
     def _render_ingredient_strip(self):
-        """Show one draggable chip per flower type with count > 0."""
+        """Show one draggable chip per known flower type with count > 0."""
         app = App.get_running_app()
         strip = self.ids.ingredient_strip
         strip.clear_widgets()
+        known_sprites = app.sprite_manager.names()
         inventory = app.profile_manager.get_inventory()
         for sprite_name in sorted(inventory):
             count = inventory[sprite_name]
             if count <= 0:
+                continue
+            if sprite_name not in known_sprites:
+                logger.warning(
+                    "Skipping unknown inventory sprite '%s' (legacy save data?)",
+                    sprite_name,
+                )
                 continue
             chip = Draggable(size=(130, 80))
             chip.size_hint = (None, 1)
@@ -437,8 +448,15 @@ class PotionsScreen(KeyboardScreen):
         app = App.get_running_app()
         grid = self.ids.cauldron_grid
         grid.clear_widgets()
+        known_sprites = app.sprite_manager.names()
         contents = app.profile_manager.get_cauldron()
         for sprite_name, count in list(contents.items())[:4]:
+            if sprite_name not in known_sprites:
+                logger.warning(
+                    "Skipping unknown cauldron sprite '%s' (legacy save data?)",
+                    sprite_name,
+                )
+                continue
             slot = CauldronSlot(
                 size=(95, 95),
                 remove_handler=self._on_cauldron_ingredient_removed,
