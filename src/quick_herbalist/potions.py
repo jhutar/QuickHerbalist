@@ -61,17 +61,11 @@ def load_recipes(path, valid_ingredients=None):
             if not isinstance(sprite_name, str) or not sprite_name:
                 raise RecipeError(f"recipe '{recipe_id}' has an invalid ingredient name")
             if valid_ingredients is not None and sprite_name not in valid_ingredients:
-                raise RecipeError(
-                    f"recipe '{recipe_id}' uses unknown ingredient '{sprite_name}'"
-                )
+                raise RecipeError(f"recipe '{recipe_id}' uses unknown ingredient '{sprite_name}'")
             _validate_positive_int(count, f"recipe '{recipe_id}' ingredient count")
 
         duration = entry.get("duration_seconds")
-        if (
-            not isinstance(duration, (int, float))
-            or isinstance(duration, bool)
-            or duration <= 0
-        ):
+        if not isinstance(duration, (int, float)) or isinstance(duration, bool) or duration <= 0:
             raise RecipeError(f"recipe '{recipe_id}' duration_seconds must be a positive number")
 
         recipes.append(

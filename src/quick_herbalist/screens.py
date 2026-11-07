@@ -2,6 +2,7 @@
 
 from kivy.app import App
 from kivy.core.window import Window
+from kivy.factory import Factory
 from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -307,6 +308,10 @@ class Draggable(FloatLayout):
                 self.click_handler()
             return True
         return super().on_touch_up(touch)
+
+
+# KV rules resolve widget names through the Factory only
+Factory.register("Draggable", cls=Draggable)
 
 
 class CauldronSlot(FloatLayout):
@@ -886,10 +891,6 @@ Builder.load_string("""
             do_scroll_x: True
             do_scroll_y: False
             size_hint_y: 0.16
-            Bar:
-                pos_hint: {'x': 1}
-                size_hint: (0.01, 1)
-                background_normal: ''
             BoxLayout:
                 id: ingredient_strip
                 orientation: 'horizontal'
@@ -982,10 +983,6 @@ Builder.load_string("""
                 do_scroll_x: True
                 do_scroll_y: False
                 size_hint_x: 0.65
-                Bar:
-                    pos_hint: {'x': 1}
-                    size_hint: (0.01, 1)
-                    background_normal: ''
                 BoxLayout:
                     id: potion_strip
                     orientation: 'horizontal'
