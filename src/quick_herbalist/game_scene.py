@@ -9,6 +9,7 @@ from kivy.graphics import Rectangle
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 
+from quick_herbalist.game_rules import GameRules
 from quick_herbalist.localization import _
 
 logger = logging.getLogger(__name__)
@@ -155,12 +156,10 @@ class GameView(Widget):
         self.active = True
         self.profile_manager = profile_manager
         self.sprite_manager = sprite_manager
-        self.win_distance = profile_manager.settings.get("win_distance", 1000.0)
-        self.game_speed = profile_manager.settings.get("game_speed_start", 3.0)
-
-        self.max_speed = 15.0  # Cap game speed to prevent unbounded growth
-        self.score = 0
-        self.distance = 0.0
+        self.rules = GameRules(
+            win_distance=profile_manager.settings.get("win_distance", 1000.0),
+            start_speed=profile_manager.settings.get("game_speed_start", 3.0),
+        )
         self.stone_interval = 3.0
 
         self.flowers = []
@@ -262,8 +261,8 @@ class GameView(Widget):
         self.char_label.text = (
             str(active_name) if active_name else _("No Active Character")
         )
-        self.score_label.text = _("Collected: ") + str(self.score)
-        self.distance_label.text = _("Distance: ") + str(int(self.distance))
+        self.score_label.text = _("Collected: ") + str(self.rules.score)
+        self.distance_label.text = _("Distance: ") + str(int(self.rules.distance))
 
     def update(self, dt):
         """Update game state each frame."""
@@ -273,15 +272,12 @@ class GameView(Widget):
         frame_factor = dt * 60
         self.hero.animate(dt)
 
-        self.game_speed = min(self.game_speed + 0.001 * frame_factor, self.max_speed)
-        self.distance += (self.game_speed / 10) * frame_factor
-
         # Check Win Condition
-        if self.distance >= self.win_distance:
+        if self.rules.step(dt):
             self.game_won()
             return
 
-        self.background.update(self.game_speed * frame_factor)
+        self.background.update(self.rules.game_speed * frame_factor)
 
         # Player Movement Y
         step = 0.01 * 600 * frame_factor
@@ -299,21 +295,22 @@ class GameView(Widget):
                 self.hero.move_by(-step)
 
         for flower in self.flowers[:]:
-            alive = flower.update(self.game_speed * frame_factor)
+            alive = flower.update(self.rules.game_speed * frame_factor)
             if not alive:
                 self.remove_widget(flower)
                 self.flowers.remove(flower)
             elif self.hero.collide_widget(flower):
-                self.score += 1
+                self.rules.on_flower_hit()
                 self.remove_widget(flower)
                 self.flowers.remove(flower)
 
         for stone in self.stones[:]:
-            alive = stone.update(self.game_speed * frame_factor)
+            alive = stone.update(self.rules.game_speed * frame_factor)
             if not alive:
                 self.remove_widget(stone)
                 self.stones.remove(stone)
             elif self.hero.collide_widget(stone):
+                self.rules.on_stone_hit()
                 self.game_over()
 
         self.update_labels()
@@ -323,8 +320,8 @@ class GameView(Widget):
         self.stop_game()
         app = App.get_running_app()
         go_screen = app.root.get_screen("game_over")
-        go_screen.score = self.score
-        go_screen.distance = self.distance
+        go_screen.score = self.rules.score
+        go_screen.distance = self.rules.distance
         app.root.current = "game_over"
 
     def game_won(self):
@@ -332,12 +329,12 @@ class GameView(Widget):
         self.stop_game()
         try:
             self.profile_manager.complete_level()
-            self.profile_manager.add_flowers(self.score)
+            self.profile_manager.add_flowers(self.rules.score)
         except Exception as e:
             logger.error("Failed to save profile on win: %s", e)
         app = App.get_running_app()
         won_screen = app.root.get_screen("game_won")
-        won_screen.score = self.score
+        won_screen.score = self.rules.score
         app.root.current = "game_won"
 
     def on_touch_down(self, touch):
