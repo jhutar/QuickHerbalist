@@ -54,3 +54,35 @@ msgstr "Dandelion"
 #: screens.py
 msgid "flower2_sprite"
 msgstr "Bluebell"
+
+#: screens.py
+msgid "Potion Crafting"
+msgstr ""
+
+#: screens.py
+msgid "Back to Menu"
+msgstr ""
+
+#: screens.py
+msgid "Drag onto cauldron to mix"
+msgstr ""
+
+#: screens.py
+msgid "Ingredients wasted"
+msgstr ""
+
+#: screens.py
+msgid "Brewed: "
+msgstr ""
+
+#: screens.py
+msgid "Duration: "
+msgstr ""
+
+#: potions.py
+msgid "potion_magnetism_name"
+msgstr "Magnetism Potion"
+
+#: potions.py
+msgid "potion_magnetism_description"
+msgstr "Drags flowers up to X pixels from you towards you automatically"

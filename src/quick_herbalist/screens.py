@@ -5,11 +5,15 @@ from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.image import Image
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 
+from quick_herbalist.core.config_parser import get_asset_path
 from quick_herbalist.game_scene import GameView
 from quick_herbalist.localization import _
+from quick_herbalist.potions import match_recipe
 from quick_herbalist.profiles import ProfileError, ProfileErrorCode
 
 
@@ -245,14 +249,309 @@ class GameWonScreen(KeyboardScreen):
         self.manager.current = "game_menu"
 
 
+class Draggable(FloatLayout):
+    """Base widget that can be dragged onto a drop target, with click support.
+
+    Set drop_target, drop_handler, click_handler and drag_image_source before
+    use. A drop fires when the touch ends over drop_target after a real move;
+    a click fires when the touch ends on the widget without moving.
+    """
+
+    def __init__(self, **kwargs):
+        """Initialize drag state and handlers."""
+        super().__init__(**kwargs)
+        self.drop_target = None
+        self.drop_handler = None
+        self.click_handler = None
+        self.drag_image_source = None
+
+    def on_touch_down(self, touch):
+        """Start a drag when the touch lands on this widget."""
+        if self.collide_point(*touch.pos):
+            touch.ud["qh_drag"] = self
+            touch.ud["qh_moved"] = False
+            if self.drag_image_source is not None:
+                proxy = Image(source=self.drag_image_source)
+                proxy.size = (48, 48)
+                proxy.center = (touch.x, touch.y)
+                self.get_root_window().add_widget(proxy)
+                touch.ud["qh_proxy"] = proxy
+            return True
+        return super().on_touch_down(touch)
+
+    def on_touch_move(self, touch):
+        """Move the drag proxy while the touch is held."""
+        if touch.ud.get("qh_drag") is self:
+            if abs(touch.x - touch.sx) + abs(touch.y - touch.sy) > 15:
+                touch.ud["qh_moved"] = True
+            if "qh_proxy" in touch.ud:
+                touch.ud["qh_proxy"].center = (touch.x, touch.y)
+        return super().on_touch_move(touch)
+
+    def on_touch_up(self, touch):
+        """Finish the drag: commit a drop, fire a click, or cancel silently."""
+        if touch.ud.get("qh_drag") is self:
+            moved = touch.ud.pop("qh_moved", False)
+            touch.ud.pop("qh_drag")
+            proxy = touch.ud.pop("qh_proxy", None)
+            if proxy is not None:
+                self.get_root_window().remove_widget(proxy)
+            if (
+                moved
+                and self.drop_target is not None
+                and self.drop_target.collide_point(*touch.pos)
+            ):
+                if self.drop_handler is not None:
+                    self.drop_handler(touch)
+            elif not moved and self.click_handler is not None:
+                self.click_handler()
+            return True
+        return super().on_touch_up(touch)
+
+
+class CauldronSlot(FloatLayout):
+    """One 2x2 grid cell over the cauldron showing a held ingredient."""
+
+    def __init__(self, remove_handler=None, **kwargs):
+        """Create an empty cauldron cell."""
+        super().__init__(**kwargs)
+        self.remove_handler = remove_handler
+        self.sprite_name = None
+        self.opacity = 0
+
+    def set_ingredient(self, sprite_name, count, sprite_widget):
+        """Show one ingredient with a count badge in the lower right corner."""
+        self.sprite_name = sprite_name
+        self.opacity = 1
+        self.clear_widgets()
+        sprite_widget.size = (60, 60)
+        sprite_widget.pos_hint = {"center_x": 0.42, "center_y": 0.55}
+        self.add_widget(sprite_widget)
+        badge = Label(text=str(count), font_size=20, color=(1, 1, 0, 1))
+        badge.pos_hint = {"x": 0.65, "y": 0}
+        self.add_widget(badge)
+
+    def clear_slot(self):
+        """Empty this cell and hide it."""
+        self.sprite_name = None
+        self.opacity = 0
+        self.clear_widgets()
+
+    def on_touch_up(self, touch):
+        """Return the held ingredient to the inventory when the cell is tapped."""
+        if self.sprite_name is not None and self.collide_point(*touch.pos):
+            name = self.sprite_name
+            if self.remove_handler is not None:
+                self.remove_handler(name)
+            return True
+        return super().on_touch_up(touch)
+
+
 class PotionsScreen(KeyboardScreen):
-    """Screen for potion crafting (placeholder)."""
+    """Screen for brewing potions from flowers and preparing the run loadout."""
 
     def on_pre_enter(self):
-        """Initialize potions screen UI."""
+        """Rebuild all brewing UI from the active profile state."""
+        if not hasattr(self, "_recipe_page"):
+            self._recipe_page = 0
+
         self.ids.title.text = _("Potion Crafting")
-        self.ids.desc.text = _("Placeholder Screen: Future crafting system will be here!")
+        self.ids.message_lbl.text = ""
+        self.ids.spoon_lbl.text = _("Drag onto cauldron to mix")
         self.ids.back_btn.text = _("Back to Menu")
+        self.ids.cauldron_img.source = get_asset_path("cauldron.png")
+        self.ids.book_img.source = get_asset_path("star.png")
+        self.ids.spoon.drag_image_source = get_asset_path("star.png")
+        self.ids.spoon.drop_target = self.ids.cauldron_zone
+        self.ids.spoon.drop_handler = lambda _touch: self._on_brew()
+
+        self._render_recipe_book()
+        self._refresh()
+
+    def _refresh(self):
+        """Re-render all dynamic areas of the brewing screen."""
+        self._render_ingredient_strip()
+        self._render_cauldron()
+        self._render_potion_strip()
+        self._render_run_slots()
+
+    def _render_recipe_book(self):
+        """Fill the recipe book panel with the current page's recipe details."""
+        app = App.get_running_app()
+        recipes = getattr(app, "recipes", [])
+        if not recipes:
+            name, desc, ingredients, duration = ("", "", "", "")
+        else:
+            recipe = recipes[self._recipe_page % len(recipes)]
+            lines = [
+                f"{_(sprite_name)} x{count}" for sprite_name, count in recipe.ingredients.items()
+            ]
+            name = _(recipe.name_key)
+            desc = _(recipe.description_key)
+            ingredients = "\n".join(lines)
+            duration = _("Duration: ") + str(int(recipe.duration_seconds))
+        self.ids.recipe_name_lbl.text = name
+        self.ids.recipe_desc_lbl.text = desc
+        self.ids.recipe_ingredients_lbl.text = ingredients
+        self.ids.recipe_duration_lbl.text = duration
+
+    def _flip_recipe(self, direction):
+        """Move the recipe book by one page, wrapping around."""
+        app = App.get_running_app()
+        total = max(1, len(getattr(app, "recipes", [])))
+        self._recipe_page = (self._recipe_page + direction) % total
+        self._render_recipe_book()
+
+    def _render_ingredient_strip(self):
+        """Show one draggable chip per flower type with count > 0."""
+        app = App.get_running_app()
+        strip = self.ids.ingredient_strip
+        strip.clear_widgets()
+        inventory = app.profile_manager.get_inventory()
+        for sprite_name in sorted(inventory):
+            count = inventory[sprite_name]
+            if count <= 0:
+                continue
+            chip = Draggable(size=(130, 80))
+            chip.size_hint = (None, 1)
+            sprite = app.sprite_manager.get(sprite_name)
+            sprite.size = (48, 48)
+            sprite.pos_hint = {"center_x": 0.5, "y": 0.35}
+            label = Label(text=f"{_(sprite_name)} ({count}x)", font_size=16, color=(1, 1, 1, 1))
+            label.size = (130, 24)
+            label.halign = "center"
+            label.pos_hint = {"center_x": 0.5, "y": 0.05}
+            chip.add_widget(sprite)
+            chip.add_widget(label)
+            chip.drop_target = self.ids.cauldron_zone
+            chip.drop_handler = lambda _touch, s=sprite_name: self._on_ingredient_dropped(s)
+            strip.add_widget(chip)
+
+    def _render_cauldron(self):
+        """Show current cauldron contents in the 2x2 slot grid."""
+        app = App.get_running_app()
+        grid = self.ids.cauldron_grid
+        grid.clear_widgets()
+        contents = app.profile_manager.get_cauldron()
+        for sprite_name, count in list(contents.items())[:4]:
+            slot = CauldronSlot(
+                size=(95, 95),
+                remove_handler=self._on_cauldron_ingredient_removed,
+            )
+            slot.size_hint = (None, None)
+            slot.set_ingredient(sprite_name, count, app.sprite_manager.get(sprite_name))
+            grid.add_widget(slot)
+
+    def _render_potion_strip(self):
+        """Show one draggable/clickable chip per potion with count > 0."""
+        app = App.get_running_app()
+        strip = self.ids.potion_strip
+        strip.clear_widgets()
+        for potion_id in sorted(app.profile_manager.get_potions()):
+            count = app.profile_manager.get_potion_count(potion_id)
+            if count <= 0:
+                continue
+            chip = Draggable(size=(150, 70))
+            chip.size_hint = (None, 1)
+            icon = Image(source=get_asset_path("star.png"))
+            icon.size = (40, 40)
+            icon.pos_hint = {"x": 0.02, "center_y": 0.5}
+            label = Label(
+                text=f"{_(potion_id + '_name')} ({count}x)", font_size=16, color=(1, 1, 1, 1)
+            )
+            label.size = (105, 30)
+            label.pos_hint = {"x": 0.25, "center_y": 0.5}
+            chip.add_widget(icon)
+            chip.add_widget(label)
+            chip.drop_target = self.ids.run_slot_box
+            chip.drop_handler = lambda touch, p=potion_id: self._on_potion_dropped(p, touch)
+            chip.click_handler = lambda p=potion_id: self._on_potion_clicked(p)
+            strip.add_widget(chip)
+
+    def _render_run_slots(self):
+        """Show the three next-run slots; empty ones labelled 1, 2, 3."""
+        app = App.get_running_app()
+        box = self.ids.run_slot_box
+        box.clear_widgets()
+        self._slot_buttons = []
+        for index, potion_id in enumerate(app.profile_manager.get_run_loadout()):
+            text = _(potion_id + "_name") if potion_id else str(index + 1)
+            btn = Button(text=text, font_size=16)
+            btn.bind(on_release=lambda _btn, i=index: self._on_run_slot_clicked(i))
+            box.add_widget(btn)
+            self._slot_buttons.append(btn)
+
+    def _show_message(self, text, ok):
+        """Show a status message, green on success and red on failure."""
+        self.ids.message_lbl.text = text
+        self.ids.message_lbl.color = (0.3, 1, 0.3, 1) if ok else (1, 0.3, 0.3, 1)
+
+    def _on_ingredient_dropped(self, sprite_name):
+        """Move one inventory flower unit into the cauldron."""
+        app = App.get_running_app()
+        try:
+            app.profile_manager.move_flower_to_cauldron(sprite_name)
+        except ProfileError as e:
+            self._show_message(str(e), ok=False)
+            return
+        self._refresh()
+
+    def _on_cauldron_ingredient_removed(self, sprite_name):
+        """Move one cauldron ingredient unit back to the inventory."""
+        app = App.get_running_app()
+        try:
+            app.profile_manager.move_cauldron_ingredient_to_inventory(sprite_name)
+        except ProfileError as e:
+            self._show_message(str(e), ok=False)
+            return
+        self._refresh()
+
+    def _on_brew(self):
+        """Mix the cauldron: brew the matching recipe or waste the ingredients."""
+        app = App.get_running_app()
+        contents = app.profile_manager.get_cauldron()
+        if not contents:
+            return
+        recipe = match_recipe(contents, getattr(app, "recipes", []))
+        app.profile_manager.clear_cauldron()
+        if recipe is None:
+            self._show_message(_("Ingredients wasted"), ok=False)
+        else:
+            app.profile_manager.add_potion(recipe.id)
+            self._show_message(_("Brewed: ") + _(recipe.name_key), ok=True)
+        self._refresh()
+
+    def _on_potion_clicked(self, potion_id):
+        """Place the potion into the first free run slot."""
+        self._assign_potion(potion_id, None)
+
+    def _on_potion_dropped(self, potion_id, touch):
+        """Place the potion into the run slot under the touch, else the first free one."""
+        for index, btn in enumerate(self._slot_buttons):
+            if btn.collide_point(*touch.pos):
+                self._assign_potion(potion_id, index)
+                return
+        self._assign_potion(potion_id, None)
+
+    def _assign_potion(self, potion_id, slot_index):
+        """Assign a potion to a run slot, showing an error message on failure."""
+        app = App.get_running_app()
+        try:
+            app.profile_manager.assign_potion_to_slot(potion_id, slot_index)
+        except ProfileError as e:
+            self._show_message(str(e), ok=False)
+            return
+        self._refresh()
+
+    def _on_run_slot_clicked(self, slot_index):
+        """Return the potion from the clicked slot back to the potions inventory."""
+        app = App.get_running_app()
+        try:
+            app.profile_manager.release_run_slot(slot_index)
+        except ProfileError as e:
+            self._show_message(str(e), ok=False)
+            return
+        self._refresh()
 
     def on_back(self):
         """Return to game menu hub when leaving the potions screen."""
@@ -574,22 +873,132 @@ Builder.load_string("""
             size: self.size
     BoxLayout:
         orientation: 'vertical'
-        padding: 50
-        spacing: 20
+        padding: 20
+        spacing: 10
         Label:
             id: title
-            font_size: 40
+            font_size: 32
             color: 1, 1, 1, 1
         Label:
-            id: desc
-            font_size: 24
-            color: 0.7, 0.7, 0.7, 1
+            id: message_lbl
+            font_size: 20
+        ScrollView:
+            do_scroll_x: True
+            do_scroll_y: False
+            size_hint_y: 0.16
+            Bar:
+                pos_hint: {'x': 1}
+                size_hint: (0.01, 1)
+                background_normal: ''
+            BoxLayout:
+                id: ingredient_strip
+                orientation: 'horizontal'
+                spacing: 8
+                size_hint_x: None
+                width: self.minimum_width
+                padding: 4
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: 0.55
+            spacing: 10
+            Button:
+                id: prev_recipe_btn
+                size_hint_x: 0.08
+                font_size: 22
+                text: '<<<'
+                on_release: root._flip_recipe(-1)
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_x: 0.3
+                spacing: 4
+                padding: 8
+                Image:
+                    id: book_img
+                    size: (60, 60)
+                    pos_hint: {'center_x': 0.5}
+                Label:
+                    id: recipe_name_lbl
+                    font_size: 20
+                    color: 1, 1, 1, 1
+                    halign: 'center'
+                Label:
+                    id: recipe_desc_lbl
+                    font_size: 14
+                    color: 0.8, 0.8, 0.8, 1
+                    halign: 'center'
+                Label:
+                    id: recipe_ingredients_lbl
+                    font_size: 16
+                    color: 0.6, 1, 0.6, 1
+                    halign: 'center'
+                Label:
+                    id: recipe_duration_lbl
+                    font_size: 14
+                    color: 0.8, 0.8, 0.8, 1
+                    halign: 'center'
+            Button:
+                id: next_recipe_btn
+                size_hint_x: 0.08
+                font_size: 22
+                text: '>>>'
+                on_release: root._flip_recipe(1)
+            FloatLayout:
+                id: cauldron_zone
+                Image:
+                    id: cauldron_img
+                    size: (240, 240)
+                    pos_hint: {'center_x': 0.6, 'center_y': 0.55}
+                GridLayout:
+                    id: cauldron_grid
+                    cols: 2
+                    spacing: 4
+                    size: (200, 200)
+                    pos_hint: {'center_x': 0.6, 'center_y': 0.55}
+                BoxLayout:
+                    orientation: 'vertical'
+                    size: (90, 110)
+                    pos_hint: {'x': 0, 'y': 0}
+                    Draggable:
+                        id: spoon
+                        size_hint_y: 0.8
+                        Image:
+                            size: (70, 70)
+                            pos_hint: {'center': (0.5, 0.5)}
+                    Label:
+                        id: spoon_lbl
+                        font_size: 12
+                        halign: 'center'
+                        color: 0.8, 0.8, 0.8, 1
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: 0.18
+            spacing: 10
+            BoxLayout:
+                id: run_slot_box
+                orientation: 'horizontal'
+                size_hint_x: 0.35
+                spacing: 6
+            ScrollView:
+                do_scroll_x: True
+                do_scroll_y: False
+                size_hint_x: 0.65
+                Bar:
+                    pos_hint: {'x': 1}
+                    size_hint: (0.01, 1)
+                    background_normal: ''
+                BoxLayout:
+                    id: potion_strip
+                    orientation: 'horizontal'
+                    spacing: 8
+                    size_hint_x: None
+                    width: self.minimum_width
+                    padding: 4
         Button:
             id: back_btn
-            size_hint: (0.4, 0.15)
+            size_hint: (0.3, 0.1)
             pos_hint: {'center_x': 0.5}
-            font_size: 20
-            on_release: root.manager.current = 'game_menu'
+            font_size: 16
+            on_release: root.on_back()
 
 <GreenhouseScreen>:
     canvas.before:

@@ -54,3 +54,35 @@ msgstr "Pampeliška"
 #: screens.py
 msgid "flower2_sprite"
 msgstr "Zvonkovka"
+
+#: screens.py
+msgid "Potion Crafting"
+msgstr "Vytváření lektvarů"
+
+#: screens.py
+msgid "Back to Menu"
+msgstr "Zpět do menu"
+
+#: screens.py
+msgid "Drag onto cauldron to mix"
+msgstr "Přetáhni do hrnce pro promíchání"
+
+#: screens.py
+msgid "Ingredients wasted"
+msgstr "Suroviny prohozeny"
+
+#: screens.py
+msgid "Brewed: "
+msgstr "Vymícháno: "
+
+#: screens.py
+msgid "Duration: "
+msgstr "Trvání: "
+
+#: potions.py
+msgid "potion_magnetism_name"
+msgstr "Magnetická píl"
+
+#: potions.py
+msgid "potion_magnetism_description"
+msgstr "Automaticky táhne květy ve vzdálenosti do X pixelů směrem k tobě"
