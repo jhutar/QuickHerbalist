@@ -51,9 +51,7 @@ def test_valid_load_returns_definitions(tmp_path):
     assert level.start_speed == 3.0
     assert level.max_speed == 15.0
     assert level.flower == SpawnDefinition(sprite="flower_sprite", interval=1.0)
-    assert level.stone == StoneDefinition(
-        sprite="stone_sprite", interval=3.0, ramp_to=0.05
-    )
+    assert level.stone == StoneDefinition(sprite="stone_sprite", interval=3.0, ramp_to=0.05)
 
 
 def test_stone_ramp_to_optional(tmp_path):
@@ -74,9 +72,7 @@ def test_unknown_top_level_key_rejected(tmp_path):
 
 def test_unknown_key_inside_spawn_rejected(tmp_path):
     """Unknown keys inside flower/stone sub-mappings are load errors."""
-    yaml_text = VALID_YAML.replace(
-        "      interval: 1.0\n", "      interval: 1.0\n      count: 3\n"
-    )
+    yaml_text = VALID_YAML.replace("      interval: 1.0\n", "      interval: 1.0\n      count: 3\n")
     with pytest.raises(LevelConfigError, match="flower: unknown key\\(s\\): \\['count'\\]"):
         load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
 
