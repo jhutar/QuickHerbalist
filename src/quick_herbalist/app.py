@@ -38,6 +38,8 @@ class QuickHerbalistApp(App):
         logger = logging.getLogger(__name__)
         self.profile_manager = ProfileManager()
         self.sprite_manager = SpriteManager()
+        # Level chosen on the game menu; None means the next available level.
+        self.selected_level_number = None
         try:
             self.levels = load_levels(get_asset_path("levels.yaml"), self.sprite_manager.names())
         except LevelConfigError as e:

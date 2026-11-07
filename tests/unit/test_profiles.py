@@ -278,3 +278,28 @@ def test_next_level_number_tracks_completions(temp_config_dir):
     pm.complete_level()
     pm.complete_level()
     assert pm.next_level_number() == 3
+
+
+def test_playable_level_numbers_no_active_character(temp_config_dir):
+    # Without an active character only level 1 is playable
+    pm = ProfileManager(config_dir=temp_config_dir)
+    assert pm.playable_level_numbers() == [1]
+
+
+def test_playable_level_numbers_tracks_completions(temp_config_dir):
+    # Completed levels stay playable plus the next level
+    pm = ProfileManager(config_dir=temp_config_dir)
+    pm.create_character("herb")
+    assert pm.playable_level_numbers() == [1]
+    pm.complete_level()
+    pm.complete_level()
+    assert pm.playable_level_numbers() == [1, 2, 3]
+
+
+def test_playable_level_numbers_capped_by_max_levels(temp_config_dir):
+    # Playable list never exceeds the number of configured levels
+    pm = ProfileManager(config_dir=temp_config_dir)
+    pm.create_character("herb")
+    pm.complete_level()
+    pm.complete_level()
+    assert pm.playable_level_numbers(max_levels=2) == [1, 2]

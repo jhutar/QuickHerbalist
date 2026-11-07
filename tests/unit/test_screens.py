@@ -2,7 +2,7 @@
 
 import sys
 import types
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 
 # Setup mocks for Kivy BEFORE importing anything that uses it
 kivy_module = types.ModuleType("kivy")
@@ -90,18 +90,35 @@ def _make_app(next_level=1):
     """Build a fake running app with a profile manager."""
     app = MagicMock()
     app.profile_manager.next_level_number.return_value = next_level
+    app.profile_manager.playable_level_numbers.return_value = list(range(1, next_level + 1))
+    app.levels = [1, 2, 3]
     kivy_app_module.App.get_running_app.return_value = app
     return app
 
 
-def test_game_menu_start_button_shows_next_level():
-    """Hub start button label must carry the next available level number."""
-    _make_app(next_level=3)
+def test_game_menu_builds_button_per_playable_level():
+    """Hub must show one Start Level button per playable level."""
+    app = _make_app(next_level=3)
+    kivy_button_module.Button.reset_mock()
 
     screen = GameMenuScreen()
     screen.on_pre_enter()
 
-    assert screen.ids.start_btn.text == "Start Run — Level 3"
+    assert app.profile_manager.playable_level_numbers.call_args == call(max_levels=3)
+    texts = [c.kwargs["text"] for c in kivy_button_module.Button.call_args_list]
+    assert texts == ["Start Level 1", "Start Level 2", "Start Level 3"]
+    assert screen.ids.level_buttons.add_widget.call_count == 3
+
+
+def test_game_menu_level_button_starts_chosen_level():
+    """Pressing a level button must store the level and open the game."""
+    app = _make_app(next_level=3)
+
+    screen = GameMenuScreen()
+    screen.start_level(2)
+
+    assert app.selected_level_number == 2
+    assert screen.manager.current == "game"
 
 
 def test_main_menu_start_goes_to_game_menu():
@@ -113,12 +130,15 @@ def test_main_menu_start_goes_to_game_menu():
 
 
 def test_game_menu_s_key_starts_run():
-    """Pressing 's' on the hub must go straight into the game."""
+    """Pressing 's' on the hub must go straight into the game at the next level."""
+    app = _make_app(next_level=3)
+
     screen = GameMenuScreen()
 
     handled = screen._on_keyboard_down(MagicMock(), (0, "s"), "s", set())
 
     assert handled is True
+    assert app.selected_level_number == 3
     assert screen.manager.current == "game"
 
 

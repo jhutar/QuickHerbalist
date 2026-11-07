@@ -163,6 +163,16 @@ class ProfileManager:
             return 1
         return char.get("levels_completed", 0) + 1
 
+    def playable_level_numbers(self, max_levels=None):
+        """Return 1-based level numbers the active character may start playing.
+
+        Includes all completed levels plus the next one, capped at max_levels.
+        """
+        next_level = self.next_level_number()
+        if max_levels is not None:
+            next_level = min(next_level, max_levels)
+        return list(range(1, next_level + 1))
+
     def complete_level(self):
         """Increment levels completed for active character."""
         if not self.active_character_name or self.active_character_name not in self.characters:

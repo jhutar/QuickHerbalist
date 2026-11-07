@@ -154,13 +154,15 @@ class Stone(MovingWidget):
 class GameView(Widget):
     """Game view widget managing the game scene for one level definition."""
 
-    def __init__(self, profile_manager, sprite_manager, levels, **kwargs):
+    def __init__(self, profile_manager, sprite_manager, levels, level_number=None, **kwargs):
         """Initialize game view with widgets, labels, and the level definition."""
         super().__init__(**kwargs)
         self.active = True
         self.profile_manager = profile_manager
         self.sprite_manager = sprite_manager
-        self.level_number = profile_manager.next_level_number()
+        if level_number is None:
+            level_number = profile_manager.next_level_number()
+        self.level_number = level_number
         self.level = level_for(levels, self.level_number)
         self.rules = GameRules(
             win_distance=self.level.distance,

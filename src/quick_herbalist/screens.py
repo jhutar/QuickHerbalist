@@ -92,14 +92,27 @@ class GameMenuScreen(KeyboardScreen):
 
     def on_pre_enter(self):
         """Initialize game menu labels and buttons before entering."""
-        app = App.get_running_app()
         self.ids.title.text = _("Game Menu")
-        self.ids.start_btn.text = _("Start Run — Level ") + str(
-            app.profile_manager.next_level_number()
-        )
+        self._build_level_buttons()
         self.ids.potions_btn.text = _("Create Potions")
         self.ids.greenhouse_btn.text = _("Greenhouse")
         self.ids.back_btn.text = _("Back to Main Menu")
+
+    def _build_level_buttons(self):
+        """Build one Start Level button per playable level."""
+        app = App.get_running_app()
+        numbers = app.profile_manager.playable_level_numbers(max_levels=len(app.levels))
+        layout = self.ids.level_buttons
+        layout.clear_widgets()
+        for number in numbers:
+            btn = Button(
+                text=_("Start Level ") + str(number),
+                size_hint_y=None,
+                height=50,
+                font_size=18,
+            )
+            btn.bind(on_release=lambda _btn, n=number: self.start_level(n))
+            layout.add_widget(btn)
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
         """Handle game menu keyboard shortcuts."""
@@ -115,8 +128,15 @@ class GameMenuScreen(KeyboardScreen):
             return True
         return super()._on_keyboard_down(keyboard, keycode, text, modifiers)
 
+    def start_level(self, level_number):
+        """Start a run at the given level number."""
+        App.get_running_app().selected_level_number = level_number
+        self.manager.current = "game"
+
     def start_run(self):
         """Start a run at the next available level."""
+        app = App.get_running_app()
+        app.selected_level_number = app.profile_manager.next_level_number()
         self.manager.current = "game"
 
 
@@ -295,7 +315,12 @@ class GameScreen(Screen):
     def on_enter(self):
         """Initialize game view and request keyboard on entry."""
         app = App.get_running_app()
-        self.game_view = GameView(app.profile_manager, app.sprite_manager, app.levels)
+        self.game_view = GameView(
+            app.profile_manager,
+            app.sprite_manager,
+            app.levels,
+            level_number=app.selected_level_number,
+        )
         self.add_widget(self.game_view)
         self.game_view.start_game()
 
@@ -397,13 +422,10 @@ Builder.load_string("""
             font_size: 40
             color: 1, 1, 1, 1
         BoxLayout:
-            orientation: 'horizontal'
+            id: level_buttons
+            orientation: 'vertical'
             spacing: 10
-            size_hint_y: 0.15
-            Button:
-                id: start_btn
-                font_size: 18
-                on_release: root.start_run()
+            size_hint_y: 0.5
         BoxLayout:
             orientation: 'horizontal'
             spacing: 10
