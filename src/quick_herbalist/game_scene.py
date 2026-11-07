@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 SCREEN_W = 800
 SCREEN_H = 600
+SPAWN_POSITION_RETRIES = 10
 
 
 class Background(Widget):
@@ -129,21 +130,25 @@ class MovingWidget(Widget):
 class Flower(MovingWidget):
     """Flower object to be collected."""
 
-    def __init__(self, sprite_manager, sprite_name, **kwargs):
-        """Initialize flower at random position using the level's flower sprite."""
-        x = SCREEN_W + random.randint(50, 200)
-        y = random.randint(0, SCREEN_H - 32)
-        super().__init__(sprite_manager, sprite_name, (32, 32), x, y, **kwargs)
+    SIZE = (32, 32)
+    SPAWN_X_MIN = 50
+    SPAWN_X_MAX = 200
+
+    def __init__(self, sprite_manager, sprite_name, x, y, **kwargs):
+        """Initialize flower at the given position using the level's flower sprite."""
+        super().__init__(sprite_manager, sprite_name, self.SIZE, x, y, **kwargs)
 
 
 class Stone(MovingWidget):
     """Stone object that causes game over."""
 
-    def __init__(self, sprite_manager, sprite_name, **kwargs):
-        """Initialize stone at random position using the level's stone sprite."""
-        x = SCREEN_W + random.randint(100, 300)
-        y = random.randint(0, SCREEN_H - 64)
-        super().__init__(sprite_manager, sprite_name, (64, 53), x, y, **kwargs)
+    SIZE = (64, 53)
+    SPAWN_X_MIN = 100
+    SPAWN_X_MAX = 300
+
+    def __init__(self, sprite_manager, sprite_name, x, y, **kwargs):
+        """Initialize stone at the given position using the level's stone sprite."""
+        super().__init__(sprite_manager, sprite_name, self.SIZE, x, y, **kwargs)
 
 
 class GameView(Widget):
@@ -231,11 +236,36 @@ class GameView(Widget):
         Clock.unschedule(self.spawn_flower)
         Clock.unschedule(self.spawn_stone)
 
+    def _spawn_position(self, cls):
+        """Pick a random spawn position that does not overlap live entities.
+
+        Returns (x, y) or None if no free spot is found after retries.
+        """
+        for _attempt in range(SPAWN_POSITION_RETRIES):
+            x = SCREEN_W + random.randint(cls.SPAWN_X_MIN, cls.SPAWN_X_MAX)
+            y = random.randint(0, SCREEN_H - cls.SIZE[1])
+            if not self._overlaps_entity(x, y, cls.SIZE):
+                return x, y
+        return None
+
+    def _overlaps_entity(self, x, y, size):
+        """Return True if the given rectangle overlaps any live flower or stone."""
+        for entity in self.flowers + self.stones:
+            ex, ey = entity.pos
+            ew, eh = entity.size
+            if x < ex + ew and x + size[0] > ex and y < ey + eh and y + size[1] > ey:
+                return True
+        return False
+
     def spawn_flower(self, dt):
-        """Spawn a flower at a random position."""
+        """Spawn a flower at a random position that does not overlap existing entities."""
         if not self.active:
             return
-        flower = Flower(self.sprite_manager, self.level.flower.sprite)
+        position = self._spawn_position(Flower)
+        if position is None:
+            logger.warning("No free spawn position for flower, skipping spawn")
+            return
+        flower = Flower(self.sprite_manager, self.level.flower.sprite, *position)
         self.add_widget(flower)
         self.flowers.append(flower)
 
@@ -244,12 +274,16 @@ class GameView(Widget):
         Clock.schedule_once(self.spawn_stone, self.rules.next_stone_interval())
 
     def spawn_stone(self, dt):
-        """Spawn a stone and schedule the next one."""
+        """Spawn a stone at a free position and schedule the next one."""
         if not self.active:
             return
-        stone = Stone(self.sprite_manager, self.level.stone.sprite)
-        self.add_widget(stone)
-        self.stones.append(stone)
+        position = self._spawn_position(Stone)
+        if position is None:
+            logger.warning("No free spawn position for stone, skipping spawn")
+        else:
+            stone = Stone(self.sprite_manager, self.level.stone.sprite, *position)
+            self.add_widget(stone)
+            self.stones.append(stone)
 
         self.schedule_next_stone()
 
