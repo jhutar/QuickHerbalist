@@ -1,14 +1,16 @@
 import os
+
+from kivy.clock import Clock
+from kivy.properties import ListProperty, ObjectProperty, StringProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
-from kivy.uix.label import Label
-from kivy.uix.textinput import TextInput
-from kivy.uix.scrollview import ScrollView
-from kivy.properties import ListProperty, ObjectProperty, StringProperty
-from kivy.uix.gridlayout import GridLayout
-from kivy.clock import Clock
-from kivy.uix.popup import Popup
 from kivy.uix.filechooser import FileChooserListView
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.label import Label
+from kivy.uix.popup import Popup
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.textinput import TextInput
+
 from quick_herbalist.core.config_parser import get_asset_path
 
 
@@ -69,9 +71,7 @@ class FrameCard(BoxLayout):
         self.clear_widgets()
 
         # Row 1: Header (acting as select / fold trigger) + Reorder (Up/Down) + Delete
-        row1 = BoxLayout(
-            orientation="horizontal", size_hint_y=None, height="30dp", spacing=5
-        )
+        row1 = BoxLayout(orientation="horizontal", size_hint_y=None, height="30dp", spacing=5)
 
         atlas_id_disp = self.frame_data.get("atlas_id", "Unsaved")
         header_text = f"Frame #{self.index} ({atlas_id_disp})"
@@ -80,9 +80,7 @@ class FrameCard(BoxLayout):
         self.select_btn = Button(
             text=header_text,
             size_hint_x=0.5,
-            background_color=[0.2, 0.6, 1, 1]
-            if self.is_selected
-            else [0.3, 0.3, 0.3, 1],
+            background_color=[0.2, 0.6, 1, 1] if self.is_selected else [0.3, 0.3, 0.3, 1],
             bold=self.is_selected,
         )
         self.select_btn.bind(on_release=self._on_select_clicked)
@@ -99,9 +97,7 @@ class FrameCard(BoxLayout):
         row1.add_widget(down_btn)
 
         # Delete button
-        remove_btn = Button(
-            text="Delete", size_hint_x=0.3, background_color=[0.8, 0.2, 0.2, 1]
-        )
+        remove_btn = Button(text="Delete", size_hint_x=0.3, background_color=[0.8, 0.2, 0.2, 1])
         remove_btn.bind(on_release=self._on_remove_clicked)
         row1.add_widget(remove_btn)
         self.add_widget(row1)
@@ -111,9 +107,7 @@ class FrameCard(BoxLayout):
             return
 
         # Row 2: Atlas ID (read-only Label) + Duration
-        row2 = BoxLayout(
-            orientation="horizontal", size_hint_y=None, height="35dp", spacing=5
-        )
+        row2 = BoxLayout(orientation="horizontal", size_hint_y=None, height="35dp", spacing=5)
         row2.add_widget(Label(text="Atlas ID:", size_hint_x=0.2))
 
         self.atlas_id_label = Label(
@@ -137,9 +131,7 @@ class FrameCard(BoxLayout):
         self.add_widget(row2)
 
         # Row 3: Image + Browse + Status Indicator (on a separate row)
-        row3 = BoxLayout(
-            orientation="horizontal", size_hint_y=None, height="35dp", spacing=5
-        )
+        row3 = BoxLayout(orientation="horizontal", size_hint_y=None, height="35dp", spacing=5)
         row3.add_widget(Label(text="Img:", size_hint_x=0.2))
 
         self.image_input = SelectableTextInput(
@@ -159,9 +151,7 @@ class FrameCard(BoxLayout):
         self.add_widget(row3)
 
         # Row 4: Dimensions/Coordinates (on a separate row)
-        row4 = BoxLayout(
-            orientation="horizontal", size_hint_y=None, height="35dp", spacing=5
-        )
+        row4 = BoxLayout(orientation="horizontal", size_hint_y=None, height="35dp", spacing=5)
         row4.add_widget(Label(text="X:", size_hint_x=0.1))
         self.x_input = SelectableTextInput(
             text=str(self.frame_data.get("x", 0)),
@@ -227,9 +217,7 @@ class FrameCard(BoxLayout):
         if assets_dir.endswith(os.sep):
             assets_dir = assets_dir[:-1]
 
-        file_chooser = FileChooserListView(
-            path=assets_dir, filters=["*.png", "*.jpg", "*.jpeg"]
-        )
+        file_chooser = FileChooserListView(path=assets_dir, filters=["*.png", "*.jpg", "*.jpeg"])
         content.add_widget(file_chooser)
 
         btn_layout = BoxLayout(size_hint_y=None, height="40dp", spacing=10)
@@ -240,9 +228,7 @@ class FrameCard(BoxLayout):
         btn_layout.add_widget(cancel_btn)
         content.add_widget(btn_layout)
 
-        popup = Popup(
-            title="Choose Image File from Assets", content=content, size_hint=(0.9, 0.9)
-        )
+        popup = Popup(title="Choose Image File from Assets", content=content, size_hint=(0.9, 0.9))
 
         def on_select(btn_instance):
             if file_chooser.selection:
@@ -321,9 +307,9 @@ class SequenceEditorWidget(BoxLayout):
     A widget that allows editing the sequence of frames for a sprite.
     """
 
-    frames = ListProperty(
-        []
-    )  # List of dicts: {'atlas_id': str, 'duration_ms': int, 'image': str, 'x': int, 'y': int, 'w': int, 'h': int}
+    # List of dicts: {'atlas_id': str, 'duration_ms': int, 'image': str,
+    # 'x': int, 'y': int, 'w': int, 'h': int}
+    frames = ListProperty([])
     sprite_name = StringProperty("")
     save_callback = ObjectProperty(None)
     frames_changed_callback = ObjectProperty(None)
@@ -403,7 +389,7 @@ class SequenceEditorWidget(BoxLayout):
             return
 
         # Rule 4: Given I have a frame selected, When I add a new frame,
-        # Then the new frame defaults to the same image and its x coordinate is advanced by its width.
+        # Then the new frame defaults to the same image with x advanced by its width.
         if 0 <= self.selected_frame_index < len(self.frames):
             ref_frame = self.frames[self.selected_frame_index]
             w = ref_frame.get("w", 32)

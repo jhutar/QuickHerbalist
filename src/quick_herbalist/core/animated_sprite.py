@@ -1,7 +1,7 @@
-from kivy.uix.widget import Widget
-from kivy.graphics import Rectangle, Color
 from kivy.clock import Clock
 from kivy.core.image import Image as CoreImage
+from kivy.graphics import Color, Rectangle
+from kivy.uix.widget import Widget
 
 
 class AnimationStateController:
@@ -42,9 +42,7 @@ class AnimationStateController:
 
         if self.current_time >= duration:
             self.current_time = 0.0
-            self.current_frame_index = (self.current_frame_index + 1) % len(
-                self.frames_data
-            )
+            self.current_frame_index = (self.current_frame_index + 1) % len(self.frames_data)
             return True
 
         return False

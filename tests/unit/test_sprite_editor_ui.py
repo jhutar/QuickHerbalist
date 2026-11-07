@@ -1,8 +1,9 @@
-import sys
 import json
-import yaml
-import pytest
+import sys
 from unittest.mock import MagicMock, patch
+
+import pytest
+import yaml
 
 
 # 1. Setup descriptor properties to mock Kivy properties before importing UI elements
@@ -169,7 +170,9 @@ sys.modules["kivy.core.image"].Image = MockCoreImage
 
 # 2. Import components under test now that mocks are active
 from quick_herbalist.tools.sprite_editor.ui.main_layout import SpriteEditorMainLayout  # noqa: E402
-from quick_herbalist.tools.sprite_editor.ui.sequence_editor import SequenceEditorWidget  # noqa: E402
+from quick_herbalist.tools.sprite_editor.ui.sequence_editor import (  # noqa: E402
+    SequenceEditorWidget,
+)
 
 
 @pytest.fixture
@@ -202,12 +205,8 @@ sprites:
 
 def test_main_layout_load_and_select_sprite(mock_get_asset_path):
     yaml_path, atlas_path = mock_get_asset_path
-    with patch(
-        "quick_herbalist.tools.sprite_editor.ui.main_layout.get_asset_path"
-    ) as mock_gap:
-        mock_gap.side_effect = lambda filename: (
-            yaml_path if "yaml" in filename else atlas_path
-        )
+    with patch("quick_herbalist.tools.sprite_editor.ui.main_layout.get_asset_path") as mock_gap:
+        mock_gap.side_effect = lambda filename: yaml_path if "yaml" in filename else atlas_path
 
         layout = SpriteEditorMainLayout()
 
@@ -266,12 +265,8 @@ def test_sequence_editor_add_frame_auto_advance(mock_get_asset_path):
 
 def test_main_layout_create_and_delete_sprite(mock_get_asset_path):
     yaml_path, atlas_path = mock_get_asset_path
-    with patch(
-        "quick_herbalist.tools.sprite_editor.ui.main_layout.get_asset_path"
-    ) as mock_gap:
-        mock_gap.side_effect = lambda filename: (
-            yaml_path if "yaml" in filename else atlas_path
-        )
+    with patch("quick_herbalist.tools.sprite_editor.ui.main_layout.get_asset_path") as mock_gap:
+        mock_gap.side_effect = lambda filename: yaml_path if "yaml" in filename else atlas_path
 
         layout = SpriteEditorMainLayout()
 
@@ -290,12 +285,8 @@ def test_main_layout_create_and_delete_sprite(mock_get_asset_path):
 
 def test_main_layout_save_sprite(mock_get_asset_path):
     yaml_path, atlas_path = mock_get_asset_path
-    with patch(
-        "quick_herbalist.tools.sprite_editor.ui.main_layout.get_asset_path"
-    ) as mock_gap:
-        mock_gap.side_effect = lambda filename: (
-            yaml_path if "yaml" in filename else atlas_path
-        )
+    with patch("quick_herbalist.tools.sprite_editor.ui.main_layout.get_asset_path") as mock_gap:
+        mock_gap.side_effect = lambda filename: yaml_path if "yaml" in filename else atlas_path
 
         layout = SpriteEditorMainLayout()
         layout.select_sprite("hero_run")
@@ -317,9 +308,9 @@ def test_main_layout_save_sprite(mock_get_asset_path):
         layout.on_save_callback("hero_run", layout.editor.frames)
 
         # Read back from yaml and atlas to confirm
-        with open(yaml_path, "r") as f:
+        with open(yaml_path) as f:
             yaml_data = yaml.safe_load(f)
-        with open(atlas_path, "r") as f:
+        with open(atlas_path) as f:
             atlas_data = json.load(f)
 
         assert "hero_run" in yaml_data["sprites"]
@@ -335,12 +326,8 @@ def test_main_layout_save_sprite(mock_get_asset_path):
 
 def test_save_button_triggers_on_save_callback(mock_get_asset_path):
     yaml_path, atlas_path = mock_get_asset_path
-    with patch(
-        "quick_herbalist.tools.sprite_editor.ui.main_layout.get_asset_path"
-    ) as mock_gap:
-        mock_gap.side_effect = lambda filename: (
-            yaml_path if "yaml" in filename else atlas_path
-        )
+    with patch("quick_herbalist.tools.sprite_editor.ui.main_layout.get_asset_path") as mock_gap:
+        mock_gap.side_effect = lambda filename: yaml_path if "yaml" in filename else atlas_path
 
         layout = SpriteEditorMainLayout()
         layout.select_sprite("hero_run")
@@ -362,9 +349,9 @@ def test_save_button_triggers_on_save_callback(mock_get_asset_path):
         layout.editor.save_sequence(None)
 
         # Read back from yaml and atlas to confirm
-        with open(yaml_path, "r") as f:
+        with open(yaml_path) as f:
             yaml_data = yaml.safe_load(f)
-        with open(atlas_path, "r") as f:
+        with open(atlas_path) as f:
             atlas_data = json.load(f)
 
         assert yaml_data["sprites"]["hero_run"]["frames"][0]["duration_ms"] == 500

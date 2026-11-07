@@ -1,7 +1,8 @@
 import sys
-import pytest
-from unittest.mock import MagicMock
 import types
+from unittest.mock import MagicMock
+
+import pytest
 
 # 1. Setup mocks for Kivy BEFORE importing anything that uses it
 kivy_module = types.ModuleType("kivy")
@@ -129,9 +130,7 @@ def test_animated_sprite_update(dummy_configs):
 def test_sprite_manager_default_paths(monkeypatch):
     from unittest.mock import patch
 
-    with patch(
-        "quick_herbalist.core.sprite_manager.get_asset_path"
-    ) as mock_get_asset_path:
+    with patch("quick_herbalist.core.sprite_manager.get_asset_path") as mock_get_asset_path:
         mock_get_asset_path.side_effect = lambda filename: f"/dummy/assets/{filename}"
         sm = SpriteManager()
         assert sm.yaml_path == "/dummy/assets/sprites.yaml"
@@ -142,6 +141,7 @@ def test_sprite_manager_default_paths(monkeypatch):
 
 def test_real_assets_integrity_and_instantiation():
     import os
+
     from quick_herbalist.core.config_parser import get_asset_path
     from quick_herbalist.core.sprite_config import SpriteConfig
 

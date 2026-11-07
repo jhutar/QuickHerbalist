@@ -1,8 +1,8 @@
 """Game-side sprite access: hands out AnimatedSprites built from resolved frames."""
 
+from quick_herbalist.core.animated_sprite import AnimatedSprite
 from quick_herbalist.core.config_parser import get_asset_path
 from quick_herbalist.core.sprite_config import SpriteConfig
-from quick_herbalist.core.animated_sprite import AnimatedSprite
 
 
 class SpriteManager:
@@ -14,12 +14,8 @@ class SpriteManager:
 
     def __init__(self, yaml_path: str = None, atlas_path: str = None):
         """Initialize SpriteManager with optional custom paths."""
-        self.yaml_path = (
-            yaml_path if yaml_path is not None else get_asset_path("sprites.yaml")
-        )
-        self.atlas_path = (
-            atlas_path if atlas_path is not None else get_asset_path("sprites.atlas")
-        )
+        self.yaml_path = yaml_path if yaml_path is not None else get_asset_path("sprites.yaml")
+        self.atlas_path = atlas_path if atlas_path is not None else get_asset_path("sprites.atlas")
         self.config = SpriteConfig(self.yaml_path, self.atlas_path)
 
     def get(self, sprite_name: str) -> AnimatedSprite:

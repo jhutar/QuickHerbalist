@@ -54,9 +54,7 @@ class Background(Widget):
 
         for tile in self.tiles:
             if tile["pos"][0] <= -self.tile_width:
-                same_row_tiles = [
-                    t for t in self.tiles if abs(t["pos"][1] - tile["pos"][1]) < 1
-                ]
+                same_row_tiles = [t for t in self.tiles if abs(t["pos"][1] - tile["pos"][1]) < 1]
                 max_x = max(t["pos"][0] for t in same_row_tiles)
                 tile["pos"][0] = max_x + self.tile_width
 
@@ -258,9 +256,7 @@ class GameView(Widget):
     def update_labels(self):
         """Update score, distance, and character name labels."""
         active_name = self.profile_manager.active_character_name
-        self.char_label.text = (
-            str(active_name) if active_name else _("No Active Character")
-        )
+        self.char_label.text = str(active_name) if active_name else _("No Active Character")
         self.score_label.text = _("Collected: ") + str(self.rules.score)
         self.distance_label.text = _("Distance: ") + str(int(self.rules.distance))
 

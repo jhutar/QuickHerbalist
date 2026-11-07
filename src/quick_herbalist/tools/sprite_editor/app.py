@@ -1,12 +1,14 @@
 import os
+
 from kivy.app import App
-from kivy.uix.popup import Popup
-from kivy.uix.label import Label
-from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
-from quick_herbalist.tools.sprite_editor.ui.main_layout import SpriteEditorMainLayout
-from quick_herbalist.core.sprite_config import SpriteConfig
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.uix.popup import Popup
+
 from quick_herbalist.core.config_parser import get_asset_path
+from quick_herbalist.core.sprite_config import SpriteConfig
+from quick_herbalist.tools.sprite_editor.ui.main_layout import SpriteEditorMainLayout
 
 
 class SpriteEditorApp(App):
@@ -34,7 +36,10 @@ class SpriteEditorApp(App):
         """Display a Kivy popup informing the user of config inconsistencies."""
         content = BoxLayout(orientation="vertical", padding=10, spacing=10)
         label = Label(
-            text="Configuration Error!\n\nInconsistency detected between\nsprites.yaml and sprites.atlas."
+            text=(
+                "Configuration Error!\n\n"
+                "Inconsistency detected between\nsprites.yaml and sprites.atlas."
+            )
         )
         close_button = Button(text="Close", size_hint=(1, 0.3))
 
