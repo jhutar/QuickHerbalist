@@ -17,9 +17,11 @@ from quick_herbalist.core.level_config import LevelConfigError, load_levels  # n
 from quick_herbalist.core.sprite_manager import SpriteManager  # noqa: E402
 from quick_herbalist.profiles import ProfileManager  # noqa: E402
 from quick_herbalist.screens import (  # noqa: E402
+    GameMenuScreen,
     GameOverScreen,
     GameScreen,
     GameWonScreen,
+    GreenhouseScreen,
     LoadCharacterScreen,
     MenuScreen,
     NewCharacterScreen,
@@ -47,6 +49,8 @@ class QuickHerbalistApp(App):
         sm.add_widget(NewCharacterScreen(name="new_character"))
         sm.add_widget(LoadCharacterScreen(name="load_character"))
         sm.add_widget(PotionsScreen(name="potions"))
+        sm.add_widget(GreenhouseScreen(name="greenhouse"))
+        sm.add_widget(GameMenuScreen(name="game_menu"))
         sm.add_widget(GameScreen(name="game"))
         sm.add_widget(GameWonScreen(name="game_won"))
         sm.add_widget(QuitScreen(name="quit"))

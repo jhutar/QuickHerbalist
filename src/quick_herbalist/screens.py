@@ -62,7 +62,6 @@ class MenuScreen(KeyboardScreen):
         self.ids.start_btn.text = _("Start Game")
         self.ids.new_btn.text = _("New Character")
         self.ids.load_btn.text = _("Load Character")
-        self.ids.potions_btn.text = _("Create Potions")
         self.ids.quit_btn.text = _("Quit")
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
@@ -77,9 +76,6 @@ class MenuScreen(KeyboardScreen):
         elif key == "l":
             self.manager.current = "load_character"
             return True
-        elif key == "c":
-            self.manager.current = "potions"
-            return True
         return super()._on_keyboard_down(keyboard, keycode, text, modifiers)
 
     def on_back(self):
@@ -87,7 +83,40 @@ class MenuScreen(KeyboardScreen):
         App.get_running_app().stop()
 
     def start_game(self):
-        """Switch to game screen."""
+        """Switch to the game menu hub."""
+        self.manager.current = "game_menu"
+
+
+class GameMenuScreen(KeyboardScreen):
+    """Hub screen for starting a run and accessing secondary systems."""
+
+    def on_pre_enter(self):
+        """Initialize game menu labels and buttons before entering."""
+        app = App.get_running_app()
+        self.ids.title.text = _("Game Menu")
+        self.ids.start_btn.text = _("Start Run — Level ") + str(
+            app.profile_manager.next_level_number()
+        )
+        self.ids.potions_btn.text = _("Create Potions")
+        self.ids.greenhouse_btn.text = _("Greenhouse")
+        self.ids.back_btn.text = _("Back to Main Menu")
+
+    def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        """Handle game menu keyboard shortcuts."""
+        key = keycode[1]
+        if key == "s":
+            self.start_run()
+            return True
+        elif key == "c":
+            self.manager.current = "potions"
+            return True
+        elif key == "g":
+            self.manager.current = "greenhouse"
+            return True
+        return super()._on_keyboard_down(keyboard, keycode, text, modifiers)
+
+    def start_run(self):
+        """Start a run at the next available level."""
         self.manager.current = "game"
 
 
@@ -174,8 +203,8 @@ class GameWonScreen(KeyboardScreen):
         self.manager.current = "game"
 
     def goto_menu(self):
-        """Go to main menu."""
-        self.manager.current = "menu"
+        """Go to the game menu hub."""
+        self.manager.current = "game_menu"
 
 
 class PotionsScreen(KeyboardScreen):
@@ -186,6 +215,24 @@ class PotionsScreen(KeyboardScreen):
         self.ids.title.text = _("Potion Crafting")
         self.ids.desc.text = _("Placeholder Screen: Future crafting system will be here!")
         self.ids.back_btn.text = _("Back to Menu")
+
+    def on_back(self):
+        """Return to game menu hub when leaving the potions screen."""
+        self.manager.current = "game_menu"
+
+
+class GreenhouseScreen(KeyboardScreen):
+    """Screen for greenhouse showcase (placeholder)."""
+
+    def on_pre_enter(self):
+        """Initialize greenhouse screen UI."""
+        self.ids.title.text = _("Greenhouse")
+        self.ids.desc.text = _("Placeholder Screen: Future greenhouse system will be here!")
+        self.ids.back_btn.text = _("Back to Menu")
+
+    def on_back(self):
+        """Return to game menu hub when leaving the greenhouse screen."""
+        self.manager.current = "game_menu"
 
 
 class QuitScreen(KeyboardScreen):
@@ -238,8 +285,8 @@ class GameOverScreen(KeyboardScreen):
         self.manager.current = "game"
 
     def goto_menu(self):
-        """Go to main menu."""
-        self.manager.current = "menu"
+        """Go to the game menu hub."""
+        self.manager.current = "game_menu"
 
 
 class GameScreen(Screen):
@@ -315,10 +362,6 @@ Builder.load_string("""
                 id: start_btn
                 font_size: 18
                 on_release: root.start_game()
-            Button:
-                id: potions_btn
-                font_size: 18
-                on_release: root.manager.current = 'potions'
         BoxLayout:
             orientation: 'horizontal'
             spacing: 10
@@ -337,6 +380,48 @@ Builder.load_string("""
             pos_hint: {'center_x': 0.5}
             font_size: 18
             on_release: app.stop()
+
+<GameMenuScreen>:
+    canvas.before:
+        Color:
+            rgb: 0, 0, 0
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 40
+        spacing: 15
+        Label:
+            id: title
+            font_size: 40
+            color: 1, 1, 1, 1
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: 10
+            size_hint_y: 0.15
+            Button:
+                id: start_btn
+                font_size: 18
+                on_release: root.start_run()
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: 10
+            size_hint_y: 0.15
+            Button:
+                id: potions_btn
+                font_size: 18
+                on_release: root.manager.current = 'potions'
+            Button:
+                id: greenhouse_btn
+                font_size: 18
+                on_release: root.manager.current = 'greenhouse'
+        Button:
+            id: back_btn
+            size_hint: (0.4, 0.15)
+            pos_hint: {'center_x': 0.5}
+            font_size: 18
+            on_release: root.manager.current = 'menu'
 
 <NewCharacterScreen>:
     canvas.before:
@@ -463,7 +548,33 @@ Builder.load_string("""
             size_hint: (0.4, 0.15)
             pos_hint: {'center_x': 0.5}
             font_size: 20
-            on_release: root.manager.current = 'menu'
+            on_release: root.manager.current = 'game_menu'
+
+<GreenhouseScreen>:
+    canvas.before:
+        Color:
+            rgb: 0, 0, 0
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 50
+        spacing: 20
+        Label:
+            id: title
+            font_size: 40
+            color: 1, 1, 1, 1
+        Label:
+            id: desc
+            font_size: 24
+            color: 0.7, 0.7, 0.7, 1
+        Button:
+            id: back_btn
+            size_hint: (0.4, 0.15)
+            pos_hint: {'center_x': 0.5}
+            font_size: 20
+            on_release: root.on_back()
 
 <QuitScreen>:
     canvas.before:
