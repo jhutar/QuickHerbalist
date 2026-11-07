@@ -237,7 +237,10 @@ class GameWonScreen(KeyboardScreen):
         box.clear_widgets()
         for sprite_name, count in self.harvest.items():
             row = BoxLayout(size_hint_y=0, spacing=10)
-            row.add_widget(app.sprite_manager.get(sprite_name))
+            sprite = app.sprite_manager.get(sprite_name)
+            sprite.size_hint = (None, 1)
+            sprite.size = (64, 64)
+            row.add_widget(sprite)
             row.add_widget(
                 Label(text=f"{_(sprite_name)}: {count}", font_size=28, color=(1, 1, 1, 1))
             )
@@ -369,7 +372,7 @@ class PotionsScreen(KeyboardScreen):
         self.ids.spoon_lbl.text = _("Drag onto cauldron to mix")
         self.ids.back_btn.text = _("Back to Menu")
         self.ids.cauldron_img.source = get_asset_path("cauldron.png")
-        self.ids.book_img.source = get_asset_path("star.png")
+        self.ids.book_img.source = get_asset_path("recipes.png")
         self.ids.spoon.drag_image_source = get_asset_path("star.png")
         self.ids.spoon.drop_target = self.ids.cauldron_zone
         self.ids.spoon.drop_handler = lambda _touch: self._on_brew()
@@ -428,15 +431,17 @@ class PotionsScreen(KeyboardScreen):
                     sprite_name,
                 )
                 continue
-            chip = Draggable(size=(130, 80))
+            chip = Draggable(size=(90, 110))
             chip.size_hint = (None, 1)
             sprite = app.sprite_manager.get(sprite_name)
-            sprite.size = (48, 48)
-            sprite.pos_hint = {"center_x": 0.5, "y": 0.35}
-            label = Label(text=f"{_(sprite_name)} ({count}x)", font_size=16, color=(1, 1, 1, 1))
-            label.size = (130, 24)
+            sprite.size = (56, 56)
+            sprite.pos_hint = {"center_x": 0.5, "top": 1.0}
+            label = Label(text=f"{_(sprite_name)} ({count}x)", font_size=15, color=(1, 1, 1, 1))
+            label.wrap = True
+            label.text_size = (86, 40)
             label.halign = "center"
-            label.pos_hint = {"center_x": 0.5, "y": 0.05}
+            label.valign = "top"
+            label.pos_hint = {"x": 0.02, "y": 0.0}
             chip.add_widget(sprite)
             chip.add_widget(label)
             chip.drop_target = self.ids.cauldron_zone
@@ -470,26 +475,33 @@ class PotionsScreen(KeyboardScreen):
         app = App.get_running_app()
         strip = self.ids.potion_strip
         strip.clear_widgets()
+        shown = False
         for potion_id in sorted(app.profile_manager.get_potions()):
             count = app.profile_manager.get_potion_count(potion_id)
             if count <= 0:
                 continue
-            chip = Draggable(size=(150, 70))
+            chip = Draggable(size=(160, 110))
             chip.size_hint = (None, 1)
             icon = Image(source=get_asset_path("star.png"))
             icon.size = (40, 40)
-            icon.pos_hint = {"x": 0.02, "center_y": 0.5}
+            icon.pos_hint = {"x": 0.05, "center_y": 0.5}
             label = Label(
                 text=f"{_(potion_id + '_name')} ({count}x)", font_size=16, color=(1, 1, 1, 1)
             )
-            label.size = (105, 30)
-            label.pos_hint = {"x": 0.25, "center_y": 0.5}
+            label.wrap = True
+            label.text_size = (105, 60)
+            label.pos_hint = {"x": 0.28, "center_y": 0.5}
             chip.add_widget(icon)
             chip.add_widget(label)
             chip.drop_target = self.ids.run_slot_box
             chip.drop_handler = lambda touch, p=potion_id: self._on_potion_dropped(p, touch)
             chip.click_handler = lambda p=potion_id: self._on_potion_clicked(p)
             strip.add_widget(chip)
+            shown = True
+        if not shown:
+            empty = Label(text="No potions yet", font_size=16, color=(0.7, 0.7, 0.7, 1))
+            empty.pos_hint = {"x": 0.05, "center_y": 0.5}
+            strip.add_widget(empty)
 
     def _render_run_slots(self):
         """Show the three next-run slots; empty ones labelled 1, 2, 3."""
@@ -896,86 +908,52 @@ Builder.load_string("""
             size: self.size
     BoxLayout:
         orientation: 'vertical'
-        padding: 20
-        spacing: 10
+        padding: 12
+        spacing: 6
         Label:
             id: title
             font_size: 32
             color: 1, 1, 1, 1
+            size_hint_y: 0.1
         Label:
             id: message_lbl
-            font_size: 20
+            font_size: 18
+            size_hint_y: 0.05
         ScrollView:
             do_scroll_x: True
             do_scroll_y: False
-            size_hint_y: 0.16
+            size_hint_y: 0.19
             BoxLayout:
                 id: ingredient_strip
                 orientation: 'horizontal'
-                spacing: 8
+                spacing: 6
                 size_hint_x: None
                 width: self.minimum_width
+                size_hint_y: 1
                 padding: 4
         BoxLayout:
             orientation: 'horizontal'
-            size_hint_y: 0.55
+            size_hint_y: 1
             spacing: 10
-            Button:
-                id: prev_recipe_btn
-                size_hint_x: 0.08
-                font_size: 22
-                text: '<<<'
-                on_release: root._flip_recipe(-1)
-            BoxLayout:
-                orientation: 'vertical'
-                size_hint_x: 0.3
-                spacing: 4
-                padding: 8
-                Image:
-                    id: book_img
-                    size: (60, 60)
-                    pos_hint: {'center_x': 0.5}
-                Label:
-                    id: recipe_name_lbl
-                    font_size: 20
-                    color: 1, 1, 1, 1
-                    halign: 'center'
-                Label:
-                    id: recipe_desc_lbl
-                    font_size: 14
-                    color: 0.8, 0.8, 0.8, 1
-                    halign: 'center'
-                Label:
-                    id: recipe_ingredients_lbl
-                    font_size: 16
-                    color: 0.6, 1, 0.6, 1
-                    halign: 'center'
-                Label:
-                    id: recipe_duration_lbl
-                    font_size: 14
-                    color: 0.8, 0.8, 0.8, 1
-                    halign: 'center'
-            Button:
-                id: next_recipe_btn
-                size_hint_x: 0.08
-                font_size: 22
-                text: '>>>'
-                on_release: root._flip_recipe(1)
             FloatLayout:
                 id: cauldron_zone
+                size_hint_x: 0.45
+                padding: 8
                 Image:
                     id: cauldron_img
-                    size: (240, 240)
-                    pos_hint: {'center_x': 0.6, 'center_y': 0.55}
+                    size: (250, 250)
+                    pos_hint: {'center': (0.5, 0.5)}
                 GridLayout:
                     id: cauldron_grid
                     cols: 2
                     spacing: 4
-                    size: (200, 200)
-                    pos_hint: {'center_x': 0.6, 'center_y': 0.55}
+                    size: (190, 190)
+                    size_hint: (None, None)
+                    pos_hint: {'center': (0.5, 0.5)}
                 BoxLayout:
                     orientation: 'vertical'
-                    size: (90, 110)
+                    size: (110, 120)
+                    size_hint: (None, None)
                     pos_hint: {'x': 0, 'y': 0}
                     Draggable:
                         id: spoon
@@ -988,29 +966,100 @@ Builder.load_string("""
                         font_size: 12
                         halign: 'center'
                         color: 0.8, 0.8, 0.8, 1
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_x: 0.55
+                spacing: 6
+                Button:
+                    id: prev_recipe_btn
+                    size_hint_x: 0.08
+                    font_size: 20
+                    text: '<<<'
+                    on_release: root._flip_recipe(-1)
+                FloatLayout:
+                    id: book_page
+                    Image:
+                        id: book_img
+                        allow_stretch: True
+                        size_hint: (1, 1)
+                        pos_hint: {'x': 0, 'y': 0}
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint: (1, 1)
+                        padding: 10
+                        spacing: 4
+                        canvas.before:
+                            Color:
+                                rgba: 0, 0, 0, 0.35
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                        Label:
+                            id: recipe_name_lbl
+                            font_size: 22
+                            color: 1, 1, 1, 1
+                            wrap: True
+                            text_size: self.size
+                            halign: 'center'
+                            valign: 'middle'
+                            size_hint_y: 0.22
+                        Label:
+                            id: recipe_desc_lbl
+                            font_size: 14
+                            color: 0.9, 0.9, 0.9, 1
+                            wrap: True
+                            text_size: self.size
+                            halign: 'center'
+                            valign: 'middle'
+                            size_hint_y: 0.4
+                        Label:
+                            id: recipe_ingredients_lbl
+                            font_size: 15
+                            color: 0.6, 1, 0.6, 1
+                            wrap: True
+                            text_size: self.size
+                            halign: 'center'
+                            valign: 'middle'
+                            size_hint_y: 0.23
+                        Label:
+                            id: recipe_duration_lbl
+                            font_size: 13
+                            color: 0.8, 0.8, 0.8, 1
+                            wrap: True
+                            text_size: self.size
+                            halign: 'center'
+                            valign: 'middle'
+                            size_hint_y: 0.15
+                Button:
+                    id: next_recipe_btn
+                    size_hint_x: 0.08
+                    font_size: 20
+                    text: '>>>'
+                    on_release: root._flip_recipe(1)
         BoxLayout:
             orientation: 'horizontal'
-            size_hint_y: 0.18
-            spacing: 10
+            size_hint_y: 0.2
+            spacing: 8
             BoxLayout:
                 id: run_slot_box
                 orientation: 'horizontal'
-                size_hint_x: 0.35
+                size_hint_x: 0.4
                 spacing: 6
             ScrollView:
                 do_scroll_x: True
                 do_scroll_y: False
-                size_hint_x: 0.65
+                size_hint_x: 0.6
                 BoxLayout:
                     id: potion_strip
                     orientation: 'horizontal'
-                    spacing: 8
+                    spacing: 6
                     size_hint_x: None
                     width: self.minimum_width
+                    size_hint_y: 1
                     padding: 4
         Button:
             id: back_btn
-            size_hint: (0.3, 0.1)
+            size_hint: (0.3, 0.08)
             pos_hint: {'center_x': 0.5}
             font_size: 16
             on_release: root.on_back()
