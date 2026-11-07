@@ -165,14 +165,38 @@ def test_greenhouse_screen_back_goes_to_game_menu():
 
 
 def test_game_won_next_level_starts_next_level():
-    """Win-screen 'Next Level' button must select the next level, not repeat the current one."""
+    """Win-screen 'Next Level' button must pick the level after the one just played."""
+    app = _make_app(next_level=3)
+    app.selected_level_number = 2
+
+    screen = GameWonScreen()
+    screen.restart_game()
+
+    assert app.selected_level_number == 3
+    assert screen.manager.current == "game"
+
+
+def test_game_won_next_level_after_all_completed_advances_from_current():
+    """With all levels finished, 'Next Level' must follow the re-run level, not jump to the last."""
+    app = _make_app(next_level=4)
+    app.selected_level_number = 1
+
+    screen = GameWonScreen()
+    screen.restart_game()
+
+    assert app.selected_level_number == 2
+    assert screen.manager.current == "game"
+
+
+def test_game_won_next_level_clamps_at_last_level():
+    """'Next Level' from the last level must stay on the last level."""
     app = _make_app(next_level=4)
     app.selected_level_number = 3
 
     screen = GameWonScreen()
     screen.restart_game()
 
-    assert app.selected_level_number == 4
+    assert app.selected_level_number == 3
     assert screen.manager.current == "game"
 
 
