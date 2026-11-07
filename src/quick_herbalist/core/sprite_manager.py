@@ -18,6 +18,10 @@ class SpriteManager:
         self.atlas_path = atlas_path if atlas_path is not None else get_asset_path("sprites.atlas")
         self.config = SpriteConfig(self.yaml_path, self.atlas_path)
 
+    def names(self) -> set[str]:
+        """Return the set of sprite names available in the sprite config."""
+        return set(self.config.get_sprite_list())
+
     def get(self, sprite_name: str) -> AnimatedSprite:
         """Build an AnimatedSprite from frames resolved for the given name."""
         frames = self.config.resolve_frames(sprite_name)

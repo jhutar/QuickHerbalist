@@ -9,6 +9,7 @@ from kivy.graphics import Rectangle
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 
+from quick_herbalist.core.level_config import level_for
 from quick_herbalist.game_rules import GameRules
 from quick_herbalist.localization import _
 
@@ -21,8 +22,8 @@ SCREEN_H = 600
 class Background(Widget):
     """Animated background with scrolling tiles."""
 
-    def __init__(self, sprite_manager, **kwargs):
-        """Initialize background with grass tiles from the given SpriteManager."""
+    def __init__(self, sprite_manager, background_sprite, **kwargs):
+        """Initialize background with the level's grass tile sprite."""
         super().__init__(**kwargs)
         self.tile_width = 128
         self.tile_height = 128
@@ -32,7 +33,7 @@ class Background(Widget):
         self.tiles = []
 
         # Retrieve grass texture region from SpriteManager
-        grass_sprite = sprite_manager.get("grass_sprite")
+        grass_sprite = sprite_manager.get(background_sprite)
         grass_texture = grass_sprite.rect.texture
 
         with self.canvas:
@@ -128,37 +129,41 @@ class MovingWidget(Widget):
 class Flower(MovingWidget):
     """Flower object to be collected."""
 
-    def __init__(self, sprite_manager, **kwargs):
-        """Initialize flower at random position."""
+    def __init__(self, sprite_manager, sprite_name, **kwargs):
+        """Initialize flower at random position using the level's flower sprite."""
         x = SCREEN_W + random.randint(50, 200)
         y = random.randint(0, SCREEN_H - 32)
-        super().__init__(sprite_manager, "flower_sprite", (32, 32), x, y, **kwargs)
+        super().__init__(sprite_manager, sprite_name, (32, 32), x, y, **kwargs)
 
 
 class Stone(MovingWidget):
     """Stone object that causes game over."""
 
-    def __init__(self, sprite_manager, **kwargs):
-        """Initialize stone at random position."""
+    def __init__(self, sprite_manager, sprite_name, **kwargs):
+        """Initialize stone at random position using the level's stone sprite."""
         x = SCREEN_W + random.randint(100, 300)
         y = random.randint(0, SCREEN_H - 64)
-        super().__init__(sprite_manager, "stone_sprite", (64, 53), x, y, **kwargs)
+        super().__init__(sprite_manager, sprite_name, (64, 53), x, y, **kwargs)
 
 
 class GameView(Widget):
-    """Game view widget managing the game scene."""
+    """Game view widget managing the game scene for one level definition."""
 
-    def __init__(self, profile_manager, sprite_manager, **kwargs):
-        """Initialize game view with widgets and labels."""
+    def __init__(self, profile_manager, sprite_manager, levels, **kwargs):
+        """Initialize game view with widgets, labels, and the level definition."""
         super().__init__(**kwargs)
         self.active = True
         self.profile_manager = profile_manager
         self.sprite_manager = sprite_manager
+        self.level_number = profile_manager.next_level_number()
+        self.level = level_for(levels, self.level_number)
         self.rules = GameRules(
-            win_distance=profile_manager.settings.get("win_distance", 1000.0),
-            start_speed=profile_manager.settings.get("game_speed_start", 3.0),
+            win_distance=self.level.distance,
+            start_speed=self.level.start_speed,
+            max_speed=self.level.max_speed,
+            stone_interval=self.level.stone.interval,
+            stone_interval_min=self.level.stone.ramp_to,
         )
-        self.stone_interval = 3.0
 
         self.flowers = []
         self.stones = []
@@ -168,7 +173,7 @@ class GameView(Widget):
         self.touch_active = False
         self.target_y = 0
 
-        self.background = Background(self.sprite_manager)
+        self.background = Background(self.sprite_manager, self.level.background)
         self.add_widget(self.background)
 
         self.hero = Player(self.sprite_manager)
@@ -216,7 +221,7 @@ class GameView(Widget):
     def start_game(self):
         """Start the game loop and spawning timers."""
         Clock.schedule_interval(self.update, 1.0 / 60)
-        Clock.schedule_interval(self.spawn_flower, 1.0)
+        Clock.schedule_interval(self.spawn_flower, self.level.flower.interval)
         self.schedule_next_stone()
 
     def stop_game(self):
@@ -230,33 +235,29 @@ class GameView(Widget):
         """Spawn a flower at a random position."""
         if not self.active:
             return
-        flower = Flower(self.sprite_manager)
+        flower = Flower(self.sprite_manager, self.level.flower.sprite)
         self.add_widget(flower)
         self.flowers.append(flower)
 
     def schedule_next_stone(self):
-        """Schedule the next stone spawn."""
-        Clock.schedule_once(self.spawn_stone, self.stone_interval)
+        """Schedule the next stone spawn using the rules' pacing."""
+        Clock.schedule_once(self.spawn_stone, self.rules.next_stone_interval())
 
     def spawn_stone(self, dt):
         """Spawn a stone and schedule the next one."""
         if not self.active:
             return
-        stone = Stone(self.sprite_manager)
+        stone = Stone(self.sprite_manager, self.level.stone.sprite)
         self.add_widget(stone)
         self.stones.append(stone)
-
-        if self.stone_interval > 0.05:
-            self.stone_interval -= random.randint(0, 50) / 1000.0
-            if self.stone_interval < 0.05:
-                self.stone_interval = 0.05
 
         self.schedule_next_stone()
 
     def update_labels(self):
-        """Update score, distance, and character name labels."""
+        """Update score, distance, level, and character name labels."""
         active_name = self.profile_manager.active_character_name
-        self.char_label.text = str(active_name) if active_name else _("No Active Character")
+        name = active_name if active_name else _("No Active Character")
+        self.char_label.text = f"{name}  {_('Level: ')}{self.level_number}"
         self.score_label.text = _("Collected: ") + str(self.rules.score)
         self.distance_label.text = _("Distance: ") + str(int(self.rules.distance))
 

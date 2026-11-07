@@ -81,3 +81,46 @@ def test_fresh_instance_resets_between_runs():
     assert second.distance == 0.0
     assert second.game_speed == 3.0
     assert not second.dead
+
+
+def test_next_stone_interval_first_call_returns_start_interval():
+    """The first stone spawn waits the full starting interval."""
+    rules = GameRules(win_distance=100.0, start_speed=3.0, stone_interval=3.0)
+    assert rules.next_stone_interval() == 3.0
+
+
+def test_stone_interval_ramps_down_to_floor():
+    """Repeated calls decay the interval toward stone_interval_min, never below."""
+    rules = GameRules(
+        win_distance=100.0,
+        start_speed=3.0,
+        stone_interval=3.0,
+        stone_interval_min=0.05,
+    )
+    for _ in range(1000):
+        delay = rules.next_stone_interval()
+        assert delay >= 0.05
+    assert rules.stone_interval == 0.05
+
+
+def test_stone_interval_never_increases():
+    """Ramping only shrinks the interval; it never grows back."""
+    rules = GameRules(
+        win_distance=100.0,
+        start_speed=3.0,
+        stone_interval=3.0,
+        stone_interval_min=0.05,
+    )
+    previous = 3.0
+    for _ in range(200):
+        delay = rules.next_stone_interval()
+        assert delay <= previous
+        previous = delay
+
+
+def test_no_ramp_when_min_absent():
+    """Without stone_interval_min the interval stays constant (no ramp)."""
+    rules = GameRules(win_distance=100.0, start_speed=3.0, stone_interval=2.5)
+    for _ in range(50):
+        assert rules.next_stone_interval() == 2.5
+    assert rules.stone_interval == 2.5

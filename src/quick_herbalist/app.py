@@ -1,5 +1,7 @@
 """Application entry: window config, App class, and main()."""
 
+import logging
+
 # Kivy setup (force window size before other imports)
 from kivy.config import Config
 
@@ -10,6 +12,8 @@ Config.set("graphics", "resizable", "0")
 from kivy.app import App  # noqa: E402
 from kivy.uix.screenmanager import ScreenManager  # noqa: E402
 
+from quick_herbalist.core.config_parser import get_asset_path  # noqa: E402
+from quick_herbalist.core.level_config import LevelConfigError, load_levels  # noqa: E402
 from quick_herbalist.core.sprite_manager import SpriteManager  # noqa: E402
 from quick_herbalist.profiles import ProfileManager  # noqa: E402
 from quick_herbalist.screens import (  # noqa: E402
@@ -29,8 +33,14 @@ class QuickHerbalistApp(App):
 
     def build(self):
         """Build the app with screen manager and all screens."""
+        logger = logging.getLogger(__name__)
         self.profile_manager = ProfileManager()
         self.sprite_manager = SpriteManager()
+        try:
+            self.levels = load_levels(get_asset_path("levels.yaml"), self.sprite_manager.names())
+        except LevelConfigError as e:
+            logger.error("Refusing to start, invalid level definitions:\n%s", e)
+            raise SystemExit(str(e)) from e
 
         sm = ScreenManager()
         sm.add_widget(MenuScreen(name="menu"))

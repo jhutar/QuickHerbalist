@@ -1,121 +1,169 @@
-# Multi-Level Progression — Design Draft
+# Multi-Level Progression — Design (v2, user-authored levels)
 
-Status: draft, not yet implemented.
+Status: approved draft, not yet implemented. Supersedes the formula-based
+`make_level` design (v1).
 
 ## Goal
 
-Character who finishes a level continues on a harder next level: longer
-distance, faster start, denser stones, more stones in flight at once.
-Per-character level number is already persisted (`levels_completed` in the
-profile), so progression state exists; what is missing is *level-scoped game
-parameters* and *flow* (win -> next level, not same level).
+Every level is a hand-authored entry in `levels.yaml` under the player's
+control: which sprites appear (background, flower, stone), pacing
+(intervals), distance, speed, and per-level stone ramp. Levels the game
+doesn't have a definition for: repeat the last level endlessly.
 
-## Current state (baseline)
+## Level definitions file
 
-- `GameRules(win_distance, start_speed, max_speed)` — params pulled from global
-  `profile_manager.settings`, identical every run.
-- Stone/flower spawn rates hardcoded in `GameView` (`stone_interval = 3.0`,
-  flower every 1.0 s).
-- `GameWonScreen.restart_game` re-enters the `game` screen; the new
-  `GameView` is built with the same params, so "Play Again" replays level 1.
-- `profile.complete_level()` already increments `levels_completed`.
+Location: `src/quick_herbalist/assets/levels.yaml`, versioned next to
+`sprites.yaml`. Hand-edited YAML.
 
-## Design
+```yaml
+# Each entry is one level, in play order.
+levels:
+  - name: meadow
+    background: grass_sprite
+    distance: 1000
+    start_speed: 3.0
+    max_speed: 15.0
+    flower:
+      sprite: flower_sprite
+      interval: 1.0
+    stone:
+      sprite: stone_sprite
+      interval: 3.0
+      ramp_to: 0.05
 
-### 1. `LevelConfig` (new, in `game_rules.py` or sibling module)
-
-Plain dataclass describing one level's difficulty. No Kivy imports, pure
-Python, testable headless — same rule as `GameRules`.
-
+  - name: desert
+    background: desert_grass_sprite
+    distance: 1400
+    start_speed: 3.4
+    max_speed: 15.0
+    flower:
+      sprite: desert_flower_sprite
+      interval: 1.2
+    stone:
+      sprite: desert_stone_sprite
+      interval: 2.6
+      ramp_to: 0.05
 ```
-LevelConfig(
-    level: int,          # 1-based
-    win_distance: float, # distance required to finish
-    start_speed: float,
-    max_speed: float,
-    stone_interval: float,   # base seconds between stone spawns
-    stone_interval_min: float, # how far the interval may shrink in-level
-    stone_interval_decay: float, # per-spawn interval reduction
-    flower_interval: float,
-)
-```
 
-`GameRules.__init__` gains an optional `LevelConfig` (or its fields) so
-stone pacing rules live in the rules layer, not in `GameView`. `GameView`
-keeps only spawning/scheduling.
+### Schema (strict)
 
-### 2. Level generation: formula first, explicit levels later
+| key            | type   | required | meaning                                |
+|----------------|--------|----------|----------------------------------------|
+| `name`         | str    | yes      | unique human label, shown in HUD       |
+| `background`   | str    | yes      | sprite name (cosmetic, tile scroll)    |
+| `distance`     | number | yes      | distance to finish the level           |
+| `start_speed`  | number | yes      | scroll speed at level start            |
+| `max_speed`    | number | yes      | speed cap within the level             |
+| `flower`       | map    | yes      | `sprite` (required), `interval` (required, seconds) |
+| `stone`        | map    | yes      | `sprite` (required), `interval` (required, starting seconds), `ramp_to` (optional, min interval) |
 
-Default: a `make_level(n) -> LevelConfig` pure function that scales by level
-number. No data files, no design work for levels 2..∞.
+- Single slot per entity type. One flower type, one stone type per level.
+- Frequencies are intervals in seconds (existing convention; lower = harder).
+- `stone.ramp_to`: during the level, each spawn shrinks the interval by a
+  random step (constant `STONE_RAMP_STEP = 0.05` s) down to `ramp_to`.
+  Omit `ramp_to` for a constant-interval (no ramp) level.
+- **Strict schema, fail fast and loud.** Any unknown key (top-level in a
+  level, or inside `flower`/`stone`), missing required key, wrong type,
+  duplicate `name`, or sprite name not present in `sprites.yaml` is a load
+  error. All validation errors are collected and reported together,
+  e.g. `levels.yaml: level 2 (desert): unknown key 'magnetism_bonuses';
+  level 2 (desert): unknown sprite 'desert_floer'`.
+- Consequence (accepted): a level file may not contain options for
+  mechanics that don't exist yet (e.g. `magnetism_bonuses`). Adding a
+  mechanic later is a code + schema change; existing entries don't need
+  editing.
+- Empty or missing `levels:` list, or a file that is not a mapping with a
+  `levels` key: load error.
 
-Proposed curve (tunables in one place):
+### Loading
 
-| param            | formula (n = level)                  | L1      | L2     | L5     |
-|------------------|--------------------------------------|---------|--------|--------|
-| win_distance     | `1000 * 1.25 ** (n-1)`               | 1000    | 1250   | 2441   |
-| start_speed      | `min(3.0 + 0.4 * (n-1), 7.0)`        | 3.0     | 3.4    | 4.6    |
-| max_speed        | `min(15.0, start_speed + 9.0)`       | 15.0    | 15.0   | 15.0   |
-| stone_interval   | `max(3.0 * 0.9 ** (n-1), 0.8)`       | 3.0     | 2.7    | 2.19   |
-| flower_interval  | fixed `1.0`                          | 1.0     | 1.0    | 1.0    |
+New module `src/quick_herbalist/core/level_config.py` (pure Python, no
+Kivy, mirrors `sprite_config.py` structure):
 
-Later levels can add content hooks to `LevelConfig` without breaking the
-function (all optional, sensible defaults): `extra_stone_chance` (spawn a
-second stone in the same row band), `hazard: str | None` (new obstacle type
-name from sprite config). Keep off until the base curve plays well.
+- `LevelDefinition` dataclass: fields per schema, plus `flower`/`stone`
+  nested as small dataclasses (`SpawnDefinition(sprite, interval)`,
+  `StoneDefinition(sprite, interval, ramp_to: float | None)`).
+- `load_levels(path, sprite_names) -> list[LevelDefinition]` — parses and
+  validates; raises `LevelConfigError` carrying the full error list.
+  `sprite_names` is the set of valid names (from the sprite config), so
+  unknown-sprite errors happen at load, not at first spawn.
+- `level_for(levels, number) -> LevelDefinition` — 1-based lookup with
+  endless-repeat-last: `number > len(levels)` returns the last entry.
 
-Extension point: if a handcrafted level list is ever wanted, read an
-optional `levels:` YAML section (list of per-level overrides) and let
-`make_level` apply an override on top of the formula for known numbers.
-Formula stays the fallback for anything beyond the list. Do not build this
-until it is actually needed.
+Load point: app startup in `app.py`, right after SpriteManager is built.
+On `LevelConfigError`: log full error list, show error text, stop the app
+before any screen is playable.
 
-### 3. Which level is played
+### Sprite system
 
-- Level number = `active character's levels_completed + 1`. Single source of
-  truth; no extra persistence.
-- `GameView` computes it once in `__init__` via the profile manager:
-  `profile_manager.next_level_number()` (thin helper returning
-  `levels_completed + 1` for the active character, `1` when none).
-- HUD: extend `char_label` line (or new small label) to show `Level: n`.
+No structural changes. Level definitions reference sprites by the exact
+name keys from `sprites.yaml`; SpriteManager lookup stays as is.
 
-### 4. Flow changes
+One addition: `SpriteManager.names() -> set[str]` (or expose the parsed
+config's name set) so `load_levels` can validate against real sprites.
 
-- **Win** (`game_won`): `complete_level()` already runs and persists.
-  `GameWonScreen` then shows "Next Level" (reworded from "Play Again") and
-  its handler re-enters the `game` screen; the fresh `GameView` reads the now
-  incremented `levels_completed` and starts level n+1. No explicit level
-  passing between screens — the profile is the carrier.
-- **Game over** (`game_over`): "Play Again" re-enters `game`; `levels_completed`
-  unchanged, so the same level restarts. No code change needed beyond the
-  shared mechanism.
-- **Restart from menu**: also starts at `levels_completed + 1`. Consistent:
-  you are always "about to play your next level".
+`Background`, `Flower`, `Stone` widgets take their sprite name as a
+constructor argument from the level definition instead of hardcoded
+`"grass_sprite"` / `"flower_sprite"` / `"stone_sprite"`. Widget sizes stay
+hardcoded per type for now (per-level sprite sizing is out of scope).
 
-Edge case: character with 0 levels completed -> level 1, identical to today's
-behavior with the L1 formula values matching current defaults
-(`win_distance` 1000, `start_speed` 3.0). Existing `settings` keys
-`win_distance`/`game_speed_start` remain as *level-1 base* values read by
-`make_level`, so existing configs still honor user tuning.
+## Progression flow
 
-### 5. Affected files
+- Level number for a run = active character's `levels_completed + 1`
+  (`ProfileManager.next_level_number()` helper).
+- Win: `complete_level()` persists; next run starts at `levels_completed + 1`
+  via the same mechanism. Past the last defined level, every win keeps
+  incrementing and `level_for` keeps returning the last definition
+  (endless repeat, no hidden difficulty bump).
+- Game over: `levels_completed` unchanged, same level restarts.
+- Acceptable risk (accepted): inserting or reordering entries in
+  `levels.yaml` shifts what `levels_completed: n` points at. Dev-time-only
+  concern; restructure = accept save shift.
 
-- `src/quick_herbalist/game_rules.py` — `LevelConfig`, `make_level`,
-  `GameRules` takes level pacing params.
-- `src/quick_herbalist/profiles.py` — `next_level_number()` helper.
-- `src/quick_herbalist/game_scene.py` — `GameView` builds rules from
-  `make_level(next_level_number)`; stone/flower spawn intervals sourced from
-  `LevelConfig`; HUD level label.
-- `src/quick_herbalist/screens.py` — `GameWonScreen` copy ("Next Level").
-- `tests/unit/` — new `test_make_level.py` (curve monotonicity, L1 == old
-  defaults, clamps), stone-interval rules tests, `next_level_number` tests.
+## Settings migration
+
+`settings.win_distance` and `settings.game_speed_start` in `config.yaml`
+become unused — per-level `distance`/`start_speed` replace them. Stop
+reading them; existing keys in saved configs are ignored harmlessly.
+`settings.fps` unchanged.
+
+## GameRules change
+
+`GameRules.__init__` gains stone pacing: `stone_interval`,
+`stone_interval_min` (from `ramp_to`, default = start interval when absent,
+i.e. no ramp). New `next_stone_interval()` returns the current interval and
+applies the random decay step, clamped to the min. `GameView` uses
+`rules.next_stone_interval()` for scheduling; `spawn_stone` no longer
+decays manually. Flower spawn period = `level.flower.interval`.
+
+## Affected files
+
+- `src/quick_herbalist/assets/levels.yaml` — new, ships with 2 sample
+  levels (meadow = current behavior; desert uses existing sprite names
+  as placeholders until real art exists).
+- `src/quick_herbalist/core/level_config.py` — new: schema, loader,
+  `LevelDefinition`, `level_for`, `LevelConfigError`.
+- `src/quick_herbalist/core/sprite_manager.py` — `names()`.
+- `src/quick_herbalist/game_rules.py` — stone pacing + `next_stone_interval`.
+- `src/quick_herbalist/profiles.py` — `next_level_number()`.
+- `src/quick_herbalist/game_scene.py` — `GameView` builds everything from
+  `LevelDefinition`; `Background`/`Flower`/`Stone` take sprite names;
+  HUD shows `Level: n (name)`.
+- `src/quick_herbalist/app.py` — load levels at startup, fail fast.
+- `src/quick_herbalist/screens.py` — win screen "Next Level" wording.
+- `tests/unit/test_level_config.py` — new: valid load, each validation
+  failure class, all-errors-collected, `level_for` repeat-last.
+- `tests/unit/test_game_rules.py` — stone ramp: decays, clamps at
+  `ramp_to`, no ramp when absent.
+- `tests/unit/test_profiles.py` — `next_level_number`.
+- `tests/unit/test_game_scene_widgets.py` — GameView uses level sprite
+  names for background/flower/stone.
 
 ## Open questions
 
-1. Does "Play Again" after a *win* mean continue (next level) or repeat?
-   Draft assumes continue; repeating a level would need an explicit "Replay"
-   button and a level override in flow — small addition if wanted.
-2. Distance pacing: multiplicative (1.25x) or additive (+250 per level)?
-   Multiplicative chosen — keeps late levels interesting; one-line change.
-3. Should `max_speed` stay 15 for all levels or rise after some level?
-   Draft holds it at 15; revisit once level 5+ feels flat.
+1. Ship a 2nd sample level now (desert, placeholder sprites) or ship
+   only `meadow` until real sprites exist? Strict sprite validation means
+   the desert entry can only reference names that already exist in
+   `sprites.yaml`.
+2. Per-level sprite *sizes* (a big desert cactus flower?) — deferred,
+   widget sizes stay per-type constants.

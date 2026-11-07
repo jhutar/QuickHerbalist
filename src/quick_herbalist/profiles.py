@@ -156,6 +156,13 @@ class ProfileManager:
         self.active_character_name = name
         self.save_config()
 
+    def next_level_number(self):
+        """Return the 1-based level number the active character plays next."""
+        char = self.active_character
+        if not char:
+            return 1
+        return char.get("levels_completed", 0) + 1
+
     def complete_level(self):
         """Increment levels completed for active character."""
         if not self.active_character_name or self.active_character_name not in self.characters:

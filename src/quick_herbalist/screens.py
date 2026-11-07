@@ -166,11 +166,11 @@ class GameWonScreen(KeyboardScreen):
         """Initialize level completion UI."""
         self.ids.title.text = _("LEVEL COMPLETED!")
         self.ids.score_lbl.text = _("Collected Flowers: ") + str(self.score)
-        self.ids.restart_btn.text = _("Play Again")
+        self.ids.restart_btn.text = _("Next Level")
         self.ids.menu_btn.text = _("Main Menu")
 
     def restart_game(self):
-        """Restart game."""
+        """Start the next level."""
         self.manager.current = "game"
 
     def goto_menu(self):
@@ -248,7 +248,7 @@ class GameScreen(Screen):
     def on_enter(self):
         """Initialize game view and request keyboard on entry."""
         app = App.get_running_app()
-        self.game_view = GameView(app.profile_manager, app.sprite_manager)
+        self.game_view = GameView(app.profile_manager, app.sprite_manager, app.levels)
         self.add_widget(self.game_view)
         self.game_view.start_game()
 

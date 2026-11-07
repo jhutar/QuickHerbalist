@@ -262,3 +262,19 @@ def test_profile_manager_add_flowers_success(temp_config_dir):
     pm2 = ProfileManager(config_dir=temp_config_dir)
     char2 = pm2.characters["HerbalistMax"]
     assert char2["inventory"]["flower"] == 17
+
+
+def test_next_level_number_no_active_character(temp_config_dir):
+    # Without an active character the next level is 1
+    pm = ProfileManager(config_dir=temp_config_dir)
+    assert pm.next_level_number() == 1
+
+
+def test_next_level_number_tracks_completions(temp_config_dir):
+    # Next level is levels_completed + 1 for the active character
+    pm = ProfileManager(config_dir=temp_config_dir)
+    pm.create_character("herb")
+    assert pm.next_level_number() == 1
+    pm.complete_level()
+    pm.complete_level()
+    assert pm.next_level_number() == 3
