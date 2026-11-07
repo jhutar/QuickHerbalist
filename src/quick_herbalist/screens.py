@@ -448,6 +448,7 @@ class PotionsScreen(KeyboardScreen):
             chip.drop_target = self.ids.cauldron_zone
             chip.drop_handler = lambda _touch, s=sprite_name: self._on_ingredient_dropped(s)
             chip.click_handler = lambda s=sprite_name: self._on_ingredient_dropped(s)
+            chip.drag_image_source = get_asset_path(sprite.frames_data[0]["image"])
             strip.add_widget(chip)
 
     def _render_cauldron(self):
