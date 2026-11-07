@@ -447,6 +447,7 @@ class PotionsScreen(KeyboardScreen):
             chip.add_widget(label)
             chip.drop_target = self.ids.cauldron_zone
             chip.drop_handler = lambda _touch, s=sprite_name: self._on_ingredient_dropped(s)
+            chip.click_handler = lambda s=sprite_name: self._on_ingredient_dropped(s)
             strip.add_widget(chip)
 
     def _render_cauldron(self):
@@ -547,6 +548,7 @@ class PotionsScreen(KeyboardScreen):
         app = App.get_running_app()
         contents = app.profile_manager.get_cauldron()
         if not contents:
+            self._show_message(_("Cauldron is empty"), ok=False)
             return
         recipe = match_recipe(contents, getattr(app, "recipes", []))
         app.profile_manager.clear_cauldron()
@@ -920,18 +922,13 @@ Builder.load_string("""
             id: message_lbl
             font_size: 18
             size_hint_y: 0.05
-        ScrollView:
-            do_scroll_x: True
-            do_scroll_y: False
+        BoxLayout:
+            id: ingredient_strip
+            orientation: 'horizontal'
+            spacing: 6
+            size_hint_x: 1
             size_hint_y: 0.19
-            BoxLayout:
-                id: ingredient_strip
-                orientation: 'horizontal'
-                spacing: 6
-                size_hint_x: None
-                width: self.minimum_width
-                size_hint_y: 1
-                padding: 4
+            padding: 4
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: 1

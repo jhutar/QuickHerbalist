@@ -76,6 +76,10 @@ msgid "Brewed: "
 msgstr ""
 
 #: screens.py
+msgid "Cauldron is empty"
+msgstr ""
+
+#: screens.py
 msgid "Duration: "
 msgstr ""
 

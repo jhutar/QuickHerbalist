@@ -311,8 +311,8 @@ def test_potions_screen_brew_no_match_wastes_ingredients():
     assert screen.ids.message_lbl.text == "Ingredients wasted"
 
 
-def test_potions_screen_brew_empty_cauldron_noop():
-    """Mixing an empty cauldron does nothing."""
+def test_potions_screen_brew_empty_cauldron_shows_message():
+    """Mixing an empty cauldron shows an error instead of brewing silently."""
     app = _setup_potions_app([_recipe()])
 
     screen = PotionsScreen()
@@ -321,7 +321,8 @@ def test_potions_screen_brew_empty_cauldron_noop():
 
     app.profile_manager.clear_cauldron.assert_not_called()
     app.profile_manager.add_potion.assert_not_called()
-    assert screen.ids.message_lbl.text == ""
+    assert screen.ids.message_lbl.text == "Cauldron is empty"
+    assert screen.ids.message_lbl.color == (1, 0.3, 0.3, 1)
 
 
 def test_potions_screen_ingredient_drop_moves_to_cauldron():
@@ -331,6 +332,22 @@ def test_potions_screen_ingredient_drop_moves_to_cauldron():
     screen = PotionsScreen()
     screen.on_pre_enter()
     screen._on_ingredient_dropped("flower_sprite")
+
+    app.profile_manager.move_flower_to_cauldron.assert_called_once_with("flower_sprite")
+
+
+def test_potions_screen_ingredient_chip_click_adds_to_cauldron():
+    """A rendered ingredient chip wires a click handler that commits the flower."""
+    app = _setup_potions_app([_recipe()], inventory={"flower_sprite": 2})
+
+    screen = PotionsScreen()
+    screen.on_pre_enter()
+
+    chips = [c.args[0] for c in screen.ids.ingredient_strip.add_widget.call_args_list]
+    assert len(chips) == 1
+    chip = chips[0]
+    assert callable(chip.click_handler)
+    chip.click_handler()
 
     app.profile_manager.move_flower_to_cauldron.assert_called_once_with("flower_sprite")
 

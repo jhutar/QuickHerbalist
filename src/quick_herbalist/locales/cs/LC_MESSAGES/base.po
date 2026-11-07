@@ -76,6 +76,10 @@ msgid "Brewed: "
 msgstr "Vymícháno: "
 
 #: screens.py
+msgid "Cauldron is empty"
+msgstr "Hrnec je prázdný"
+
+#: screens.py
 msgid "Duration: "
 msgstr "Trvání: "
 
