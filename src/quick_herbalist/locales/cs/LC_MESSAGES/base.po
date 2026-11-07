@@ -46,3 +46,11 @@ msgstr "Stiskni 'q' pro ukončení"
 #: game.py:279
 msgid "GAME OVER!"
 msgstr "KONEC HRY!"
+
+#: screens.py
+msgid "flower_sprite"
+msgstr "Pampeliška"
+
+#: screens.py
+msgid "flower2_sprite"
+msgstr "Zvonkovka"

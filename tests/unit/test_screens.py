@@ -12,6 +12,7 @@ kivy_window_module = types.ModuleType("kivy.core.window")
 kivy_lang_module = types.ModuleType("kivy.lang")
 kivy_uix_module = types.ModuleType("kivy.uix")
 kivy_button_module = types.ModuleType("kivy.uix.button")
+kivy_boxlayout_module = types.ModuleType("kivy.uix.boxlayout")
 kivy_screenmanager_module = types.ModuleType("kivy.uix.screenmanager")
 
 
@@ -27,6 +28,7 @@ kivy_app_module.App = MagicMock()
 kivy_window_module.Window = MagicMock()
 kivy_lang_module.Builder = MagicMock()
 kivy_button_module.Button = MagicMock()
+kivy_boxlayout_module.BoxLayout = MagicMock()
 kivy_screenmanager_module.Screen = FakeScreen
 
 sys.modules["kivy"] = kivy_module
@@ -44,6 +46,7 @@ kivy_module.lang = kivy_lang_module
 kivy_module.uix = kivy_uix_module
 kivy_core_module.window = kivy_window_module
 kivy_uix_module.button = kivy_button_module
+kivy_uix_module.boxlayout = kivy_boxlayout_module
 kivy_uix_module.screenmanager = kivy_screenmanager_module
 
 # game_scene import needs these kivy modules stubbed too
@@ -66,6 +69,7 @@ kivy_uix_label_module.Label = MagicMock()
 kivy_clock_module.Clock = MagicMock()
 kivy_graphics_module.Rectangle = MagicMock()
 
+sys.modules["kivy.uix.boxlayout"] = kivy_boxlayout_module
 sys.modules["kivy.uix.widget"] = kivy_uix_widget_module
 sys.modules["kivy.uix.label"] = kivy_uix_label_module
 sys.modules["kivy.clock"] = kivy_clock_module
@@ -170,6 +174,21 @@ def test_game_won_next_level_starts_next_level():
 
     assert app.selected_level_number == 4
     assert screen.manager.current == "game"
+
+
+def test_game_won_renders_row_per_flower_type():
+    """Win screen must resolve the sprite of every collected flower type."""
+    app = _make_app(next_level=2)
+    app.sprite_manager.get.reset_mock()
+
+    screen = GameWonScreen()
+    screen.harvest = {"flower_sprite": 5, "flower2_sprite": 3}
+    screen.on_pre_enter()
+
+    assert app.sprite_manager.get.call_args_list == [
+        call("flower_sprite"),
+        call("flower2_sprite"),
+    ]
 
 
 def test_game_won_menu_goes_to_game_menu():

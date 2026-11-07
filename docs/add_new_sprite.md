@@ -46,3 +46,15 @@ validates consistency on save.
 referenced in `sprites.yaml` must exist in `sprites.atlas`. The game resolves
 sprites through `SpriteManager.get(name)`; an unknown name raises
 `ValueError` at load time.
+
+## Flower sprites: human-readable name
+
+A sprite used as a level flower (the `flower.sprite` key in `levels.yaml`) is
+also a collectable inventory type, keyed by its sprite name. Add a display
+name for it in the translation files: one `msgid "<sprite_name>"` entry with
+the human name as `msgstr` in
+`src/quick_herbalist/locales/en/LC_MESSAGES/base.po` and the Czech translation
+in `.../cs/LC_MESSAGES/base.po` (plus the empty entry in `locales/base.pot`),
+then recompile with `python scripts/compile_mo.py` on the changed `.po`
+files. Without a translation the raw sprite name is shown in the win screen
+harvest list.
