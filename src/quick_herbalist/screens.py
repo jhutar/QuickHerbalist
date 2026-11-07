@@ -373,7 +373,8 @@ class PotionsScreen(KeyboardScreen):
         self.ids.back_btn.text = _("Back to Menu")
         self.ids.cauldron_img.source = get_asset_path("cauldron.png")
         self.ids.book_img.source = get_asset_path("recipes.png")
-        self.ids.spoon.drag_image_source = get_asset_path("star.png")
+        self.ids.spoon_img.source = get_asset_path("spoon.png")
+        self.ids.spoon.drag_image_source = get_asset_path("spoon.png")
         self.ids.spoon.drop_target = self.ids.cauldron_zone
         self.ids.spoon.drop_handler = lambda _touch: self._on_brew()
 
@@ -942,6 +943,7 @@ Builder.load_string("""
                 Image:
                     id: cauldron_img
                     size: (250, 250)
+                    size_hint: (None, None)
                     pos_hint: {'center': (0.5, 0.5)}
                 GridLayout:
                     id: cauldron_grid
@@ -959,81 +961,85 @@ Builder.load_string("""
                         id: spoon
                         size_hint_y: 0.8
                         Image:
+                            id: spoon_img
                             size: (70, 70)
+                            size_hint: (None, None)
                             pos_hint: {'center': (0.5, 0.5)}
                     Label:
                         id: spoon_lbl
                         font_size: 12
                         halign: 'center'
                         color: 0.8, 0.8, 0.8, 1
-            BoxLayout:
-                orientation: 'horizontal'
+            FloatLayout:
+                id: book_page
                 size_hint_x: 0.55
-                spacing: 6
+                Image:
+                    id: book_img
+                    allow_stretch: True
+                    size_hint: (1, 1)
+                    pos_hint: {'x': 0, 'y': 0}
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint: (1, 1)
+                    pos_hint: {'x': 0, 'y': 0}
+                    padding: 34, 10, 34, 10
+                    spacing: 4
+                    canvas.before:
+                        Color:
+                            rgba: 0, 0, 0, 0.35
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    Label:
+                        id: recipe_name_lbl
+                        font_size: 22
+                        color: 1, 1, 1, 1
+                        wrap: True
+                        text_size: self.size
+                        halign: 'center'
+                        valign: 'middle'
+                        size_hint_y: 0.22
+                    Label:
+                        id: recipe_desc_lbl
+                        font_size: 14
+                        color: 0.9, 0.9, 0.9, 1
+                        wrap: True
+                        text_size: self.size
+                        halign: 'center'
+                        valign: 'middle'
+                        size_hint_y: 0.4
+                    Label:
+                        id: recipe_ingredients_lbl
+                        font_size: 15
+                        color: 0.6, 1, 0.6, 1
+                        wrap: True
+                        text_size: self.size
+                        halign: 'center'
+                        valign: 'middle'
+                        size_hint_y: 0.23
+                    Label:
+                        id: recipe_duration_lbl
+                        font_size: 13
+                        color: 0.8, 0.8, 0.8, 1
+                        wrap: True
+                        text_size: self.size
+                        halign: 'center'
+                        valign: 'middle'
+                        size_hint_y: 0.15
                 Button:
                     id: prev_recipe_btn
-                    size_hint_x: 0.08
-                    font_size: 20
+                    size: (44, 44)
+                    size_hint: (None, None)
+                    pos_hint: {'x': 0, 'center_y': 0.5}
+                    font_size: 16
                     text: '<<<'
                     on_release: root._flip_recipe(-1)
-                FloatLayout:
-                    id: book_page
-                    Image:
-                        id: book_img
-                        allow_stretch: True
-                        size_hint: (1, 1)
-                        pos_hint: {'x': 0, 'y': 0}
-                    BoxLayout:
-                        orientation: 'vertical'
-                        size_hint: (1, 1)
-                        padding: 10
-                        spacing: 4
-                        canvas.before:
-                            Color:
-                                rgba: 0, 0, 0, 0.35
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-                        Label:
-                            id: recipe_name_lbl
-                            font_size: 22
-                            color: 1, 1, 1, 1
-                            wrap: True
-                            text_size: self.size
-                            halign: 'center'
-                            valign: 'middle'
-                            size_hint_y: 0.22
-                        Label:
-                            id: recipe_desc_lbl
-                            font_size: 14
-                            color: 0.9, 0.9, 0.9, 1
-                            wrap: True
-                            text_size: self.size
-                            halign: 'center'
-                            valign: 'middle'
-                            size_hint_y: 0.4
-                        Label:
-                            id: recipe_ingredients_lbl
-                            font_size: 15
-                            color: 0.6, 1, 0.6, 1
-                            wrap: True
-                            text_size: self.size
-                            halign: 'center'
-                            valign: 'middle'
-                            size_hint_y: 0.23
-                        Label:
-                            id: recipe_duration_lbl
-                            font_size: 13
-                            color: 0.8, 0.8, 0.8, 1
-                            wrap: True
-                            text_size: self.size
-                            halign: 'center'
-                            valign: 'middle'
-                            size_hint_y: 0.15
                 Button:
                     id: next_recipe_btn
-                    size_hint_x: 0.08
-                    font_size: 20
+                    size: (44, 44)
+                    size_hint: (None, None)
+                    pos_hint: {'right': 1, 'center_y': 0.5}
+                    font_size: 16
                     text: '>>>'
                     on_release: root._flip_recipe(1)
         BoxLayout:
