@@ -160,6 +160,18 @@ def test_greenhouse_screen_back_goes_to_game_menu():
     assert screen.manager.current == "game_menu"
 
 
+def test_game_won_next_level_starts_next_level():
+    """Win-screen 'Next Level' button must select the next level, not repeat the current one."""
+    app = _make_app(next_level=4)
+    app.selected_level_number = 3
+
+    screen = GameWonScreen()
+    screen.restart_game()
+
+    assert app.selected_level_number == 4
+    assert screen.manager.current == "game"
+
+
 def test_game_won_menu_goes_to_game_menu():
     """Level-completed 'Main Menu' button must return to the hub."""
     screen = GameWonScreen()

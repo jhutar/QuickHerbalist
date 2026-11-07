@@ -196,10 +196,10 @@ class ProfileManager:
                 ProfileErrorCode.INVALID_FLOWER_COUNT,
                 "flower_count must be an integer.",
             )
-        if flower_count <= 0:
+        if flower_count < 0:
             raise ProfileError(
                 ProfileErrorCode.INVALID_FLOWER_COUNT,
-                "flower_count must be a positive integer.",
+                "flower_count must be a non-negative integer.",
             )
 
         char = self.characters[self.active_character_name]
