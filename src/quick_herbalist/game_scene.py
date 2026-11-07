@@ -133,7 +133,7 @@ class Flower(MovingWidget):
         """Initialize flower at random position."""
         x = SCREEN_W + random.randint(50, 200)
         y = random.randint(0, SCREEN_H - 32)
-        super().__init__("flower_sprite", (32, 32), x, y, **kwargs)
+        super().__init__(sprite_manager, "flower_sprite", (32, 32), x, y, **kwargs)
 
 
 class Stone(MovingWidget):
@@ -143,7 +143,7 @@ class Stone(MovingWidget):
         """Initialize stone at random position."""
         x = SCREEN_W + random.randint(100, 300)
         y = random.randint(0, SCREEN_H - 64)
-        super().__init__("stone_sprite", (64, 53), x, y, **kwargs)
+        super().__init__(sprite_manager, "stone_sprite", (64, 53), x, y, **kwargs)
 
 
 class GameView(Widget):
