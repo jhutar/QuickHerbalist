@@ -21,3 +21,15 @@ sprites:
     frames:
     - atlas_id: grass_sprite_0
       duration_ms: 250
+  background_desert_sprite:
+    frames:
+    - atlas_id: background_desert_sprite_0
+      duration_ms: 250
+  background_ice_sprite:
+    frames:
+    - atlas_id: background_ice_sprite_0
+      duration_ms: 250
+  flower2_sprite:
+    frames:
+    - atlas_id: flower2_sprite_0
+      duration_ms: 250

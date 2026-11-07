@@ -41,12 +41,36 @@
       64
     ]
   },
-  "grass.png": {
+  "background_grass.png": {
     "grass_sprite_0": [
       0,
       0,
       128,
       128
+    ]
+  },
+  "background_desert.png": {
+    "background_desert_sprite_0": [
+      0,
+      0,
+      128,
+      128
+    ]
+  },
+  "background_ice.png": {
+    "background_ice_sprite_0": [
+      0,
+      0,
+      128,
+      128
+    ]
+  },
+  "flower2.png": {
+    "flower2_sprite_0": [
+      0,
+      0,
+      64,
+      64
     ]
   }
 }
