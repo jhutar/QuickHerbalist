@@ -282,7 +282,15 @@ def _setup_potions_app(recipes, inventory=None, cauldron=None, potions=None, loa
     pm.get_potion_count.side_effect = lambda p: (potions or {}).get(p, 0)
     pm.get_run_loadout.return_value = loadout or [None, None, None]
     app.sprite_manager.names.return_value = set(inventory or {}) | set(cauldron or {})
+    app.sprite_manager.get.side_effect = _make_sprite_mock
     return app
+
+
+def _make_sprite_mock(name):
+    """Fake AnimatedSprite carrying the frame-image path the drag proxy needs."""
+    sprite = MagicMock()
+    sprite.frames_data = [{"image": f"{name}.png"}]
+    return sprite
 
 
 def test_potions_screen_brew_success_adds_potion():
@@ -350,6 +358,20 @@ def test_potions_screen_ingredient_chip_click_adds_to_cauldron():
     chip.click_handler()
 
     app.profile_manager.move_flower_to_cauldron.assert_called_once_with("flower_sprite")
+
+
+def test_potions_screen_ingredient_chip_has_drag_proxy_image():
+    """Each ingredient chip carries a drag-proxy image source so the flower follows the pointer."""
+    from quick_herbalist.core.config_parser import get_asset_path
+
+    _setup_potions_app([_recipe()], inventory={"flower_sprite": 2})
+
+    screen = PotionsScreen()
+    screen.on_pre_enter()
+
+    chips = [c.args[0] for c in screen.ids.ingredient_strip.add_widget.call_args_list]
+    assert len(chips) == 1
+    assert chips[0].drag_image_source == get_asset_path("flower_sprite.png")
 
 
 def test_potions_screen_cauldron_slot_tap_removes_ingredient():
