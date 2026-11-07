@@ -107,7 +107,7 @@ def test_profile_manager_create_character_success(temp_config_dir):
     char = pm.characters["HerbalistMax"]
     assert char["name"] == "HerbalistMax"
     assert char["levels_completed"] == 0
-    assert char["inventory"]["flower"] == 0
+    assert char["inventory"] == {}
 
     # Assert it is set as the active character
     assert pm.active_character_name == "HerbalistMax"
@@ -190,7 +190,7 @@ def test_profile_manager_add_flowers_no_active_character(temp_config_dir):
     pm = ProfileManager(config_dir=temp_config_dir)
 
     with pytest.raises(ProfileError) as exc_info:
-        pm.add_flowers(10)
+        pm.add_flowers("flower_sprite", 10)
     assert exc_info.value.code is ProfileErrorCode.NO_ACTIVE_CHARACTER
 
 
@@ -201,28 +201,44 @@ def test_profile_manager_add_flowers_invalid_flower_count(temp_config_dir):
 
     # Reject negative
     with pytest.raises(ProfileError) as exc_info:
-        pm.add_flowers(-1)
+        pm.add_flowers("flower_sprite", -1)
     assert exc_info.value.code is ProfileErrorCode.INVALID_FLOWER_COUNT
 
     # Reject string
     with pytest.raises(ProfileError) as exc_info:
-        pm.add_flowers("five")
+        pm.add_flowers("flower_sprite", "five")
     assert exc_info.value.code is ProfileErrorCode.INVALID_FLOWER_COUNT
 
     # Reject float
     with pytest.raises(ProfileError) as exc_info:
-        pm.add_flowers(3.5)
+        pm.add_flowers("flower_sprite", 3.5)
     assert exc_info.value.code is ProfileErrorCode.INVALID_FLOWER_COUNT
 
     # Reject None
     with pytest.raises(ProfileError) as exc_info:
-        pm.add_flowers(None)
+        pm.add_flowers("flower_sprite", None)
     assert exc_info.value.code is ProfileErrorCode.INVALID_FLOWER_COUNT
 
     # Reject boolean
     with pytest.raises(ProfileError) as exc_info:
-        pm.add_flowers(True)
+        pm.add_flowers("flower_sprite", True)
     assert exc_info.value.code is ProfileErrorCode.INVALID_FLOWER_COUNT
+
+
+def test_profile_manager_add_flowers_invalid_sprite_name(temp_config_dir):
+    pm = ProfileManager(config_dir=temp_config_dir)
+
+    pm.create_character("HerbalistMax")
+
+    # Reject empty string
+    with pytest.raises(ProfileError) as exc_info:
+        pm.add_flowers("", 5)
+    assert exc_info.value.code is ProfileErrorCode.INVALID_SPRITE_NAME
+
+    # Reject non-string
+    with pytest.raises(ProfileError) as exc_info:
+        pm.add_flowers(None, 5)
+    assert exc_info.value.code is ProfileErrorCode.INVALID_SPRITE_NAME
 
 
 def test_profile_manager_complete_level_success(temp_config_dir):
@@ -248,19 +264,25 @@ def test_profile_manager_add_flowers_success(temp_config_dir):
     pm.create_character("HerbalistMax")
 
     # Zero is valid (winning a level without collecting flowers)
-    pm.add_flowers(0)
-    assert pm.characters["HerbalistMax"]["inventory"]["flower"] == 0
+    pm.add_flowers("flower_sprite", 0)
+    assert pm.characters["HerbalistMax"]["inventory"]["flower_sprite"] == 0
 
-    pm.add_flowers(5)
+    pm.add_flowers("flower_sprite", 5)
     char = pm.characters["HerbalistMax"]
-    assert char["inventory"]["flower"] == 5
+    assert char["inventory"]["flower_sprite"] == 5
 
-    pm.add_flowers(12)
-    assert char["inventory"]["flower"] == 17
+    # A second flower type accumulates separately
+    pm.add_flowers("flower2_sprite", 3)
+    assert char["inventory"]["flower2_sprite"] == 3
+
+    pm.add_flowers("flower_sprite", 12)
+    assert char["inventory"]["flower_sprite"] == 17
+    assert char["inventory"]["flower2_sprite"] == 3
 
     pm2 = ProfileManager(config_dir=temp_config_dir)
     char2 = pm2.characters["HerbalistMax"]
-    assert char2["inventory"]["flower"] == 17
+    assert char2["inventory"]["flower_sprite"] == 17
+    assert char2["inventory"]["flower2_sprite"] == 3
 
 
 def test_next_level_number_no_active_character(temp_config_dir):

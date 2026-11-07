@@ -3,7 +3,9 @@
 from kivy.app import App
 from kivy.core.window import Window
 from kivy.lang import Builder
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
+from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 
 from quick_herbalist.game_scene import GameView
@@ -210,13 +212,27 @@ class GameWonScreen(KeyboardScreen):
     """Screen shown when level is completed."""
 
     score = 0
+    harvest = {}
 
     def on_pre_enter(self):
         """Initialize level completion UI."""
         self.ids.title.text = _("LEVEL COMPLETED!")
-        self.ids.score_lbl.text = _("Collected Flowers: ") + str(self.score)
+        self._render_harvest()
         self.ids.restart_btn.text = _("Next Level")
         self.ids.menu_btn.text = _("Main Menu")
+
+    def _render_harvest(self):
+        """Render one icon + name + count row per flower type collected this run."""
+        app = App.get_running_app()
+        box = self.ids.harvest_box
+        box.clear_widgets()
+        for sprite_name, count in self.harvest.items():
+            row = BoxLayout(size_hint_y=0, spacing=10)
+            row.add_widget(app.sprite_manager.get(sprite_name))
+            row.add_widget(
+                Label(text=f"{_(sprite_name)}: {count}", font_size=28, color=(1, 1, 1, 1))
+            )
+            box.add_widget(row)
 
     def restart_game(self):
         """Start the next level."""
@@ -531,10 +547,11 @@ Builder.load_string("""
             id: title
             font_size: 50
             color: 0.2, 0.8, 0.2, 1
-        Label:
-            id: score_lbl
-            font_size: 28
-            color: 1, 1, 1, 1
+        BoxLayout:
+            id: harvest_box
+            orientation: 'vertical'
+            spacing: 10
+            size_hint_y: 0.4
         Button:
             id: restart_btn
             size_hint: (0.4, 0.15)

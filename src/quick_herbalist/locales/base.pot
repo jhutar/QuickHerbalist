@@ -46,3 +46,11 @@ msgstr ""
 #: game.py:279
 msgid "GAME OVER!"
 msgstr ""
+
+#: screens.py
+msgid "flower_sprite"
+msgstr ""
+
+#: screens.py
+msgid "flower2_sprite"
+msgstr ""

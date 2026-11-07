@@ -16,6 +16,7 @@ class ProfileErrorCode(enum.StrEnum):
     CHARACTER_NOT_FOUND = "CHARACTER_NOT_FOUND"
     NO_ACTIVE_CHARACTER = "NO_ACTIVE_CHARACTER"
     INVALID_FLOWER_COUNT = "INVALID_FLOWER_COUNT"
+    INVALID_SPRITE_NAME = "INVALID_SPRITE_NAME"
 
 
 class ProfileError(ValueError):
@@ -142,7 +143,7 @@ class ProfileManager:
         self.characters[stripped_name] = {
             "name": stripped_name,
             "levels_completed": 0,
-            "inventory": {"flower": 0},
+            "inventory": {},
         }
 
         self.active_character_name = stripped_name
@@ -184,13 +185,18 @@ class ProfileManager:
         char["levels_completed"] = char.get("levels_completed", 0) + 1
         self.save_config()
 
-    def add_flowers(self, flower_count):
-        """Add flowers to active character inventory."""
+    def add_flowers(self, sprite_name, flower_count):
+        """Add flowers of the given type (sprite key) to the active character inventory."""
         if not self.active_character_name or self.active_character_name not in self.characters:
             raise ProfileError(
                 ProfileErrorCode.NO_ACTIVE_CHARACTER, "No active character selected."
             )
 
+        if not isinstance(sprite_name, str) or not sprite_name:
+            raise ProfileError(
+                ProfileErrorCode.INVALID_SPRITE_NAME,
+                "sprite_name must be a non-empty string.",
+            )
         if not isinstance(flower_count, int) or isinstance(flower_count, bool):
             raise ProfileError(
                 ProfileErrorCode.INVALID_FLOWER_COUNT,
@@ -205,6 +211,6 @@ class ProfileManager:
         char = self.characters[self.active_character_name]
         if "inventory" not in char or not isinstance(char["inventory"], dict):
             char["inventory"] = {}
-        char["inventory"]["flower"] = char["inventory"].get("flower", 0) + flower_count
+        char["inventory"][sprite_name] = char["inventory"].get(sprite_name, 0) + flower_count
 
         self.save_config()

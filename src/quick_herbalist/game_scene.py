@@ -362,12 +362,13 @@ class GameView(Widget):
         self.stop_game()
         try:
             self.profile_manager.complete_level()
-            self.profile_manager.add_flowers(self.rules.score)
+            self.profile_manager.add_flowers(self.level.flower.sprite, self.rules.score)
         except Exception as e:
             logger.error("Failed to save profile on win: %s", e)
         app = App.get_running_app()
         won_screen = app.root.get_screen("game_won")
         won_screen.score = self.rules.score
+        won_screen.harvest = {self.level.flower.sprite: self.rules.score}
         app.root.current = "game_won"
 
     def on_touch_down(self, touch):
