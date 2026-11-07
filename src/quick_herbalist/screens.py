@@ -235,9 +235,9 @@ class GameWonScreen(KeyboardScreen):
             box.add_widget(row)
 
     def restart_game(self):
-        """Start the next level."""
+        """Start the level after the one just played, clamped at the last level."""
         app = App.get_running_app()
-        app.selected_level_number = app.profile_manager.next_level_number()
+        app.selected_level_number = min(app.selected_level_number + 1, len(app.levels))
         self.manager.current = "game"
 
     def goto_menu(self):
