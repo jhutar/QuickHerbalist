@@ -491,3 +491,16 @@ def test_potions_screen_ingredient_chip_labels_show_count():
 
     texts = [c.kwargs.get("text") for c in kivy_uix_label_module.Label.call_args_list]
     assert "flower_sprite (2x)" in texts
+
+
+def test_potions_screen_spoon_uses_spoon_image():
+    """Spoon widget and its drag proxy use the spoon.png asset."""
+    from quick_herbalist.core.config_parser import get_asset_path
+
+    _setup_potions_app([_recipe()])
+
+    screen = PotionsScreen()
+    screen.on_pre_enter()
+
+    assert screen.ids.spoon_img.source == get_asset_path("spoon.png")
+    assert screen.ids.spoon.drag_image_source == get_asset_path("spoon.png")
