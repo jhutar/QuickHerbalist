@@ -14,6 +14,13 @@ if [[ -z "$SPEC_DIR" || ! -d "$SPEC_DIR" ]]; then
     exit 1
 fi
 
+# Pre-flight Check: Ensure the agent command exists and is executable.
+if [[ ! -x "$AGENT_CMD" ]]; then
+    echo "FATAL: Agent command not found or not executable: $AGENT_CMD"
+    echo "Set AGENT_CMD (second arg) or install the runner at that path."
+    exit 1
+fi
+
 TASKS_FILE="$SPEC_DIR/tasks.md"
 if [[ ! -f "$TASKS_FILE" ]]; then
     echo "Error: $TASKS_FILE not found."
