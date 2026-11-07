@@ -1,11 +1,13 @@
 import json
-import yaml
+
 import pytest
+import yaml
+
 from quick_herbalist.core.config_parser import (
-    load_sprites_yaml,
-    save_sprites_yaml,
     load_sprites_atlas,
+    load_sprites_yaml,
     save_sprites_atlas,
+    save_sprites_yaml,
 )
 
 
@@ -38,7 +40,7 @@ def test_save_sprites_yaml_success(temp_assets_dir):
 
     save_sprites_yaml(str(yaml_path), data)
 
-    with open(yaml_path, "r", encoding="utf-8") as f:
+    with open(yaml_path, encoding="utf-8") as f:
         loaded_data = yaml.safe_load(f)
     assert loaded_data == data
 
@@ -65,6 +67,6 @@ def test_save_sprites_atlas_success(temp_assets_dir):
 
     save_sprites_atlas(str(atlas_path), data)
 
-    with open(atlas_path, "r", encoding="utf-8") as f:
+    with open(atlas_path, encoding="utf-8") as f:
         loaded_data = json.load(f)
     assert loaded_data == data

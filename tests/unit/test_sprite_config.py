@@ -26,9 +26,7 @@ sprites:
         encoding="utf-8",
     )
     atlas_path.write_text(
-        json.dumps(
-            {"hero.png": {"frame_0": [0, 0, 32, 32], "frame_1": [32, 0, 32, 32]}}
-        ),
+        json.dumps({"hero.png": {"frame_0": [0, 0, 32, 32], "frame_1": [32, 0, 32, 32]}}),
         encoding="utf-8",
     )
     return str(yaml_path), str(atlas_path)
@@ -131,11 +129,7 @@ def test_resolve_frames_zero_duration_ms_raises(config_files):
     yaml_path, atlas_path = config_files
     with open(yaml_path, "w", encoding="utf-8") as f:
         yaml.dump(
-            {
-                "sprites": {
-                    "hero_run": {"frames": [{"atlas_id": "frame_0", "duration_ms": 0}]}
-                }
-            },
+            {"sprites": {"hero_run": {"frames": [{"atlas_id": "frame_0", "duration_ms": 0}]}}},
             f,
         )
     config = SpriteConfig(yaml_path, atlas_path)
@@ -250,7 +244,7 @@ def test_create_sprite_success(config):
     assert config.sprites_data["sprites"]["new_sprite"] == {"frames": []}
 
     # Persisted to the yaml file
-    with open(config.yaml_path, "r", encoding="utf-8") as f:
+    with open(config.yaml_path, encoding="utf-8") as f:
         data = yaml.safe_load(f)
     assert "new_sprite" in data["sprites"]
 
@@ -265,7 +259,7 @@ def test_delete_sprite_cleans_atlas(config):
     assert "hero_run" not in config.sprites_data["sprites"]
     assert config.atlas_data == {}
 
-    with open(config.atlas_path, "r", encoding="utf-8") as f:
+    with open(config.atlas_path, encoding="utf-8") as f:
         assert json.load(f) == {}
 
 
@@ -297,7 +291,7 @@ def test_save_sprite_frames_persists_both_files(config):
     ]
     config.save_sprite_frames("hero_run", frames)
 
-    with open(config.yaml_path, "r", encoding="utf-8") as f:
+    with open(config.yaml_path, encoding="utf-8") as f:
         yaml_data = yaml.safe_load(f)
     saved_frames = yaml_data["sprites"]["hero_run"]["frames"]
     assert saved_frames == [
@@ -305,7 +299,7 @@ def test_save_sprite_frames_persists_both_files(config):
         {"atlas_id": "frame_1", "duration_ms": 150},
     ]
 
-    with open(config.atlas_path, "r", encoding="utf-8") as f:
+    with open(config.atlas_path, encoding="utf-8") as f:
         atlas_data = json.load(f)
     assert atlas_data["hero.png"]["frame_1"] == [32, 0, 32, 32]
 

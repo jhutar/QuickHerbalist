@@ -5,17 +5,17 @@ validates file consistency, and persists create/delete/save changes.
 Game (SpriteManager) and sprite editor GUI both consume this module.
 """
 
-import os
 import json
+import os
 
 import yaml
 
 from quick_herbalist.core.config_parser import (
     get_asset_path,
-    load_sprites_yaml,
-    save_sprites_yaml,
     load_sprites_atlas,
+    load_sprites_yaml,
     save_sprites_atlas,
+    save_sprites_yaml,
 )
 
 
@@ -28,12 +28,8 @@ class SpriteConfig:
 
     def __init__(self, yaml_path: str = None, atlas_path: str = None):
         """Initialize with optional custom paths, defaults to assets dir."""
-        self.yaml_path = (
-            yaml_path if yaml_path is not None else get_asset_path("sprites.yaml")
-        )
-        self.atlas_path = (
-            atlas_path if atlas_path is not None else get_asset_path("sprites.atlas")
-        )
+        self.yaml_path = yaml_path if yaml_path is not None else get_asset_path("sprites.yaml")
+        self.atlas_path = atlas_path if atlas_path is not None else get_asset_path("sprites.atlas")
         self.sprites_data = {}
         self.atlas_data = {}
         self.load()
@@ -121,7 +117,7 @@ class SpriteConfig:
             return False
 
         all_atlas_ids = set()
-        for image, regions in atlas_data.items():
+        for _image, regions in atlas_data.items():
             if not isinstance(regions, dict):
                 continue
             for region_id, rect in regions.items():
@@ -160,7 +156,10 @@ class SpriteConfig:
         return True
 
     def create_sprite(self, sprite_name: str) -> bool:
-        """Create a new empty sprite entry. Returns True on success, False if name invalid or duplicate."""
+        """Create a new empty sprite entry.
+
+        Returns True on success, False if name invalid or duplicate.
+        """
         if not sprite_name or sprite_name in self.sprites_data["sprites"]:
             return False
         self.sprites_data["sprites"][sprite_name] = {"frames": []}
@@ -173,11 +172,7 @@ class SpriteConfig:
         if sprite_entry is None:
             return
 
-        atlas_ids = {
-            f.get("atlas_id")
-            for f in sprite_entry.get("frames", [])
-            if f.get("atlas_id")
-        }
+        atlas_ids = {f.get("atlas_id") for f in sprite_entry.get("frames", []) if f.get("atlas_id")}
         self.sprites_data["sprites"].pop(sprite_name, None)
         self._remove_atlas_ids(atlas_ids)
         self._save_both()
@@ -195,9 +190,7 @@ class SpriteConfig:
         }
         self._remove_atlas_ids(old_atlas_ids)
 
-        yaml_frames = [
-            {"atlas_id": f["atlas_id"], "duration_ms": f["duration_ms"]} for f in frames
-        ]
+        yaml_frames = [{"atlas_id": f["atlas_id"], "duration_ms": f["duration_ms"]} for f in frames]
         self.sprites_data["sprites"][sprite_name] = {"frames": yaml_frames}
 
         for frame in frames:

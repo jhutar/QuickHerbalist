@@ -1,6 +1,6 @@
 import sys
-from unittest.mock import MagicMock
 import types
+from unittest.mock import MagicMock
 
 # Setup mocks for Kivy BEFORE importing anything that uses it
 kivy_module = types.ModuleType("kivy")

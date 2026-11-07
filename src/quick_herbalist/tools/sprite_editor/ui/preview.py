@@ -1,12 +1,14 @@
 import os
+
+from kivy.clock import Clock
+from kivy.core.image import Image as CoreImage
+from kivy.properties import ListProperty, NumericProperty, ObjectProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.image import Image
 from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
-from kivy.properties import NumericProperty, ObjectProperty, ListProperty
-from kivy.clock import Clock
-from kivy.core.image import Image as CoreImage
+
 from quick_herbalist.core.animated_sprite import AnimationStateController
 from quick_herbalist.core.config_parser import get_asset_path
 
@@ -18,9 +20,9 @@ class SpritePreviewWidget(BoxLayout):
 
     zoom_level = NumericProperty(1.0)
     sprite_name = ObjectProperty(None)
-    frames = ListProperty(
-        []
-    )  # List of dicts: {'atlas_id': str, 'duration_ms': int, 'image': str, 'x': int, 'y': int, 'w': int, 'h': int}
+    # List of dicts: {'atlas_id': str, 'duration_ms': int, 'image': str,
+    # 'x': int, 'y': int, 'w': int, 'h': int}
+    frames = ListProperty([])
 
     def __init__(self, **kwargs):
         """Initialize the widget with zoom controls, scroll view, and animation loop."""
@@ -33,9 +35,7 @@ class SpritePreviewWidget(BoxLayout):
     def _setup_ui(self):
         """Build the widget UI: zoom controls, label, scroll view, and debug info."""
         # Zoom controls
-        zoom_controls = BoxLayout(
-            size_hint_y=None, height="40dp", orientation="horizontal"
-        )
+        zoom_controls = BoxLayout(size_hint_y=None, height="40dp", orientation="horizontal")
         zoom_controls.add_widget(Button(text="- Zoom", on_release=self.zoom_out))
         zoom_controls.add_widget(Button(text="100%", on_release=self.reset_zoom))
         zoom_controls.add_widget(Button(text="+ Zoom", on_release=self.zoom_in))

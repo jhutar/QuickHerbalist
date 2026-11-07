@@ -1,6 +1,8 @@
 import os
-import yaml
+
 import pytest
+import yaml
+
 from quick_herbalist.profiles import ProfileError, ProfileErrorCode, ProfileManager
 
 
@@ -68,7 +70,7 @@ def test_profile_manager_fallback_on_corrupt_yaml(temp_config_dir):
     assert pm.characters == {}
 
     # Assert valid yaml written on fallback recovery
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         data = yaml.safe_load(f)
         assert isinstance(data, dict)
         assert data["active_character"] is None

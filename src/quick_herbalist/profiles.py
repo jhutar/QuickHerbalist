@@ -2,6 +2,7 @@ import copy
 import enum
 import logging
 import os
+
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -65,7 +66,7 @@ class ProfileManager:
             return
 
         try:
-            with open(self.config_path, "r", encoding="utf-8") as f:
+            with open(self.config_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f)
                 if not isinstance(data, dict):
                     logger.error("Configuration data must be a dictionary")
@@ -79,7 +80,10 @@ class ProfileManager:
         self._apply_loaded_data(data)
 
     def _apply_loaded_data(self, data):
-        """Apply loaded configuration data to instance attributes with defaults for corrupted keys."""
+        """Apply loaded configuration data to instance attributes.
+
+        Missing or corrupted keys fall back to defaults.
+        """
         self.active_character_name = data.get("active_character")
 
         self.settings = copy.deepcopy(self.get_default_config()["settings"])
@@ -133,9 +137,7 @@ class ProfileManager:
             raise ProfileError(ProfileErrorCode.EMPTY_NAME, "Name cannot be empty.")
 
         if stripped_name in self.characters:
-            raise ProfileError(
-                ProfileErrorCode.DUPLICATE_CHARACTER, "Character already exists."
-            )
+            raise ProfileError(ProfileErrorCode.DUPLICATE_CHARACTER, "Character already exists.")
 
         self.characters[stripped_name] = {
             "name": stripped_name,
@@ -149,19 +151,14 @@ class ProfileManager:
     def select_character(self, name):
         """Select existing character by name."""
         if not name or name not in self.characters:
-            raise ProfileError(
-                ProfileErrorCode.CHARACTER_NOT_FOUND, "Character not found."
-            )
+            raise ProfileError(ProfileErrorCode.CHARACTER_NOT_FOUND, "Character not found.")
 
         self.active_character_name = name
         self.save_config()
 
     def complete_level(self):
         """Increment levels completed for active character."""
-        if (
-            not self.active_character_name
-            or self.active_character_name not in self.characters
-        ):
+        if not self.active_character_name or self.active_character_name not in self.characters:
             raise ProfileError(
                 ProfileErrorCode.NO_ACTIVE_CHARACTER, "No active character selected."
             )
@@ -172,10 +169,7 @@ class ProfileManager:
 
     def add_flowers(self, flower_count):
         """Add flowers to active character inventory."""
-        if (
-            not self.active_character_name
-            or self.active_character_name not in self.characters
-        ):
+        if not self.active_character_name or self.active_character_name not in self.characters:
             raise ProfileError(
                 ProfileErrorCode.NO_ACTIVE_CHARACTER, "No active character selected."
             )

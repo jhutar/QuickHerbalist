@@ -3,10 +3,12 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.textinput import TextInput
+
+from quick_herbalist.core.config_parser import get_asset_path
+from quick_herbalist.core.sprite_config import SpriteConfig
+
 from .preview import SpritePreviewWidget
 from .sequence_editor import SequenceEditorWidget
-from quick_herbalist.core.sprite_config import SpriteConfig
-from quick_herbalist.core.config_parser import get_asset_path
 
 
 class SpriteEditorMainLayout(BoxLayout):
@@ -32,31 +34,19 @@ class SpriteEditorMainLayout(BoxLayout):
     def _setup_ui(self):
         """Build and attach the three-section UI: sidebar, editor, preview."""
         # 1. Left Sidebar (Sprite List and creation)
-        sidebar = BoxLayout(
-            orientation="vertical", size_hint_x=None, width="200dp", spacing=10
-        )
-        sidebar.add_widget(
-            Label(text="Sprites List", size_hint_y=None, height="40dp", bold=True)
-        )
+        sidebar = BoxLayout(orientation="vertical", size_hint_x=None, width="200dp", spacing=10)
+        sidebar.add_widget(Label(text="Sprites List", size_hint_y=None, height="40dp", bold=True))
 
         # Scrollable sprite list container
         self.sprite_list_scroll = ScrollView()
-        self.sprite_list_container = BoxLayout(
-            orientation="vertical", size_hint_y=None, spacing=5
-        )
-        self.sprite_list_container.bind(
-            minimum_height=self.sprite_list_container.setter("height")
-        )
+        self.sprite_list_container = BoxLayout(orientation="vertical", size_hint_y=None, spacing=5)
+        self.sprite_list_container.bind(minimum_height=self.sprite_list_container.setter("height"))
         self.sprite_list_scroll.add_widget(self.sprite_list_container)
         sidebar.add_widget(self.sprite_list_scroll)
 
         # Create/Delete controls
-        sidebar.add_widget(
-            Label(text="New Sprite Name:", size_hint_y=None, height="20dp")
-        )
-        self.new_sprite_input = TextInput(
-            multiline=False, size_hint_y=None, height="35dp"
-        )
+        sidebar.add_widget(Label(text="New Sprite Name:", size_hint_y=None, height="20dp"))
+        self.new_sprite_input = TextInput(multiline=False, size_hint_y=None, height="35dp")
         sidebar.add_widget(self.new_sprite_input)
 
         sidebar_btns = BoxLayout(

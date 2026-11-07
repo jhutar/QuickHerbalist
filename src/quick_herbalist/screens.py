@@ -17,9 +17,7 @@ class KeyboardScreen(Screen):
     def on_enter(self):
         """Handle screen entry and request keyboard."""
         self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
-        self._keyboard.bind(
-            on_key_down=self._on_keyboard_down, on_key_up=self._on_keyboard_up
-        )
+        self._keyboard.bind(on_key_down=self._on_keyboard_down, on_key_up=self._on_keyboard_up)
 
     def on_leave(self):
         """Handle screen exit and unbind keyboard."""
@@ -186,9 +184,7 @@ class PotionsScreen(KeyboardScreen):
     def on_pre_enter(self):
         """Initialize potions screen UI."""
         self.ids.title.text = _("Potion Crafting")
-        self.ids.desc.text = _(
-            "Placeholder Screen: Future crafting system will be here!"
-        )
+        self.ids.desc.text = _("Placeholder Screen: Future crafting system will be here!")
         self.ids.back_btn.text = _("Back to Menu")
 
 
@@ -257,9 +253,7 @@ class GameScreen(Screen):
         self.game_view.start_game()
 
         self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
-        self._keyboard.bind(
-            on_key_down=self._on_keyboard_down, on_key_up=self._on_keyboard_up
-        )
+        self._keyboard.bind(on_key_down=self._on_keyboard_down, on_key_up=self._on_keyboard_up)
 
     def on_leave(self):
         """Stop game and release keyboard on leave."""
