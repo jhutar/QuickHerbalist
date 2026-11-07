@@ -281,6 +281,7 @@ def _setup_potions_app(recipes, inventory=None, cauldron=None, potions=None, loa
     pm.get_potions.return_value = potions or {}
     pm.get_potion_count.side_effect = lambda p: (potions or {}).get(p, 0)
     pm.get_run_loadout.return_value = loadout or [None, None, None]
+    app.sprite_manager.names.return_value = set(inventory or {}) | set(cauldron or {})
     return app
 
 
@@ -440,3 +441,19 @@ def test_potions_screen_slot_click_releases_potion():
     screen._on_run_slot_clicked(0)
 
     app.profile_manager.release_run_slot.assert_called_once_with(0)
+
+
+def test_potions_screen_ingredient_strip_skips_unknown_sprites():
+    """Legacy inventory keys without a sprite (e.g. 'flower') are skipped, not crashed on."""
+    app = _setup_potions_app(
+        [_recipe()], inventory={"flower_sprite": 2, "flower": 5, "flower2_sprite": 1}
+    )
+    app.sprite_manager.names.return_value = {"flower_sprite", "flower2_sprite"}
+
+    screen = PotionsScreen()
+    screen.on_pre_enter()
+
+    assert screen.ids.ingredient_strip.add_widget.call_count == 2
+    app.sprite_manager.get.assert_any_call("flower_sprite")
+    app.sprite_manager.get.assert_any_call("flower2_sprite")
+    assert not any(c.args and c.args[0] == "flower" for c in app.sprite_manager.get.call_args_list)
