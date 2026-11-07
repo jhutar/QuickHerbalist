@@ -16,8 +16,9 @@ Accessible from the game menu hub (`GameMenuScreen`, "Create Potions" button or
   flowers hidden. Legacy/unknown sprite keys in the save are skipped with a
   warning, not crashed on.
 - **Recipe book** — `<<<` / `>>>` flip through recipes, wrap-around. Shows
-  name, description, ingredient list, duration. Book cover is a `star.png`
-  placeholder.
+  name, description, ingredient list, duration over the `recipes.png`
+  (128x128, stretched) background with a dark overlay; all text wraps to the
+  panel size.
 - **Cauldron** — `cauldron.png` with a 2x2 grid of ingredient slots. Same
   flower merges into one slot with a count badge in the lower right; tap a
   slot to return one unit to the inventory. Max 4 unique ingredients.
@@ -110,7 +111,7 @@ dependency we avoid). It's ~60 lines in `Draggable`:
 
 ### Tests
 
-`make test` + `make check-all` (174 unit tests). Screen tests mock Kivy
+`make test` + `make check-all` (178 unit tests). Screen tests mock Kivy
 modules; drag/touch paths are not unit-tested — only the commit handlers
 (`_on_brew`, `_on_ingredient_dropped`, `_on_potion_dropped`, ...). Visual
 behavior must be verified by hand: `uv run quick-herbalist`.
@@ -130,8 +131,8 @@ In priority order as agreed with the player:
    the player for the recipe's duration. `duration_seconds` (30) is stored in
    `recipes.yaml` and shown in the book but **not enforced anywhere** — no
    timer, no active-effect system exists yet.
-4. **Potion images** — replace `star.png` placeholders (potion chips, book
-   cover, spoon) with real art via the sprite manager, like flowers.
+4. **Potion images** — replace `star.png` placeholders (potion chips, spoon)
+   with real art via the sprite manager, like flowers.
 5. **Recipes collected in-game** — players will collect recipes during runs
    later; currently all recipes in `recipes.yaml` are always available.
    Needs a per-profile "known recipes" set.
