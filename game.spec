@@ -19,6 +19,9 @@ SRC = os.path.join("src", "quick_herbalist")
 datas = [
     (os.path.join(SRC, "assets"), os.path.join("quick_herbalist", "assets")),
     (os.path.join(SRC, "locales"), os.path.join("quick_herbalist", "locales")),
+    # Per-screen KV rule files loaded via __file__-relative paths in
+    # quick_herbalist.screens.base.load_screen_kv (works frozen in _MEIPASS).
+    (os.path.join(SRC, "screens", "kv"), os.path.join("quick_herbalist", "screens", "kv")),
 ]
 
 a = Analysis(

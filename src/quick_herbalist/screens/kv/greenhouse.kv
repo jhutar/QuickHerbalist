@@ -1,0 +1,25 @@
+<GreenhouseScreen>:
+    canvas.before:
+        Color:
+            rgb: 0, 0, 0
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 50
+        spacing: 20
+        Label:
+            id: title
+            font_size: 40
+            color: 1, 1, 1, 1
+        Label:
+            id: desc
+            font_size: 24
+            color: 0.7, 0.7, 0.7, 1
+        Button:
+            id: back_btn
+            size_hint: (0.4, 0.15)
+            pos_hint: {'center_x': 0.5}
+            font_size: 20
+            on_release: root.on_back()
