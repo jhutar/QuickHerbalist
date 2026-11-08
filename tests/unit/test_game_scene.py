@@ -825,15 +825,27 @@ def test_update_skipped_while_hint_open():
     assert view.hint_active is True
 
 
-def test_spawn_skipped_while_hint_open():
-    """Spawn timers do not add entities while the run is paused on a hint."""
+def test_spawn_deferred_while_hint_open():
+    """A spawn due while a hint box pauses the run is deferred, not dropped.
+
+    Dropping it killed the spawn chain for that entity type forever (empty
+    levels after the first hint). Deferring keeps the chain alive and the
+    spawn fires on the next poll after the box closes.
+    """
     view = _view_with_hint_mocks()
     view._hint_box = object()
 
     view._spawn(1.0 / 60, view._specs[0])
 
     assert view.entities == []
-    assert view._spawn_events == []
+    # Chain alive: one deferred poll scheduled, not a dead chain.
+    assert len(view._spawn_events) == 1
+
+    view._hint_box = None  # hint closed
+    view._spawn(1.0 / 60, view._specs[0])
+
+    assert len(view.entities) == 1  # deferred spawn fired
+    assert len(view._spawn_events) == 2  # normal next spawn also scheduled
 
 
 def test_keyboard_closes_hint_box():
