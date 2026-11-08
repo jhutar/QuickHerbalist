@@ -5,15 +5,21 @@ import textwrap
 import pytest
 
 from quick_herbalist.core.level_config import (
+    EntityDefinition,
     LevelConfigError,
     LevelDefinition,
-    SpawnDefinition,
-    StoneDefinition,
     level_for,
     load_levels,
 )
 
-SPRITE_NAMES = {"grass_sprite", "flower_sprite", "stone_sprite"}
+SPRITE_NAMES = {
+    "grass_sprite",
+    "flower_sprite",
+    "flower2_sprite",
+    "stone_sprite",
+    "background_desert_sprite",
+    "background_ice_sprite",
+}
 
 VALID_YAML = """\
 levels:
@@ -22,14 +28,23 @@ levels:
     distance: 1000
     start_speed: 3.0
     max_speed: 15.0
-    flower:
-      sprite: flower_sprite
-      interval: 1.0
-    stone:
-      sprite: stone_sprite
-      interval: 3.0
-      ramp_to: 0.05
+    entities:
+      - type: flower
+        sprite: flower_sprite
+        interval: 1.0
+      - type: stone
+        sprite: stone_sprite
+        interval: 3.0
+        ramp_to: 0.05
 """
+
+FLOWER_BLOCK = "      - type: flower\n        sprite: flower_sprite\n        interval: 1.0\n"
+STONE_BLOCK = (
+    "      - type: stone\n"
+    "        sprite: stone_sprite\n"
+    "        interval: 3.0\n"
+    "        ramp_to: 0.05\n"
+)
 
 
 def _write(tmp_path, content):
@@ -50,15 +65,40 @@ def test_valid_load_returns_definitions(tmp_path):
     assert level.distance == 1000
     assert level.start_speed == 3.0
     assert level.max_speed == 15.0
-    assert level.flower == SpawnDefinition(sprite="flower_sprite", interval=1.0)
-    assert level.stone == StoneDefinition(sprite="stone_sprite", interval=3.0, ramp_to=0.05)
+    assert level.entities == (
+        EntityDefinition(type="flower", sprite="flower_sprite", interval=1.0),
+        EntityDefinition(type="stone", sprite="stone_sprite", interval=3.0, ramp_to=0.05),
+    )
 
 
-def test_stone_ramp_to_optional(tmp_path):
-    """Omitting stone.ramp_to is valid and means no ramp (None)."""
-    yaml_text = VALID_YAML.replace("      ramp_to: 0.05\n", "")
+def test_ramp_to_optional(tmp_path):
+    """Omitting ramp_to is valid and means no ramp (None)."""
+    yaml_text = VALID_YAML.replace("        ramp_to: 0.05\n", "")
     levels = load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
-    assert levels[0].stone.ramp_to is None
+    assert levels[0].entities[1].ramp_to is None
+
+
+def test_shipped_levels_yaml_loads():
+    """The shipped levels.yaml conforms to the schema and known sprites."""
+    import pathlib
+
+    path = (
+        pathlib.Path(__file__).resolve().parents[2]
+        / "src"
+        / "quick_herbalist"
+        / "assets"
+        / "levels.yaml"
+    )
+    levels = load_levels(str(path), SPRITE_NAMES)
+    assert [level.name for level in levels] == ["meadow", "desert", "ice"]
+    assert all(level.entities for level in levels)
+
+
+def test_duplicate_entity_types_allowed(tmp_path):
+    """Two entries of the same type (e.g. two flower sprites) are valid."""
+    yaml_text = VALID_YAML.replace("      - type: stone\n", FLOWER_BLOCK + "      - type: stone\n")
+    levels = load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
+    assert len(levels[0].entities) == 3
 
 
 def test_unknown_top_level_key_rejected(tmp_path):
@@ -70,10 +110,41 @@ def test_unknown_top_level_key_rejected(tmp_path):
         load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
 
 
-def test_unknown_key_inside_spawn_rejected(tmp_path):
-    """Unknown keys inside flower/stone sub-mappings are load errors."""
-    yaml_text = VALID_YAML.replace("      interval: 1.0\n", "      interval: 1.0\n      count: 3\n")
-    with pytest.raises(LevelConfigError, match="flower: unknown key\\(s\\): \\['count'\\]"):
+def test_unknown_key_inside_entity_rejected(tmp_path):
+    """Unknown keys inside entity items are load errors."""
+    yaml_text = VALID_YAML.replace(
+        "        interval: 1.0\n", "        interval: 1.0\n        count: 3\n"
+    )
+    with pytest.raises(
+        LevelConfigError, match="entities\\[0\\]: unknown key\\(s\\): \\['count'\\]"
+    ):
+        load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
+
+
+def test_missing_entities_rejected(tmp_path):
+    """A level without an entities list is a load error."""
+    yaml_text = (
+        VALID_YAML.replace("    entities:\n", "").replace(FLOWER_BLOCK, "").replace(STONE_BLOCK, "")
+    )
+    with pytest.raises(LevelConfigError, match="'entities' must be a non-empty list"):
+        load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
+
+
+def test_empty_entities_list_rejected(tmp_path):
+    """An empty entities list is a load error."""
+    yaml_text = (
+        VALID_YAML.replace("    entities:\n", "    entities: []\n")
+        .replace(FLOWER_BLOCK, "")
+        .replace(STONE_BLOCK, "")
+    )
+    with pytest.raises(LevelConfigError, match="'entities' must be a non-empty list"):
+        load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
+
+
+def test_empty_type_rejected(tmp_path):
+    """An empty entity type name is a load error."""
+    yaml_text = VALID_YAML.replace("      - type: flower\n", "      - type: ''\n")
+    with pytest.raises(LevelConfigError, match="'type' must be a non-empty string"):
         load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
 
 
@@ -98,6 +169,15 @@ def test_unknown_sprite_rejected(tmp_path):
         load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
 
 
+def test_unknown_entity_sprite_rejected(tmp_path):
+    """Entity sprites not in the sprite config are load errors."""
+    yaml_text = VALID_YAML.replace(
+        "        sprite: stone_sprite\n", "        sprite: rock_sprite\n"
+    )
+    with pytest.raises(LevelConfigError, match="unknown sprite 'rock_sprite'"):
+        load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
+
+
 def test_duplicate_name_rejected(tmp_path):
     """Two levels sharing a name is a load error."""
     level = VALID_YAML.split("levels:\n")[1]
@@ -108,8 +188,17 @@ def test_duplicate_name_rejected(tmp_path):
 
 def test_negative_interval_rejected(tmp_path):
     """Zero and negative intervals are load errors."""
-    yaml_text = VALID_YAML.replace("      interval: 3.0\n", "      interval: -1.0\n")
-    with pytest.raises(LevelConfigError, match="stone.interval must be a positive number"):
+    yaml_text = VALID_YAML.replace("        interval: 3.0\n", "        interval: -1.0\n")
+    with pytest.raises(
+        LevelConfigError, match="entities\\[1\\]: 'interval' must be a positive number"
+    ):
+        load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
+
+
+def test_invalid_ramp_to_rejected(tmp_path):
+    """A zero or negative ramp_to is a load error."""
+    yaml_text = VALID_YAML.replace("        ramp_to: 0.05\n", "        ramp_to: -1\n")
+    with pytest.raises(LevelConfigError, match="'ramp_to' must be a positive number"):
         load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
 
 
@@ -141,23 +230,19 @@ def test_all_errors_collected(tmp_path):
             distance: -5
             start_speed: 3.0
             max_speed: 15.0
-            flower:
-              sprite: flower_sprite
-              interval: 1.0
-            stone:
-              sprite: stone_sprite
-              interval: 3.0
+            entities:
+              - type: flower
+                sprite: flower_sprite
+                interval: 1.0
           - name: one
             background: grass_sprite
             distance: 1000
             start_speed: 3.0
             max_speed: 15.0
-            flower:
-              sprite: flower_sprite
-              interval: 1.0
-            stone:
-              sprite: stone_sprite
-              interval: 3.0
+            entities:
+              - type: stone
+                sprite: stone_sprite
+                interval: 3.0
         """
     )
     with pytest.raises(LevelConfigError) as excinfo:
@@ -175,8 +260,7 @@ def _levels():
             distance=1000,
             start_speed=3.0,
             max_speed=15.0,
-            flower=SpawnDefinition("flower_sprite", 1.0),
-            stone=StoneDefinition("stone_sprite", 3.0, 0.05),
+            entities=(EntityDefinition("flower", "flower_sprite", 1.0),),
         ),
         LevelDefinition(
             name="desert",
@@ -184,8 +268,10 @@ def _levels():
             distance=1400,
             start_speed=3.4,
             max_speed=15.0,
-            flower=SpawnDefinition("flower_sprite", 1.2),
-            stone=StoneDefinition("stone_sprite", 2.6, 0.05),
+            entities=(
+                EntityDefinition("flower", "flower_sprite", 1.2),
+                EntityDefinition("stone", "stone_sprite", 2.6, 0.05),
+            ),
         ),
     ]
 

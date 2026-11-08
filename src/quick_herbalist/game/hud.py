@@ -17,9 +17,7 @@ class GameHud(Widget):
         self.effect_label = self._make_label(
             font_size=20, pos=(10, 420), size=(250, 90), valign="top"
         )
-        self.char_label = self._make_label(
-            font_size=24, pos=(590, 560), halign="right"
-        )
+        self.char_label = self._make_label(font_size=24, pos=(590, 560), halign="right")
 
     @staticmethod
     def _make_label(font_size, pos, size=(200, 30), halign="left", valign="middle"):

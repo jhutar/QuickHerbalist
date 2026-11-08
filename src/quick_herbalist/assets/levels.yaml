@@ -1,40 +1,44 @@
 # Level definitions, in play order. Schema: docs/add_new_level.md.
 # Strict schema: unknown keys, missing keys, and sprite names not present in
 # sprites.yaml are load errors. Levels beyond the last entry repeat it.
+# Entity 'type' names must be registered in quick_herbalist.game.entities.
 levels:
   - name: meadow
     background: grass_sprite
     distance: 200
     start_speed: 3.0
     max_speed: 15.0
-    flower:
-      sprite: flower_sprite
-      interval: 1.0
-    stone:
-      sprite: stone_sprite
-      interval: 3.0
-      ramp_to: 0.05
+    entities:
+      - type: flower
+        sprite: flower_sprite
+        interval: 1.0
+      - type: stone
+        sprite: stone_sprite
+        interval: 3.0
+        ramp_to: 0.05
   - name: desert
     background: background_desert_sprite
     distance: 240
     start_speed: 4.0
     max_speed: 17.0
-    flower:
-      sprite: flower2_sprite
-      interval: 0.9
-    stone:
-      sprite: stone_sprite
-      interval: 2.5
-      ramp_to: 0.05
+    entities:
+      - type: flower
+        sprite: flower2_sprite
+        interval: 0.9
+      - type: stone
+        sprite: stone_sprite
+        interval: 2.5
+        ramp_to: 0.05
   - name: ice
     background: background_ice_sprite
     distance: 280
     start_speed: 5.0
     max_speed: 18.0
-    flower:
-      sprite: flower2_sprite
-      interval: 0.8
-    stone:
-      sprite: stone_sprite
-      interval: 2.0
-      ramp_to: 0.05
+    entities:
+      - type: flower
+        sprite: flower2_sprite
+        interval: 0.8
+      - type: stone
+        sprite: stone_sprite
+        interval: 2.0
+        ramp_to: 0.05

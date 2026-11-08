@@ -9,11 +9,11 @@ A potion is three independent pieces:
 
 ## How potions flow through the game
 
-- Runs collect flowers; on win, `rules.score` flowers of the level's
-  `flower.sprite` go to the character inventory (`profiles.add_flowers`).
-  **An ingredient is only obtainable if some level drops that sprite as its
-  flower** — new flower types come from `docs/add_new_sprite.md` (the
-  sprite) + `docs/add_new_level.md` (a level that drops it), not from the
+- Runs collect flowers; on win, the run harvest (`rules.harvest`, per-sprite
+  collected counts) goes to the character inventory (`profiles.add_flowers`).
+  **An ingredient is only obtainable if some level spawns an entity with that
+  sprite** — new flower types come from `docs/add_new_sprite.md` (the
+  sprite) + `docs/add_new_level.md` (a level that spawns it), not from the
   recipe file.
 - Potion screen (`screens/potions_screen.py`): drag inventory ingredients
   into the cauldron, drag the spoon onto the cauldron to mix. Mixing matches
@@ -108,8 +108,8 @@ EFFECT_FACTORIES: dict[str, Callable] = {
 ```
 
 - Factory signature: `f(GameView) -> RunEffect`. The view exposes `hero`,
-  `entities` (live widget lists per type, e.g. `view.entities["flower"]`),
-  `rules` (the live `GameRules`), and `hud`.
+  `entities` (the live `GameEntity` list), `rules` (the live `GameRules`),
+  and `hud`.
 - Effects mutate widget state per frame; keep them stateless where possible
   and derive from the view.
 - A recipe whose id is missing from `EFFECT_FACTORIES` still loads, brews,

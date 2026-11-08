@@ -1,4 +1,4 @@
-"""Headless tests for pure game rules: win, lose, speed cap, fresh-run reset."""
+"""Headless tests for pure game rules: win, lose, score, harvest, speed cap."""
 
 import pytest
 
@@ -17,6 +17,7 @@ def test_fresh_run_state(rules):
     assert rules.distance == 0.0
     assert rules.game_speed == 3.0
     assert not rules.dead
+    assert rules.harvest == {}
 
 
 def test_win_only_at_threshold():
@@ -37,17 +38,27 @@ def test_long_run_wins(rules):
     assert rules.distance >= rules.win_distance
 
 
-def test_stone_hit_loses(rules):
-    """A stone collision marks the run lost."""
-    rules.on_stone_hit()
+def test_damage_loses(rules):
+    """A damaging hit marks the run lost."""
+    rules.on_damaged()
     assert rules.dead
 
 
-def test_flower_hit_scores_without_losing(rules):
-    """Collecting flowers raises score but never loses the run."""
-    assert rules.on_flower_hit() == 1
-    assert rules.on_flower_hit() == 2
+def test_collect_scores_without_losing(rules):
+    """Collecting entities raises score but never loses the run."""
+    assert rules.on_collected("flower_sprite") == 1
+    assert rules.on_collected("flower_sprite") == 2
     assert not rules.dead
+
+
+def test_collect_tracks_per_sprite_harvest():
+    """Harvest counts collected units per sprite name, for mixed flower types."""
+    rules = GameRules(win_distance=100.0, start_speed=3.0)
+    rules.on_collected("flower_sprite")
+    rules.on_collected("flower2_sprite")
+    rules.on_collected("flower_sprite")
+    assert rules.score == 3
+    assert rules.harvest == {"flower_sprite": 2, "flower2_sprite": 1}
 
 
 def test_speed_grows_per_step(rules):
@@ -74,53 +85,11 @@ def test_fresh_instance_resets_between_runs():
     """A new GameRules instance is a reset run, independent of the previous one."""
     first = GameRules(win_distance=100.0, start_speed=3.0)
     first.step(1.0)
-    first.on_flower_hit()
-    first.on_stone_hit()
+    first.on_collected("flower_sprite")
+    first.on_damaged()
     second = GameRules(win_distance=100.0, start_speed=3.0)
     assert second.score == 0
     assert second.distance == 0.0
     assert second.game_speed == 3.0
     assert not second.dead
-
-
-def test_next_stone_interval_first_call_returns_start_interval():
-    """The first stone spawn waits the full starting interval."""
-    rules = GameRules(win_distance=100.0, start_speed=3.0, stone_interval=3.0)
-    assert rules.next_stone_interval() == 3.0
-
-
-def test_stone_interval_ramps_down_to_floor():
-    """Repeated calls decay the interval toward stone_interval_min, never below."""
-    rules = GameRules(
-        win_distance=100.0,
-        start_speed=3.0,
-        stone_interval=3.0,
-        stone_interval_min=0.05,
-    )
-    for _ in range(1000):
-        delay = rules.next_stone_interval()
-        assert delay >= 0.05
-    assert rules.stone_interval == 0.05
-
-
-def test_stone_interval_never_increases():
-    """Ramping only shrinks the interval; it never grows back."""
-    rules = GameRules(
-        win_distance=100.0,
-        start_speed=3.0,
-        stone_interval=3.0,
-        stone_interval_min=0.05,
-    )
-    previous = 3.0
-    for _ in range(200):
-        delay = rules.next_stone_interval()
-        assert delay <= previous
-        previous = delay
-
-
-def test_no_ramp_when_min_absent():
-    """Without stone_interval_min the interval stays constant (no ramp)."""
-    rules = GameRules(win_distance=100.0, start_speed=3.0, stone_interval=2.5)
-    for _ in range(50):
-        assert rules.next_stone_interval() == 2.5
-    assert rules.stone_interval == 2.5
+    assert second.harvest == {}

@@ -3,17 +3,17 @@
 import logging
 import math
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.uix.widget import Widget
 
 from quick_herbalist.core.level_config import level_for
-from quick_herbalist.game.entities import Flower, Stone
-from quick_herbalist.game.effects import ActiveEffect, EFFECT_FACTORIES
+from quick_herbalist.game.effects import EFFECT_FACTORIES, ActiveEffect
+from quick_herbalist.game.entities import ENTITY_TYPES, FrameState, GameEntity
 from quick_herbalist.game.hud import GameHud
-from quick_herbalist.game.widgets import Background, Player, SCREEN_H, SCREEN_W
+from quick_herbalist.game.widgets import SCREEN_W, Background, Player
 from quick_herbalist.game_rules import GameRules
 from quick_herbalist.localization import _
 
@@ -21,22 +21,42 @@ logger = logging.getLogger(__name__)
 
 # Max random spawn retries before a spawn is skipped.
 SPAWN_POSITION_RETRIES = 10
+# Random per-spawn decay step (seconds) applied while an interval ramps
+# down toward its level's floor.
+RAMP_STEP = 0.05
+
+
+class SpawnPacer:
+    """Current spawn interval for one entity type, with an optional ramp.
+
+    Each next_delay() call returns the current interval and, when a ramp
+    floor is set, shrinks it by a random 0..RAMP_STEP seconds toward the
+    floor. A pacer without a floor yields a constant interval.
+    """
+
+    def __init__(self, interval, ramp_to=None):
+        """Create a pacer; ramp_to None means the interval never changes."""
+        self.interval = interval
+        self.ramp_to = ramp_to
+
+    def next_delay(self):
+        """Return the current interval, then shrink it toward the floor if set."""
+        delay = self.interval
+        if self.ramp_to is not None:
+            self.interval = max(
+                self.interval - random.uniform(0.0, RAMP_STEP),
+                self.ramp_to,
+            )
+        return delay
 
 
 @dataclass(frozen=True)
 class EntitySpec:
-    """One spawnable entity type of a level: widget class, pacing, hit outcome.
+    """One spawnable entity type of a level: widget class, sprite, pacing."""
 
-    hit is "collect" (adds to the score) or "damage" (ends the run).
-    Adding a new entity type = a MovingWidget subclass plus one EntitySpec
-    built from the level definition in GameView.
-    """
-
-    key: str
-    widget_cls: type
+    cls: type[GameEntity]
     sprite: str
-    interval: float
-    hit: str
+    pacer: SpawnPacer = field(compare=False)
 
 
 class GameView(Widget):
@@ -59,28 +79,10 @@ class GameView(Widget):
             win_distance=self.level.distance,
             start_speed=self.level.start_speed,
             max_speed=self.level.max_speed,
-            stone_interval=self.level.stone.interval,
-            stone_interval_min=self.level.stone.ramp_to,
         )
 
-        self._specs = (
-            EntitySpec(
-                key="flower",
-                widget_cls=Flower,
-                sprite=self.level.flower.sprite,
-                interval=self.level.flower.interval,
-                hit="collect",
-            ),
-            EntitySpec(
-                key="stone",
-                widget_cls=Stone,
-                sprite=self.level.stone.sprite,
-                interval=self.level.stone.interval,
-                hit="damage",
-            ),
-        )
-        # One stable list per entity key; run effects may hold list references.
-        self.entities = {spec.key: [] for spec in self._specs}
+        self._specs = self._build_specs()
+        self.entities: list[GameEntity] = []
 
         self.moving_up = False
         self.moving_down = False
@@ -99,6 +101,28 @@ class GameView(Widget):
 
         self._update_hud()
 
+    def _build_specs(self):
+        """Resolve the level's entity definitions into spawnable specs.
+
+        Raises ValueError on an entity type missing from ENTITY_TYPES.
+        """
+        specs = []
+        for definition in self.level.entities:
+            cls = ENTITY_TYPES.get(definition.type)
+            if cls is None:
+                raise ValueError(
+                    f"unknown entity type '{definition.type}' in level '{self.level.name}'; "
+                    f"registered types: {sorted(ENTITY_TYPES)}"
+                )
+            specs.append(
+                EntitySpec(
+                    cls=cls,
+                    sprite=definition.sprite,
+                    pacer=SpawnPacer(definition.interval, definition.ramp_to),
+                )
+            )
+        return tuple(specs)
+
     @property
     def active_effects(self):
         """Active potion effects as (potion_id, remaining) pairs."""
@@ -108,23 +132,13 @@ class GameView(Widget):
         """Start the game loop and all entity spawn timers."""
         Clock.schedule_interval(self.update, 1.0 / 60)
         for spec in self._specs:
-            Clock.schedule_once(self._spawn, self._next_spawn_delay(spec), spec)
+            Clock.schedule_once(self._spawn, spec.pacer.next_delay(), spec)
 
     def stop_game(self):
         """Stop the game loop and all spawn timers."""
         self.active = False
         Clock.unschedule(self.update)
         Clock.unschedule(self._spawn)
-
-    def _next_spawn_delay(self, spec):
-        """Return the delay before the next spawn of this entity type.
-
-        Stones ramp their interval down through the rules; other types keep
-        a fixed interval.
-        """
-        if spec.key == "stone":
-            return self.rules.next_stone_interval()
-        return spec.interval
 
     def _spawn_position(self, cls):
         """Pick a random spawn position that does not overlap live entities.
@@ -133,57 +147,76 @@ class GameView(Widget):
         """
         for _attempt in range(SPAWN_POSITION_RETRIES):
             x = SCREEN_W + random.randint(cls.SPAWN_X_MIN, cls.SPAWN_X_MAX)
-            y = random.randint(0, SCREEN_H - cls.SIZE[1])
+            y = cls.random_spawn_y()
             if not self._overlaps_entity(x, y, cls.SIZE):
                 return x, y
         return None
 
     def _overlaps_entity(self, x, y, size):
         """Return True if the given rectangle overlaps any live entity."""
-        for entity in (e for entities in self.entities.values() for e in entities):
-            ex, ey = entity.pos
-            ew, eh = entity.size
-            if x < ex + ew and x + size[0] > ex and y < ey + eh and y + size[1] > ey:
+        for entity in self.entities:
+            if self._rects_overlap((x, y), size, entity):
                 return True
         return False
+
+    @staticmethod
+    def _rects_overlap(a_pos, a_size, b):
+        """Return True if the (pos, size) rectangle overlaps widget b's rectangle."""
+        ax, ay = a_pos
+        bx, by = b.pos
+        return (
+            ax < bx + b.size[0]
+            and ax + a_size[0] > bx
+            and ay < by + b.size[1]
+            and ay + a_size[1] > by
+        )
 
     def _spawn(self, dt, spec):
         """Spawn one entity of the given type at a free position, then reschedule."""
         if not self.active:
             return
-        position = self._spawn_position(spec.widget_cls)
+        position = self._spawn_position(spec.cls)
         if position is None:
-            logger.warning("No free spawn position for %s, skipping spawn", spec.key)
+            logger.warning("No free spawn position for %s, skipping spawn", spec.cls.__name__)
         else:
-            entity = spec.widget_cls(self.sprite_manager, spec.sprite, *position)
+            entity = spec.cls(self.sprite_manager, spec.sprite, *position)
             self.add_widget(entity)
-            self.entities[spec.key].append(entity)
+            self.entities.append(entity)
 
-        Clock.schedule_once(self._spawn, self._next_spawn_delay(spec), spec)
+        Clock.schedule_once(self._spawn, spec.pacer.next_delay(), spec)
 
-    def _update_entities(self, spec, speed):
-        """Advance one entity type: move, cull off-screen, resolve collisions."""
-        for entity in self.entities[spec.key][:]:
-            if not entity.update(speed):
+    def _frame_state(self, dt):
+        """Build the per-frame data handed to entities."""
+        return FrameState(
+            game_speed=self.rules.game_speed * dt * 60,
+            frame_factor=dt * 60,
+            hero=self.hero,
+            rules=self.rules,
+        )
+
+    def _step_entities(self, frame):
+        """Advance all live entities: move, detect overlap, resolve, cull."""
+        for entity in self.entities[:]:
+            entity.move(frame)
+            now = self._rects_overlap(self.hero.pos, self.hero.size, entity)
+            if now and not entity.overlapping:
+                entity.on_enter(frame)
+            entity.overlapping = now
+            if entity.done or entity.is_offscreen:
                 self.remove_widget(entity)
-                self.entities[spec.key].remove(entity)
-                continue
-            if self.hero.collide_widget(entity):
-                self._on_entity_hit(spec)
-                self.remove_widget(entity)
-                self.entities[spec.key].remove(entity)
+                self.entities.remove(entity)
 
-    def _on_entity_hit(self, spec):
-        """Apply the entity's hit outcome: collect adds score, damage ends the run."""
-        if spec.hit == "collect":
-            self.rules.on_flower_hit()
-        else:
-            self.rules.on_stone_hit()
-            self.game_over()
+    def _move_hero(self, frame):
+        """Move the hero from the keyboard state or the touch target.
 
-    def _move_hero(self, frame_factor):
-        """Move the hero from the keyboard state or the touch target."""
-        step = 0.01 * 600 * frame_factor
+        Movement speed is scaled by the min hero_speed_factor of all
+        overlapping entities (e.g. a hill the hero is standing in).
+        """
+        factor = min(
+            (entity.hero_speed_factor() for entity in self.entities if entity.overlapping),
+            default=1.0,
+        )
+        step = 0.01 * 600 * frame.frame_factor * factor
         if self.touch_active:
             diff_y = self.target_y - self.hero.center_y
             if abs(diff_y) > 2:
@@ -249,7 +282,6 @@ class GameView(Widget):
         if not self.active:
             return
 
-        frame_factor = dt * 60
         self.hero.animate(dt)
 
         # Check Win Condition
@@ -257,14 +289,18 @@ class GameView(Widget):
             self.game_won()
             return
 
-        self.background.update(self.rules.game_speed * frame_factor)
+        frame = self._frame_state(dt)
 
-        self._move_hero(frame_factor)
+        self._step_entities(frame)
+        if self.rules.dead:
+            self.game_over()
+            return
 
-        self._step_effects(dt, frame_factor)
+        self.background.update(frame.game_speed)
 
-        for spec in self._specs:
-            self._update_entities(spec, self.rules.game_speed * frame_factor)
+        self._move_hero(frame)
+
+        self._step_effects(dt, frame.frame_factor)
 
         self._update_hud()
 
@@ -278,17 +314,18 @@ class GameView(Widget):
         app.root.current = "game_over"
 
     def game_won(self):
-        """Handle win: stop game, update profile, show win screen."""
+        """Handle win: stop game, persist the per-sprite harvest, show win screen."""
         self.stop_game()
         try:
             self.profile_manager.complete_level()
-            self.profile_manager.add_flowers(self.level.flower.sprite, self.rules.score)
+            for sprite, count in self.rules.harvest.items():
+                self.profile_manager.add_flowers(sprite, count)
         except Exception as e:
             logger.error("Failed to save profile on win: %s", e)
         app = App.get_running_app()
         won_screen = app.root.get_screen("game_won")
         won_screen.score = self.rules.score
-        won_screen.harvest = {self.level.flower.sprite: self.rules.score}
+        won_screen.harvest = dict(self.rules.harvest)
         app.root.current = "game_won"
 
     def on_touch_down(self, touch):
