@@ -19,16 +19,16 @@ A sprite with one frame is a still image; several frames with equal
    whole, the region is `[0, 0, width, height]`:
 
    ```json
-   "flower2.png": {
-     "flower2_sprite_0": [0, 0, 64, 64]
+   "bluebell.png": {
+     "bluebell_sprite_0": [0, 0, 64, 64]
    }
    ```
 3. Add the sprite in `sprites.yaml`:
 
    ```yaml
-   flower2_sprite:
+   bluebell_sprite:
      frames:
-     - atlas_id: flower2_sprite_0
+     - atlas_id: bluebell_sprite_0
        duration_ms: 250
    ```
 

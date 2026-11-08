@@ -23,7 +23,7 @@ every problem at once).
     max_speed: 20.0
     entities:
       - type: flower
-        sprite: flower_sprite
+        sprite: dandelion_sprite
         interval: 0.7
       - type: stone
         sprite: stone_sprite
@@ -71,7 +71,7 @@ per-level sizing is not supported.
    ```python
    from quick_herbalist.core.level_config import load_levels
    load_levels("src/quick_herbalist/assets/levels.yaml",
-               {"background_my_level_sprite", "flower_sprite", "stone_sprite"})
+               {"background_my_level_sprite", "dandelion_sprite", "stone_sprite"})
    ```
 
    The real game validates against all sprites in `sprites.yaml`.

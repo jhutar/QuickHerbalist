@@ -46,19 +46,19 @@ def test_damage_loses(rules):
 
 def test_collect_scores_without_losing(rules):
     """Collecting entities raises score but never loses the run."""
-    assert rules.on_collected("flower_sprite") == 1
-    assert rules.on_collected("flower_sprite") == 2
+    assert rules.on_collected("dandelion_sprite") == 1
+    assert rules.on_collected("dandelion_sprite") == 2
     assert not rules.dead
 
 
 def test_collect_tracks_per_sprite_harvest():
     """Harvest counts collected units per sprite name, for mixed flower types."""
     rules = GameRules(win_distance=100.0, start_speed=3.0)
-    rules.on_collected("flower_sprite")
-    rules.on_collected("flower2_sprite")
-    rules.on_collected("flower_sprite")
+    rules.on_collected("dandelion_sprite")
+    rules.on_collected("bluebell_sprite")
+    rules.on_collected("dandelion_sprite")
     assert rules.score == 3
-    assert rules.harvest == {"flower_sprite": 2, "flower2_sprite": 1}
+    assert rules.harvest == {"dandelion_sprite": 2, "bluebell_sprite": 1}
 
 
 def test_speed_grows_per_step(rules):
@@ -85,7 +85,7 @@ def test_fresh_instance_resets_between_runs():
     """A new GameRules instance is a reset run, independent of the previous one."""
     first = GameRules(win_distance=100.0, start_speed=3.0)
     first.step(1.0)
-    first.on_collected("flower_sprite")
+    first.on_collected("dandelion_sprite")
     first.on_damaged()
     second = GameRules(win_distance=100.0, start_speed=3.0)
     assert second.score == 0

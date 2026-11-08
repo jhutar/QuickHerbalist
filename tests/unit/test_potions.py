@@ -27,7 +27,7 @@ def _valid_recipe_data():
                 "id": "potion_magnetism",
                 "name_key": "potion_magnetism_name",
                 "description_key": "potion_magnetism_description",
-                "ingredients": {"flower_sprite": 2, "flower2_sprite": 1},
+                "ingredients": {"dandelion_sprite": 2, "bluebell_sprite": 1},
                 "duration_seconds": 30,
             }
         ]
@@ -44,7 +44,7 @@ def test_load_recipes_valid(tmp_path):
     assert recipe.id == "potion_magnetism"
     assert recipe.name_key == "potion_magnetism_name"
     assert recipe.description_key == "potion_magnetism_description"
-    assert recipe.ingredients == {"flower_sprite": 2, "flower2_sprite": 1}
+    assert recipe.ingredients == {"dandelion_sprite": 2, "bluebell_sprite": 1}
     assert recipe.duration_seconds == 30.0
 
 
@@ -75,7 +75,7 @@ def test_load_recipes_rejects_missing_key(tmp_path, key):
 def test_load_recipes_rejects_bad_ingredient_count(tmp_path, count):
     """Ingredient counts must be positive ints, nothing else."""
     data = _valid_recipe_data()
-    data["recipes"][0]["ingredients"] = {"flower_sprite": count}
+    data["recipes"][0]["ingredients"] = {"dandelion_sprite": count}
     with pytest.raises(RecipeError):
         load_recipes(_write_recipes(tmp_path, data))
 
@@ -93,15 +93,15 @@ def test_load_recipes_rejects_unknown_ingredient(tmp_path):
     data = _valid_recipe_data()
     data["recipes"][0]["ingredients"] = {"flower3_sprite": 1}
     with pytest.raises(RecipeError, match="unknown ingredient"):
-        load_recipes(_write_recipes(tmp_path, data), valid_ingredients={"flower_sprite"})
+        load_recipes(_write_recipes(tmp_path, data), valid_ingredients={"dandelion_sprite"})
 
 
 def test_load_recipes_accepts_known_ingredient(tmp_path):
     """An ingredient name in valid_ingredients passes."""
     data = _valid_recipe_data()
-    data["recipes"][0]["ingredients"] = {"flower_sprite": 2}
-    recipes = load_recipes(_write_recipes(tmp_path, data), valid_ingredients={"flower_sprite"})
-    assert recipes[0].ingredients == {"flower_sprite": 2}
+    data["recipes"][0]["ingredients"] = {"dandelion_sprite": 2}
+    recipes = load_recipes(_write_recipes(tmp_path, data), valid_ingredients={"dandelion_sprite"})
+    assert recipes[0].ingredients == {"dandelion_sprite": 2}
 
 
 @pytest.mark.parametrize("duration", [0, -5, "30", None, True])
@@ -126,50 +126,50 @@ def _recipe(ingredients):
 
 def test_match_recipe_exact_match():
     """Exact multiset equality matches, regardless of dict order."""
-    recipes = [_recipe({"flower_sprite": 2, "flower2_sprite": 1})]
-    content = {"flower2_sprite": 1, "flower_sprite": 2}
+    recipes = [_recipe({"dandelion_sprite": 2, "bluebell_sprite": 1})]
+    content = {"bluebell_sprite": 1, "dandelion_sprite": 2}
 
     assert match_recipe(content, recipes) is recipes[0]
 
 
 def test_match_recipe_extra_ingredient_fails():
     """One extra ingredient unit means no match."""
-    recipes = [_recipe({"flower_sprite": 2, "flower2_sprite": 1})]
+    recipes = [_recipe({"dandelion_sprite": 2, "bluebell_sprite": 1})]
 
-    assert match_recipe({"flower_sprite": 2, "flower2_sprite": 2}, recipes) is None
+    assert match_recipe({"dandelion_sprite": 2, "bluebell_sprite": 2}, recipes) is None
 
 
 def test_match_recipe_missing_ingredient_fails():
     """One missing ingredient unit means no match."""
-    recipes = [_recipe({"flower_sprite": 2, "flower2_sprite": 1})]
+    recipes = [_recipe({"dandelion_sprite": 2, "bluebell_sprite": 1})]
 
-    assert match_recipe({"flower_sprite": 1}, recipes) is None
+    assert match_recipe({"dandelion_sprite": 1}, recipes) is None
 
 
 def test_match_recipe_unknown_ingredient_fails():
     """Ingredients not in the recipe mean no match."""
-    recipes = [_recipe({"flower_sprite": 2})]
+    recipes = [_recipe({"dandelion_sprite": 2})]
 
-    assert match_recipe({"flower_sprite": 2, "flower3_sprite": 1}, recipes) is None
+    assert match_recipe({"dandelion_sprite": 2, "flower3_sprite": 1}, recipes) is None
 
 
 def test_match_recipe_empty_cauldron_fails():
     """An empty cauldron never matches a recipe."""
-    recipes = [_recipe({"flower_sprite": 2})]
+    recipes = [_recipe({"dandelion_sprite": 2})]
 
     assert match_recipe({}, recipes) is None
 
 
 def test_match_recipe_zero_counts_ignored():
     """Zero-count entries in the cauldron content are ignored."""
-    recipes = [_recipe({"flower_sprite": 2})]
+    recipes = [_recipe({"dandelion_sprite": 2})]
 
-    assert match_recipe({"flower_sprite": 2, "flower2_sprite": 0}, recipes) is recipes[0]
+    assert match_recipe({"dandelion_sprite": 2, "bluebell_sprite": 0}, recipes) is recipes[0]
 
 
 def test_match_recipe_no_recipes():
     """With no recipes defined nothing ever matches."""
-    assert match_recipe({"flower_sprite": 2}, []) is None
+    assert match_recipe({"dandelion_sprite": 2}, []) is None
 
 
 def test_run_slot_count_is_three():

@@ -14,8 +14,8 @@ from quick_herbalist.core.level_config import (
 
 SPRITE_NAMES = {
     "grass_sprite",
-    "flower_sprite",
-    "flower2_sprite",
+    "dandelion_sprite",
+    "bluebell_sprite",
     "stone_sprite",
     "hill_sprite",
     "spider_sprite",
@@ -33,7 +33,7 @@ levels:
     max_speed: 15.0
     entities:
       - type: flower
-        sprite: flower_sprite
+        sprite: dandelion_sprite
         interval: 1.0
       - type: stone
         sprite: stone_sprite
@@ -41,7 +41,7 @@ levels:
         ramp_to: 0.05
 """
 
-FLOWER_BLOCK = "      - type: flower\n        sprite: flower_sprite\n        interval: 1.0\n"
+FLOWER_BLOCK = "      - type: flower\n        sprite: dandelion_sprite\n        interval: 1.0\n"
 STONE_BLOCK = (
     "      - type: stone\n"
     "        sprite: stone_sprite\n"
@@ -69,7 +69,7 @@ def test_valid_load_returns_definitions(tmp_path):
     assert level.start_speed == 3.0
     assert level.max_speed == 15.0
     assert level.entities == (
-        EntityDefinition(type="flower", sprite="flower_sprite", interval=1.0),
+        EntityDefinition(type="flower", sprite="dandelion_sprite", interval=1.0),
         EntityDefinition(type="stone", sprite="stone_sprite", interval=3.0, ramp_to=0.05),
     )
 
@@ -239,7 +239,7 @@ def test_all_errors_collected(tmp_path):
             max_speed: 15.0
             entities:
               - type: flower
-                sprite: flower_sprite
+                sprite: dandelion_sprite
                 interval: 1.0
           - name: one
             background: grass_sprite
@@ -267,7 +267,7 @@ def _levels():
             distance=1000,
             start_speed=3.0,
             max_speed=15.0,
-            entities=(EntityDefinition("flower", "flower_sprite", 1.0),),
+            entities=(EntityDefinition("flower", "dandelion_sprite", 1.0),),
         ),
         LevelDefinition(
             name="desert",
@@ -276,7 +276,7 @@ def _levels():
             start_speed=3.4,
             max_speed=15.0,
             entities=(
-                EntityDefinition("flower", "flower_sprite", 1.2),
+                EntityDefinition("flower", "dandelion_sprite", 1.2),
                 EntityDefinition("stone", "stone_sprite", 2.6, 0.05),
             ),
         ),

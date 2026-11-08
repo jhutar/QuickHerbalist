@@ -176,9 +176,9 @@ def test_flower_forwards_sprite_manager_and_sprite_name():
     """Flower must pass sprite_manager through to GameEntity unchanged."""
     sprite_manager = _make_sprite_manager()
 
-    flower = Flower(sprite_manager, "flower_sprite", SCREEN_W + 50, 10)
+    flower = Flower(sprite_manager, "dandelion_sprite", SCREEN_W + 50, 10)
 
-    sprite_manager.get.assert_called_once_with("flower_sprite")
+    sprite_manager.get.assert_called_once_with("dandelion_sprite")
     assert flower.sprite is sprite_manager.get.return_value
     assert flower.size == (32, 32)
     assert flower.pos == (SCREEN_W + 50, 10)
@@ -356,7 +356,7 @@ def test_game_view_uses_level_sprite_names():
     requested = [call.args[0] for call in sprite_manager.get.call_args_list]
     assert "lvl_flower" in requested
     assert "lvl_stone" in requested
-    assert "flower_sprite" not in requested
+    assert "dandelion_sprite" not in requested
     assert "stone_sprite" not in requested
     assert "grass_sprite" not in requested
 
@@ -493,7 +493,7 @@ def _make_magnet_recipe():
         id="potion_magnetism",
         name_key="potion_magnetism_name",
         description_key="potion_magnetism_description",
-        ingredients={"flower_sprite": 1},
+        ingredients={"dandelion_sprite": 1},
         duration_seconds=30.0,
     )
 
@@ -549,7 +549,7 @@ def test_potion_without_registered_effect_is_consumed_and_listed():
             id="potion_bubble",
             name_key="potion_bubble_name",
             description_key="potion_bubble_description",
-            ingredients={"flower_sprite": 1},
+            ingredients={"dandelion_sprite": 1},
             duration_seconds=10.0,
         )
     )

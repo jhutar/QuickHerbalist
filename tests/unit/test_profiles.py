@@ -190,7 +190,7 @@ def test_profile_manager_add_flowers_no_active_character(temp_config_dir):
     pm = ProfileManager(config_dir=temp_config_dir)
 
     with pytest.raises(ProfileError) as exc_info:
-        pm.add_flowers("flower_sprite", 10)
+        pm.add_flowers("dandelion_sprite", 10)
     assert exc_info.value.code is ProfileErrorCode.NO_ACTIVE_CHARACTER
 
 
@@ -201,27 +201,27 @@ def test_profile_manager_add_flowers_invalid_flower_count(temp_config_dir):
 
     # Reject negative
     with pytest.raises(ProfileError) as exc_info:
-        pm.add_flowers("flower_sprite", -1)
+        pm.add_flowers("dandelion_sprite", -1)
     assert exc_info.value.code is ProfileErrorCode.INVALID_FLOWER_COUNT
 
     # Reject string
     with pytest.raises(ProfileError) as exc_info:
-        pm.add_flowers("flower_sprite", "five")
+        pm.add_flowers("dandelion_sprite", "five")
     assert exc_info.value.code is ProfileErrorCode.INVALID_FLOWER_COUNT
 
     # Reject float
     with pytest.raises(ProfileError) as exc_info:
-        pm.add_flowers("flower_sprite", 3.5)
+        pm.add_flowers("dandelion_sprite", 3.5)
     assert exc_info.value.code is ProfileErrorCode.INVALID_FLOWER_COUNT
 
     # Reject None
     with pytest.raises(ProfileError) as exc_info:
-        pm.add_flowers("flower_sprite", None)
+        pm.add_flowers("dandelion_sprite", None)
     assert exc_info.value.code is ProfileErrorCode.INVALID_FLOWER_COUNT
 
     # Reject boolean
     with pytest.raises(ProfileError) as exc_info:
-        pm.add_flowers("flower_sprite", True)
+        pm.add_flowers("dandelion_sprite", True)
     assert exc_info.value.code is ProfileErrorCode.INVALID_FLOWER_COUNT
 
 
@@ -264,25 +264,25 @@ def test_profile_manager_add_flowers_success(temp_config_dir):
     pm.create_character("HerbalistMax")
 
     # Zero is valid (winning a level without collecting flowers)
-    pm.add_flowers("flower_sprite", 0)
-    assert pm.characters["HerbalistMax"]["inventory"]["flower_sprite"] == 0
+    pm.add_flowers("dandelion_sprite", 0)
+    assert pm.characters["HerbalistMax"]["inventory"]["dandelion_sprite"] == 0
 
-    pm.add_flowers("flower_sprite", 5)
+    pm.add_flowers("dandelion_sprite", 5)
     char = pm.characters["HerbalistMax"]
-    assert char["inventory"]["flower_sprite"] == 5
+    assert char["inventory"]["dandelion_sprite"] == 5
 
     # A second flower type accumulates separately
-    pm.add_flowers("flower2_sprite", 3)
-    assert char["inventory"]["flower2_sprite"] == 3
+    pm.add_flowers("bluebell_sprite", 3)
+    assert char["inventory"]["bluebell_sprite"] == 3
 
-    pm.add_flowers("flower_sprite", 12)
-    assert char["inventory"]["flower_sprite"] == 17
-    assert char["inventory"]["flower2_sprite"] == 3
+    pm.add_flowers("dandelion_sprite", 12)
+    assert char["inventory"]["dandelion_sprite"] == 17
+    assert char["inventory"]["bluebell_sprite"] == 3
 
     pm2 = ProfileManager(config_dir=temp_config_dir)
     char2 = pm2.characters["HerbalistMax"]
-    assert char2["inventory"]["flower_sprite"] == 17
-    assert char2["inventory"]["flower2_sprite"] == 3
+    assert char2["inventory"]["dandelion_sprite"] == 17
+    assert char2["inventory"]["bluebell_sprite"] == 3
 
 
 def test_next_level_number_no_active_character(temp_config_dir):
@@ -398,11 +398,11 @@ def test_consume_potion_not_enough(temp_config_dir):
 def test_move_flower_to_cauldron(temp_config_dir):
     # Moving a flower decrements inventory and increments the cauldron
     pm = _pm_with_character(temp_config_dir)
-    pm.add_flowers("flower_sprite", 2)
-    pm.move_flower_to_cauldron("flower_sprite")
+    pm.add_flowers("dandelion_sprite", 2)
+    pm.move_flower_to_cauldron("dandelion_sprite")
 
-    assert pm.get_inventory() == {"flower_sprite": 1}
-    assert pm.get_cauldron() == {"flower_sprite": 1}
+    assert pm.get_inventory() == {"dandelion_sprite": 1}
+    assert pm.get_cauldron() == {"dandelion_sprite": 1}
 
 
 def test_move_flower_to_cauldron_not_enough(temp_config_dir):
@@ -410,7 +410,7 @@ def test_move_flower_to_cauldron_not_enough(temp_config_dir):
     pm = _pm_with_character(temp_config_dir)
 
     with pytest.raises(ProfileError) as exc:
-        pm.move_flower_to_cauldron("flower_sprite")
+        pm.move_flower_to_cauldron("dandelion_sprite")
     assert exc.value.code == ProfileErrorCode.NOT_ENOUGH_FLOWERS
     assert pm.get_cauldron() == {}
 
@@ -418,11 +418,11 @@ def test_move_flower_to_cauldron_not_enough(temp_config_dir):
 def test_move_cauldron_ingredient_back(temp_config_dir):
     # Removing from the cauldron returns the unit to the inventory
     pm = _pm_with_character(temp_config_dir)
-    pm.add_flowers("flower_sprite", 2)
-    pm.move_flower_to_cauldron("flower_sprite")
-    pm.move_cauldron_ingredient_to_inventory("flower_sprite")
+    pm.add_flowers("dandelion_sprite", 2)
+    pm.move_flower_to_cauldron("dandelion_sprite")
+    pm.move_cauldron_ingredient_to_inventory("dandelion_sprite")
 
-    assert pm.get_inventory() == {"flower_sprite": 2}
+    assert pm.get_inventory() == {"dandelion_sprite": 2}
     assert pm.get_cauldron() == {}
 
 
@@ -431,16 +431,16 @@ def test_move_cauldron_ingredient_back_not_in_cauldron(temp_config_dir):
     pm = _pm_with_character(temp_config_dir)
 
     with pytest.raises(ProfileError) as exc:
-        pm.move_cauldron_ingredient_to_inventory("flower_sprite")
+        pm.move_cauldron_ingredient_to_inventory("dandelion_sprite")
     assert exc.value.code == ProfileErrorCode.NOT_IN_CAULDRON
 
 
 def test_clear_cauldron(temp_config_dir):
     # Clearing empties the cauldron; the ingredients are lost
     pm = _pm_with_character(temp_config_dir)
-    pm.add_flowers("flower_sprite", 2)
-    pm.move_flower_to_cauldron("flower_sprite")
-    pm.move_flower_to_cauldron("flower_sprite")
+    pm.add_flowers("dandelion_sprite", 2)
+    pm.move_flower_to_cauldron("dandelion_sprite")
+    pm.move_flower_to_cauldron("dandelion_sprite")
     pm.clear_cauldron()
 
     assert pm.get_cauldron() == {}
@@ -581,16 +581,16 @@ def test_use_run_slot_bad_slot_index(temp_config_dir):
 def test_potions_loadout_cauldron_persist_round_trip(temp_config_dir):
     # Potions, run loadout and cauldron survive a save/load cycle
     pm = _pm_with_character(temp_config_dir)
-    pm.add_flowers("flower_sprite", 2)
-    pm.move_flower_to_cauldron("flower_sprite")
+    pm.add_flowers("dandelion_sprite", 2)
+    pm.move_flower_to_cauldron("dandelion_sprite")
     pm.add_potion("potion_magnetism", 2)
     pm.assign_potion_to_slot("potion_magnetism", slot_index=1)
 
     pm2 = ProfileManager(config_dir=temp_config_dir)
     pm2.select_character("herb")
 
-    assert pm2.get_cauldron() == {"flower_sprite": 1}
-    assert pm2.get_inventory() == {"flower_sprite": 1}
+    assert pm2.get_cauldron() == {"dandelion_sprite": 1}
+    assert pm2.get_inventory() == {"dandelion_sprite": 1}
     assert pm2.get_potions() == {"potion_magnetism": 1}
     assert pm2.get_run_loadout() == [None, "potion_magnetism", None]
 

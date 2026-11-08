@@ -7,6 +7,6 @@ recipes:
     name_key: potion_magnetism_name
     description_key: potion_magnetism_description
     ingredients:
-      flower_sprite: 2
-      flower2_sprite: 1
+      dandelion_sprite: 2
+      bluebell_sprite: 1
     duration_seconds: 30

@@ -233,12 +233,12 @@ def test_game_won_renders_row_per_flower_type():
     app.sprite_manager.get.reset_mock()
 
     screen = GameWonScreen()
-    screen.harvest = {"flower_sprite": 5, "flower2_sprite": 3}
+    screen.harvest = {"dandelion_sprite": 5, "bluebell_sprite": 3}
     screen.on_pre_enter()
 
     assert app.sprite_manager.get.call_args_list == [
-        call("flower_sprite"),
-        call("flower2_sprite"),
+        call("dandelion_sprite"),
+        call("bluebell_sprite"),
     ]
 
 
@@ -266,7 +266,7 @@ def _recipe(recipe_id="potion_magnetism", ingredients=None):
         id=recipe_id,
         name_key=f"{recipe_id}_name",
         description_key=f"{recipe_id}_description",
-        ingredients=ingredients or {"flower_sprite": 2, "flower2_sprite": 1},
+        ingredients=ingredients or {"dandelion_sprite": 2, "bluebell_sprite": 1},
         duration_seconds=30,
     )
 
@@ -295,7 +295,7 @@ def _make_sprite_mock(name):
 
 def test_potions_screen_brew_success_adds_potion():
     """Matching cauldron contents brew the potion and clear the cauldron."""
-    app = _setup_potions_app([_recipe()], cauldron={"flower_sprite": 2, "flower2_sprite": 1})
+    app = _setup_potions_app([_recipe()], cauldron={"dandelion_sprite": 2, "bluebell_sprite": 1})
 
     screen = PotionsScreen()
     screen.on_pre_enter()
@@ -308,7 +308,7 @@ def test_potions_screen_brew_success_adds_potion():
 
 def test_potions_screen_brew_no_match_wastes_ingredients():
     """Non-matching cauldron contents are wasted without brewing."""
-    app = _setup_potions_app([_recipe()], cauldron={"flower_sprite": 3})
+    app = _setup_potions_app([_recipe()], cauldron={"dandelion_sprite": 3})
 
     screen = PotionsScreen()
     screen.on_pre_enter()
@@ -335,18 +335,18 @@ def test_potions_screen_brew_empty_cauldron_shows_message():
 
 def test_potions_screen_ingredient_drop_moves_to_cauldron():
     """Dropping an ingredient chip commits it into the cauldron."""
-    app = _setup_potions_app([_recipe()], inventory={"flower_sprite": 2})
+    app = _setup_potions_app([_recipe()], inventory={"dandelion_sprite": 2})
 
     screen = PotionsScreen()
     screen.on_pre_enter()
-    screen._on_ingredient_dropped("flower_sprite")
+    screen._on_ingredient_dropped("dandelion_sprite")
 
-    app.profile_manager.move_flower_to_cauldron.assert_called_once_with("flower_sprite")
+    app.profile_manager.move_flower_to_cauldron.assert_called_once_with("dandelion_sprite")
 
 
 def test_potions_screen_ingredient_chip_click_adds_to_cauldron():
     """A rendered ingredient chip wires a click handler that commits the flower."""
-    app = _setup_potions_app([_recipe()], inventory={"flower_sprite": 2})
+    app = _setup_potions_app([_recipe()], inventory={"dandelion_sprite": 2})
 
     screen = PotionsScreen()
     screen.on_pre_enter()
@@ -357,39 +357,39 @@ def test_potions_screen_ingredient_chip_click_adds_to_cauldron():
     assert callable(chip.click_handler)
     chip.click_handler()
 
-    app.profile_manager.move_flower_to_cauldron.assert_called_once_with("flower_sprite")
+    app.profile_manager.move_flower_to_cauldron.assert_called_once_with("dandelion_sprite")
 
 
 def test_potions_screen_ingredient_chip_has_drag_proxy_image():
     """Each ingredient chip carries a drag-proxy image source so the flower follows the pointer."""
     from quick_herbalist.core.config_parser import get_asset_path
 
-    _setup_potions_app([_recipe()], inventory={"flower_sprite": 2})
+    _setup_potions_app([_recipe()], inventory={"dandelion_sprite": 2})
 
     screen = PotionsScreen()
     screen.on_pre_enter()
 
     chips = [c.args[0] for c in screen.ids.ingredient_strip.add_widget.call_args_list]
     assert len(chips) == 1
-    assert chips[0].drag_image_source == get_asset_path("flower_sprite.png")
+    assert chips[0].drag_image_source == get_asset_path("dandelion_sprite.png")
 
 
 def test_potions_screen_cauldron_slot_tap_removes_ingredient():
     """Tapping a cauldron slot returns the ingredient to the inventory."""
-    app = _setup_potions_app([_recipe()], cauldron={"flower_sprite": 1})
+    app = _setup_potions_app([_recipe()], cauldron={"dandelion_sprite": 1})
 
     screen = PotionsScreen()
     screen.on_pre_enter()
-    screen._on_cauldron_ingredient_removed("flower_sprite")
+    screen._on_cauldron_ingredient_removed("dandelion_sprite")
 
     app.profile_manager.move_cauldron_ingredient_to_inventory.assert_called_once_with(
-        "flower_sprite"
+        "dandelion_sprite"
     )
 
 
 def test_potions_screen_ingredient_strip_hides_zero_count():
     """Flowers with count 0 are not shown in the ingredient strip."""
-    _setup_potions_app([_recipe()], inventory={"flower_sprite": 2, "flower2_sprite": 0})
+    _setup_potions_app([_recipe()], inventory={"dandelion_sprite": 2, "bluebell_sprite": 0})
 
     screen = PotionsScreen()
     screen.on_pre_enter()
@@ -400,8 +400,8 @@ def test_potions_screen_ingredient_strip_hides_zero_count():
 def test_potions_screen_recipe_book_shows_page_and_flips():
     """Recipe book shows the current page and wraps when flipping."""
     recipes = [
-        _recipe("potion_a", {"flower_sprite": 1}),
-        _recipe("potion_b", {"flower2_sprite": 2}),
+        _recipe("potion_a", {"dandelion_sprite": 1}),
+        _recipe("potion_b", {"bluebell_sprite": 2}),
     ]
     _setup_potions_app(recipes)
 
@@ -424,7 +424,7 @@ def test_potions_screen_recipe_book_lists_ingredients():
     screen = PotionsScreen()
     screen.on_pre_enter()
 
-    assert screen.ids.recipe_ingredients_lbl.text == "flower_sprite x2\nflower2_sprite x1"
+    assert screen.ids.recipe_ingredients_lbl.text == "dandelion_sprite x2\nbluebell_sprite x1"
     assert screen.ids.recipe_duration_lbl.text == "Duration: 30"
 
 
@@ -485,16 +485,16 @@ def test_potions_screen_slot_click_releases_potion():
 def test_potions_screen_ingredient_strip_skips_unknown_sprites():
     """Legacy inventory keys without a sprite (e.g. 'flower') are skipped, not crashed on."""
     app = _setup_potions_app(
-        [_recipe()], inventory={"flower_sprite": 2, "flower": 5, "flower2_sprite": 1}
+        [_recipe()], inventory={"dandelion_sprite": 2, "flower": 5, "bluebell_sprite": 1}
     )
-    app.sprite_manager.names.return_value = {"flower_sprite", "flower2_sprite"}
+    app.sprite_manager.names.return_value = {"dandelion_sprite", "bluebell_sprite"}
 
     screen = PotionsScreen()
     screen.on_pre_enter()
 
     assert screen.ids.ingredient_strip.add_widget.call_count == 2
-    app.sprite_manager.get.assert_any_call("flower_sprite")
-    app.sprite_manager.get.assert_any_call("flower2_sprite")
+    app.sprite_manager.get.assert_any_call("dandelion_sprite")
+    app.sprite_manager.get.assert_any_call("bluebell_sprite")
     assert not any(c.args and c.args[0] == "flower" for c in app.sprite_manager.get.call_args_list)
 
 
@@ -523,13 +523,13 @@ def test_potions_screen_empty_potion_strip_shows_placeholder():
 def test_potions_screen_ingredient_chip_labels_show_count():
     """Each ingredient chip shows the sprite name with its count like 'name (2x)'"""
     kivy_uix_label_module.Label.reset_mock()
-    _setup_potions_app([_recipe()], inventory={"flower_sprite": 2})
+    _setup_potions_app([_recipe()], inventory={"dandelion_sprite": 2})
 
     screen = PotionsScreen()
     screen.on_pre_enter()
 
     texts = [c.kwargs.get("text") for c in kivy_uix_label_module.Label.call_args_list]
-    assert "flower_sprite (2x)" in texts
+    assert "dandelion_sprite (2x)" in texts
 
 
 def test_potions_screen_spoon_uses_spoon_image():

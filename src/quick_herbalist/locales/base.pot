@@ -48,11 +48,11 @@ msgid "GAME OVER!"
 msgstr ""
 
 #: screens.py
-msgid "flower_sprite"
+msgid "dandelion_sprite"
 msgstr ""
 
 #: screens.py
-msgid "flower2_sprite"
+msgid "bluebell_sprite"
 msgstr ""
 
 #: screens.py
