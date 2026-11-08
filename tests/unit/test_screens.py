@@ -191,6 +191,14 @@ def test_greenhouse_screen_back_goes_to_game_menu():
     assert screen.manager.current == "game_menu"
 
 
+def test_greenhouse_back_button_labeled_game_menu():
+    """Greenhouse back button must say 'Back to Game Menu'."""
+    screen = GreenhouseScreen()
+    screen.on_pre_enter()
+
+    assert screen.ids.back_btn.text == "Back to Game Menu"
+
+
 def test_game_won_next_level_starts_next_level():
     """Win-screen 'Next Level' button must pick the level after the one just played."""
     app = _make_app(next_level=3)
@@ -243,7 +251,7 @@ def test_game_won_renders_row_per_flower_type():
 
 
 def test_game_won_menu_goes_to_game_menu():
-    """Level-completed 'Main Menu' button must return to the hub."""
+    """Level-completed 'Game Menu' button must return to the hub."""
     screen = GameWonScreen()
 
     screen.goto_menu()
@@ -251,13 +259,31 @@ def test_game_won_menu_goes_to_game_menu():
     assert screen.manager.current == "game_menu"
 
 
+def test_game_won_menu_button_labeled_game_menu():
+    """Win-screen hub button must say 'Game Menu', not 'Main Menu'."""
+    _make_app(next_level=2)
+    screen = GameWonScreen()
+    screen.harvest = {}
+    screen.on_pre_enter()
+
+    assert screen.ids.menu_btn.text == "Game Menu"
+
+
 def test_game_over_menu_goes_to_game_menu():
-    """Game-over 'Main Menu' button must return to the hub."""
+    """Game-over 'Game Menu' button must return to the hub."""
     screen = GameOverScreen()
 
     screen.goto_menu()
 
     assert screen.manager.current == "game_menu"
+
+
+def test_game_over_menu_button_labeled_game_menu():
+    """Game-over hub button must say 'Game Menu', not 'Main Menu'."""
+    screen = GameOverScreen()
+    screen.on_pre_enter()
+
+    assert screen.ids.menu_btn.text == "Game Menu"
 
 
 def _recipe(recipe_id="potion_magnetism", ingredients=None):

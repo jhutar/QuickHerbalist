@@ -60,7 +60,15 @@ msgid "Potion Crafting"
 msgstr ""
 
 #: screens.py
-msgid "Back to Menu"
+msgid "Back to Game Menu"
+msgstr ""
+
+#: screens.py
+msgid "Game Menu"
+msgstr ""
+
+#: screens.py
+msgid "Back to Main Menu"
 msgstr ""
 
 #: screens.py

@@ -11,7 +11,7 @@ class GreenhouseScreen(KeyboardScreen):
         """Initialize greenhouse screen UI."""
         self.ids.title.text = _("Greenhouse")
         self.ids.desc.text = _("Placeholder Screen: Future greenhouse system will be here!")
-        self.ids.back_btn.text = _("Back to Menu")
+        self.ids.back_btn.text = _("Back to Game Menu")
 
     def on_back(self):
         """Return to game menu hub when leaving the greenhouse screen."""
