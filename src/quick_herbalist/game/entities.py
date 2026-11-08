@@ -41,6 +41,7 @@ class GameEntity(Widget):
       done                             set True to be removed after the interaction
     """
 
+    TYPE = None  # entity type name used in levels.yaml and the hint system
     SIZE = (32, 32)
     SPAWN_X_MIN = 0
     SPAWN_X_MAX = 100
@@ -54,6 +55,7 @@ class GameEntity(Widget):
         self.sprite_name = sprite_name
         self.done = False
         self.overlapping = False
+        self.hint_triggered = False  # one-shot tutorial-hint trigger, per instance
 
         self.sprite = sprite_manager.get(sprite_name)
         self.sprite.pos = self.pos
@@ -91,6 +93,7 @@ class GameEntity(Widget):
 class Flower(GameEntity):
     """Flower object collected for score and the run harvest."""
 
+    TYPE = "flower"
     SIZE = (32, 32)
     SPAWN_X_MIN = 50
     SPAWN_X_MAX = 200
@@ -105,6 +108,7 @@ class Flower(GameEntity):
 class Stone(GameEntity):
     """Stone object that ends the run on contact."""
 
+    TYPE = "stone"
     SIZE = (64, 53)
     SPAWN_X_MIN = 100
     SPAWN_X_MAX = 300
@@ -118,6 +122,7 @@ class Stone(GameEntity):
 class Rock(Stone):
     """Bigger stone (pillar-sized) that ends the run on contact."""
 
+    TYPE = "rock"
     SIZE = (96, 128)
 
 
@@ -125,6 +130,7 @@ class Spider(GameEntity):
     """Crawling hazard: scrolls at half world speed and chases the hero
     vertically; stings (ends the run) on contact."""
 
+    TYPE = "spider"
     SIZE = (32, 32)
     SPAWN_X_MIN = 50
     SPAWN_X_MAX = 200
@@ -151,7 +157,8 @@ class Hill(GameEntity):
     any other entity.
     """
 
-    SIZE = (96, 96)
+    TYPE = "hill"
+    SIZE = (64, 32)
     SPAWN_X_MIN = 100
     SPAWN_X_MAX = 300
     SPEED_FACTOR = 0.5
