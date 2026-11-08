@@ -636,3 +636,4 @@ def test_menu_game_over_game_won_buttons_match_game_menu_height():
             block = _kv_button_block(text, button_id)
             assert "height: 50" in block, f"{kv_name} {button_id} missing height: 50"
             assert "size_hint_y: None" in block, f"{kv_name} {button_id} missing size_hint_y: None"
+        assert "size_hint_y: 0.15" not in text, f"{kv_name} still uses proportional row height"
