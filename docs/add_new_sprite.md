@@ -50,8 +50,9 @@ sprites through `SpriteManager.get(name)`; an unknown name raises
 ## Flower sprites: human-readable name
 
 A sprite used as a level flower (the `flower.sprite` key in `levels.yaml`) is
-also a collectable inventory type, keyed by its sprite name. Add a display
-name for it in the translation files: one `msgid "<sprite_name>"` entry with
+also a collectable inventory type, keyed by its sprite name, and the only
+source of potion brewing ingredients (`docs/add_new_potion.md`). Add a
+display name for it in the translation files: one `msgid "<sprite_name>"` entry with
 the human name as `msgstr` in
 `src/quick_herbalist/locales/en/LC_MESSAGES/base.po` and the Czech translation
 in `.../cs/LC_MESSAGES/base.po` (plus the empty entry in `locales/base.pot`),
