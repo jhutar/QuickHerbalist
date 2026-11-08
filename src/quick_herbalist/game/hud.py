@@ -12,6 +12,8 @@ class GameHud(Widget):
     def __init__(self, **kwargs):
         """Create the score, distance, effect, and character labels."""
         super().__init__(**kwargs)
+        # Labels must be added as children: Kivy only renders widgets in
+        # the canvas tree, so un-added labels would never draw.
         self.score_label = self._make_label(font_size=24, pos=(10, 560))
         self.distance_label = self._make_label(font_size=24, pos=(10, 520))
         self.effect_label = self._make_label(
@@ -19,9 +21,8 @@ class GameHud(Widget):
         )
         self.char_label = self._make_label(font_size=24, pos=(590, 560), halign="right")
 
-    @staticmethod
-    def _make_label(font_size, pos, size=(200, 30), halign="left", valign="middle"):
-        """Create one black HUD label at a fixed position with sized text."""
+    def _make_label(self, font_size, pos, size=(200, 30), halign="left", valign="middle"):
+        """Create one black HUD label at a fixed position with sized text and add it."""
         label = Label(
             text="",
             font_size=font_size,
@@ -32,6 +33,7 @@ class GameHud(Widget):
             valign=valign,
         )
         label.bind(size=label.setter("text_size"))
+        self.add_widget(label)
         return label
 
     def set_score(self, score):
