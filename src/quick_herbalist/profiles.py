@@ -436,3 +436,13 @@ class ProfileManager:
         self.add_potion(loadout[slot_index])
         loadout[slot_index] = None
         self.save_config()
+
+    def use_run_slot(self, slot_index):
+        """Consume the potion in a run slot; it is lost and not returned to inventory."""
+        self._require_active()
+        self._validate_slot_index(slot_index)
+        loadout = self._ensure_loadout()
+        if loadout[slot_index] is None:
+            raise ProfileError(ProfileErrorCode.RUN_SLOT_EMPTY, f"Run slot {slot_index} is empty.")
+        loadout[slot_index] = None
+        self.save_config()

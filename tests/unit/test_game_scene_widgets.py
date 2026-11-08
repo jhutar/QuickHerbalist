@@ -10,6 +10,8 @@ import sys
 import types
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 # Setup mocks for Kivy BEFORE importing anything that uses it
 kivy_module = types.ModuleType("kivy")
 kivy_app_module = types.ModuleType("kivy.app")
@@ -219,3 +221,153 @@ def test_game_view_uses_level_sprite_names():
     assert "flower_sprite" not in requested
     assert "stone_sprite" not in requested
     assert "grass_sprite" not in requested
+
+
+# --- Potion effects (run loadout hotkeys + magnet) ---
+
+
+def _make_magnet_recipe():
+    """Build a real magnetism recipe for effect wiring tests."""
+    from quick_herbalist.potions import Recipe
+
+    return Recipe(
+        id="potion_magnetism",
+        name_key="potion_magnetism_name",
+        description_key="potion_magnetism_description",
+        ingredients={"flower_sprite": 1},
+        duration_seconds=30.0,
+    )
+
+
+def _make_effect_view():
+    """Build a GameView with a mocked profile manager and the magnet recipe."""
+    levels = [_make_level(1)]
+    profile_manager = MagicMock(active_character_name="herb", next_level_number=lambda: 1)
+    from quick_herbalist.game_scene import GameView
+
+    return GameView(
+        profile_manager, _make_sprite_manager(), levels, recipes=[_make_magnet_recipe()]
+    )
+
+
+def test_hotkey_uses_filled_slot_and_activates_effect():
+    """Pressing 1 with a filled slot consumes it and starts the timed effect."""
+    view = _make_effect_view()
+    view.profile_manager.get_run_loadout.return_value = ["potion_magnetism", None, None]
+
+    assert view.on_keyboard_down("1") is True
+    view.profile_manager.use_run_slot.assert_called_once_with(0)
+    assert view.active_effects == [["potion_magnetism", 30.0]]
+
+
+def test_hotkey_with_empty_slot_is_noop():
+    """Pressing a hotkey for an empty slot does nothing and raises nothing."""
+    view = _make_effect_view()
+    view.profile_manager.get_run_loadout.return_value = [None, None, None]
+
+    assert view.on_keyboard_down("2") is True
+    view.profile_manager.use_run_slot.assert_not_called()
+    assert view.active_effects == []
+
+
+def test_hotkey_unknown_potion_skips_effect():
+    """A slot holding a potion without a recipe is not consumed and adds no effect."""
+    view = _make_effect_view()
+    view.profile_manager.get_run_loadout.return_value = ["potion_gone", None, None]
+
+    assert view.on_keyboard_down("1") is True
+    view.profile_manager.use_run_slot.assert_not_called()
+    assert view.active_effects == []
+
+
+def test_magnet_pulls_flower_at_edge_of_radius_slowly():
+    """A flower 100 px from the player center is pulled ~1 px/tick toward the player."""
+    view = _make_effect_view()
+    px, py = view.hero.pos
+    center_x, center_y = px + view.hero.size[0] / 2, py + view.hero.size[1] / 2
+    flower = Flower(_make_sprite_manager(), "lvl_flower", center_x + 100 - 16, center_y - 16)
+    view.flowers = [flower]
+
+    view._tick_magnet(1.0)
+    # speed = 10 - 9 * 100/100 = 1 px/tick, straight left
+    assert flower.pos == (pytest.approx(center_x + 100 - 1 - 16), pytest.approx(center_y - 16))
+
+
+def test_magnet_pulls_near_flower_fast_and_vertically():
+    """Pull speed scales up near the player and works along the vertical axis."""
+    view = _make_effect_view()
+    px, py = view.hero.pos
+    center_x, center_y = px + view.hero.size[0] / 2, py + view.hero.size[1] / 2
+
+    near = Flower(_make_sprite_manager(), "lvl_flower", center_x + 50 - 16, center_y - 16)
+    below = Flower(_make_sprite_manager(), "lvl_flower", center_x - 16, center_y + 60 - 16)
+    view.flowers = [near, below]
+
+    view._tick_magnet(1.0)
+    # dist 50 -> speed 5.5 left; dist 60 -> speed 4.6 up
+    assert near.pos[0] == pytest.approx(center_x + 50 - 5.5 - 16)
+    assert below.pos[1] == pytest.approx(center_y + 60 - 4.6 - 16)
+
+
+def test_magnet_ignores_flowers_outside_radius_and_stones():
+    """Flowers beyond 100 px and all stones are untouched."""
+    view = _make_effect_view()
+    px, py = view.hero.pos
+    center_x, center_y = px + view.hero.size[0] / 2, py + view.hero.size[1] / 2
+    far = Flower(_make_sprite_manager(), "lvl_flower", center_x + 150 - 16, center_y - 16)
+    stone = Stone(_make_sprite_manager(), "lvl_stone", center_x + 50 - 32, center_y - 53)
+    view.flowers = [far]
+    view.stones = [stone]
+
+    view._tick_magnet(1.0)
+    assert far.pos == (center_x + 150 - 16, center_y - 16)
+    assert stone.pos == (center_x + 50 - 32, center_y - 53)
+
+
+def test_magnet_pull_scales_with_frame_factor():
+    """Pull distance per call scales with the dt-based frame factor."""
+    view = _make_effect_view()
+    px, py = view.hero.pos
+    center_x, center_y = px + view.hero.size[0] / 2, py + view.hero.size[1] / 2
+    flower = Flower(_make_sprite_manager(), "lvl_flower", center_x + 100 - 16, center_y - 16)
+    view.flowers = [flower]
+
+    view._tick_magnet(2.0)
+    assert flower.pos == (pytest.approx(center_x + 100 - 2 - 16), pytest.approx(center_y - 16))
+
+
+def test_effects_stack_across_slots():
+    """Using two different slots starts two independent timed effects."""
+    view = _make_effect_view()
+    view.profile_manager.get_run_loadout.return_value = [
+        "potion_magnetism",
+        "potion_magnetism",
+        None,
+    ]
+
+    view.on_keyboard_down("1")
+    view.on_keyboard_down("2")
+    assert view.active_effects == [
+        ["potion_magnetism", 30.0],
+        ["potion_magnetism", 30.0],
+    ]
+
+
+def test_effect_expires_and_label_cleared():
+    """An effect dropped by the countdown is removed and the HUD label empties."""
+    view = _make_effect_view()
+    view.active_effects = [["potion_magnetism", 0.5]]
+
+    view._step_effects(1.0, 1.0)
+    assert view.active_effects == []
+    assert view.effect_label.text == ""
+
+
+def test_effect_label_shows_name_and_whole_seconds():
+    """The HUD label lists each active effect with remaining seconds rounded up."""
+    view = _make_effect_view()
+    view.active_effects = [["potion_magnetism", 12.5]]
+
+    view._step_effects(0.5, 1.0)
+    assert view.active_effects == [["potion_magnetism", 12.0]]
+    assert view.effect_label.text == "potion_magnetism_name 12"
