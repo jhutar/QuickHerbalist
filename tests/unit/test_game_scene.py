@@ -117,6 +117,7 @@ from quick_herbalist.game import (  # noqa: E402
     ENTITY_TYPES,
     SCREEN_W,
     SPAWN_POSITION_RETRIES,
+    EntitySpec,
     Flower,
     GameView,
     Hill,
@@ -126,6 +127,7 @@ from quick_herbalist.game import (  # noqa: E402
     Stone,
 )
 from quick_herbalist.game.effects import ActiveEffect, MagnetEffect  # noqa: E402
+from quick_herbalist.game.hints import ENTITY_HINTS, HintBox, hint_text  # noqa: E402
 
 
 def _make_sprite_manager():
@@ -359,6 +361,31 @@ def test_game_view_uses_level_sprite_names():
     assert "dandelion_sprite" not in requested
     assert "stone_sprite" not in requested
     assert "grass_sprite" not in requested
+
+
+def test_start_game_schedules_spawn_with_bound_spec():
+    """start_game must schedule spawns with spec bound, not as extra args.
+
+    Kivy's Clock.schedule_once accepts exactly (callback, delay); passing
+    extra positional or keyword args raises TypeError at startup
+    (regression test).
+    """
+    view = _make_game_view()
+    kivy_clock_module.Clock.reset_mock()
+
+    view.start_game()
+
+    assert view.active is True
+    spawn_calls = kivy_clock_module.Clock.schedule_once.call_args_list
+    assert len(spawn_calls) == len(view._specs)
+    for call in spawn_calls:
+        args, kwargs = call
+        assert len(args) == 2
+        assert not kwargs
+        callback = args[0]
+        assert callback.func == view._spawn
+        assert set(callback.keywords) == {"spec"}
+        assert isinstance(callback.keywords["spec"], EntitySpec)
 
 
 # --- Spawn pacing (ramp moved from GameRules to SpawnPacer) ---
@@ -658,3 +685,219 @@ def test_effect_label_shows_name_and_whole_seconds():
     view._step_effects(0.5, 1.0)
     assert view.active_effects == [("potion_magnetism", 12.0)]
     assert view.hud.effect_label.text == "potion_magnetism_name 12"
+
+
+# --- First-seen tutorial hints ---
+
+
+def _view_with_hint_mocks():
+    """Build a GameView whose profile manager behaves like the real hint API."""
+    view = _make_game_view()
+    view.profile_manager.hints_enabled.return_value = True
+    view.profile_manager.get_seen_entities.return_value = []
+    return view
+
+
+def test_entity_type_names_match_registry():
+    """Every registered entity class carries the TYPE name used in levels.yaml."""
+    assert {cls.TYPE for cls in ENTITY_TYPES.values()} == set(ENTITY_TYPES)
+
+
+def test_new_entities_start_untriggered():
+    """Each spawned instance gets its own one-shot hint trigger flag, off."""
+    stone = Stone(_make_sprite_manager(), "stone_sprite", SCREEN_W + 100, 10)
+    assert stone.hint_triggered is False
+
+
+def test_hint_triggers_at_100px_into_viewport():
+    """An unseen entity past the trigger line queues, shows, and is marked seen."""
+    view = _view_with_hint_mocks()
+    stone = Stone(_make_sprite_manager(), "stone_sprite", SCREEN_W - 100, 10)
+    view.entities.append(stone)
+
+    view._check_hints()
+
+    assert view.hint_active is True
+    assert view._hint_queue == []
+    view.profile_manager.mark_entity_seen.assert_called_once_with("stone")
+    assert stone.hint_triggered is True
+
+
+def test_hint_not_triggered_before_line():
+    """An entity still inside the HINT_TRIGGER_DEPTH band shows no hint."""
+    view = _view_with_hint_mocks()
+    stone = Stone(_make_sprite_manager(), "stone_sprite", SCREEN_W - 99, 10)
+    view.entities.append(stone)
+
+    view._check_hints()
+
+    assert view.hint_active is False
+    view.profile_manager.mark_entity_seen.assert_not_called()
+    assert stone.hint_triggered is False
+
+
+def test_hint_is_one_shot_per_instance():
+    """A triggered instance never re-queues, even if it re-enters the band."""
+    view = _view_with_hint_mocks()
+    stone = Stone(_make_sprite_manager(), "stone_sprite", SCREEN_W - 100, 10)
+    view.entities.append(stone)
+
+    view._check_hints()
+    view._close_hint_box()
+    stone.pos = (SCREEN_W - 100, 10)
+    view._check_hints()
+
+    assert view.profile_manager.mark_entity_seen.call_count == 1
+    assert view.hint_active is False
+
+
+def test_hint_skipped_for_seen_type():
+    """A type already in the character's seen-set never shows its hint."""
+    view = _view_with_hint_mocks()
+    view.profile_manager.get_seen_entities.return_value = ["stone"]
+    stone = Stone(_make_sprite_manager(), "stone_sprite", SCREEN_W - 100, 10)
+    view.entities.append(stone)
+
+    view._check_hints()
+
+    assert view.hint_active is False
+    view.profile_manager.mark_entity_seen.assert_not_called()
+
+
+def test_hints_disabled_shows_nothing():
+    """show_hints=False short-circuits the whole hint check."""
+    view = _view_with_hint_mocks()
+    view.profile_manager.hints_enabled.return_value = False
+    stone = Stone(_make_sprite_manager(), "stone_sprite", SCREEN_W - 100, 10)
+    view.entities.append(stone)
+
+    view._check_hints()
+
+    assert view.hint_active is False
+    view.profile_manager.mark_entity_seen.assert_not_called()
+    assert stone.hint_triggered is False
+
+
+def test_same_frame_batch_shows_hints_in_sequence():
+    """Two unseen types crossing in one frame queue both, shown one after the other."""
+    view = _view_with_hint_mocks()
+    stone = Stone(_make_sprite_manager(), "stone_sprite", SCREEN_W - 100, 10)
+    hill = Hill(_make_sprite_manager(), "hill_sprite", SCREEN_W - 100, 200)
+    view.entities.extend([stone, hill])
+
+    view._check_hints()
+
+    assert view.hint_active is True
+    assert view._hint_queue == [("hill", "hill_sprite")]  # stone box open, hill queued
+    assert view.profile_manager.mark_entity_seen.call_count == 2
+
+    view._close_hint_box()  # opens the queued hill box
+    assert view.hint_active is True
+    assert view._hint_queue == []
+
+    view._close_hint_box()  # queue drained, run resumes
+    assert view.hint_active is False
+
+
+def test_update_skipped_while_hint_open():
+    """The run is fully paused while a hint box is on screen."""
+    view = _view_with_hint_mocks()
+    stone = Stone(_make_sprite_manager(), "stone_sprite", SCREEN_W - 100, 10)
+    view.entities.append(stone)
+    view._check_hints()
+    assert view.hint_active is True
+
+    stone.pos = (stone.x - 5, stone.y)
+    x_before = stone.x
+    view.update(1.0 / 60)
+
+    assert stone.x == x_before  # entity did not move
+    assert view.hint_active is True
+
+
+def test_spawn_skipped_while_hint_open():
+    """Spawn timers do not add entities while the run is paused on a hint."""
+    view = _view_with_hint_mocks()
+    view._hint_box = object()
+
+    view._spawn(1.0 / 60, view._specs[0])
+
+    assert view.entities == []
+    assert view._spawn_events == []
+
+
+def test_keyboard_closes_hint_box():
+    """Esc/Enter/Space dismiss the box; other keys are swallowed while it is open."""
+    view = _view_with_hint_mocks()
+    stone = Stone(_make_sprite_manager(), "stone_sprite", SCREEN_W - 100, 10)
+    view.entities.append(stone)
+    view._check_hints()
+
+    assert view.on_keyboard_down("w") is True  # movement dead, box stays
+    assert view.hint_active is True
+    assert view.moving_up is False
+
+    assert view.on_keyboard_down("esc") is True
+    assert view.hint_active is False
+
+
+def test_stop_game_closes_open_hint():
+    """Leaving the run clears any open hint box and its queue."""
+    view = _view_with_hint_mocks()
+    view._hint_queue = [("hill", "hill_sprite")]
+    view._open_hint_box()
+    assert view.hint_active is True
+
+    view.stop_game()
+
+    assert view.hint_active is False
+    assert view._hint_queue == []
+
+
+def test_hint_box_closes_on_outside_touch():
+    """A touch outside the box dismisses the hint."""
+    from types import SimpleNamespace
+
+    closed = []
+    box = HintBox(
+        _make_sprite_manager(), "stone_sprite", "Stone", "desc", on_close=lambda: closed.append(1)
+    )
+
+    assert box.on_touch_down(SimpleNamespace(pos=(10, 10))) is True
+    assert len(closed) == 1
+
+
+def test_hint_box_closes_on_cross_touch():
+    """A touch of the cross button in the upper-right corner dismisses the hint."""
+    from types import SimpleNamespace
+
+    closed = []
+    box = HintBox(
+        _make_sprite_manager(), "stone_sprite", "Stone", "desc", on_close=lambda: closed.append(1)
+    )
+    cx, cy = box.close_rect[0] + 10, box.close_rect[1] + 10
+
+    assert box.on_touch_down(SimpleNamespace(pos=(cx, cy))) is True
+    assert len(closed) == 1
+
+
+def test_hint_box_inside_touch_swallowed():
+    """A touch inside the box is consumed without dismissing."""
+    from types import SimpleNamespace
+
+    closed = []
+    box = HintBox(
+        _make_sprite_manager(), "stone_sprite", "Stone", "desc", on_close=lambda: closed.append(1)
+    )
+    mid = (box.box_rect[0] + 50, box.box_rect[1] + 50)
+
+    assert box.on_touch_down(SimpleNamespace(pos=mid)) is True
+    assert closed == []
+
+
+def test_hint_text_covers_all_entity_types():
+    """Every registered entity type has a title and a non-empty description."""
+    for entity_type in ENTITY_TYPES:
+        title, description = hint_text(entity_type)
+        assert title and description
+        assert hint_text(entity_type) == ENTITY_HINTS[entity_type]

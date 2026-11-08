@@ -611,3 +611,57 @@ def test_old_save_without_potion_keys_migrates(temp_config_dir):
     assert pm2.get_potions() == {}
     assert pm2.get_run_loadout() == [None, None, None]
     assert pm2.get_cauldron() == {}
+
+
+def test_create_character_sets_hint_keys(temp_config_dir):
+    pm = ProfileManager(config_dir=temp_config_dir)
+
+    pm.create_character("herb")
+
+    char = pm.characters["herb"]
+    assert char["show_hints"] is True
+    assert char["seen_entities"] == []
+
+
+def test_create_character_can_disable_hints(temp_config_dir):
+    pm = ProfileManager(config_dir=temp_config_dir)
+
+    pm.create_character("herb", show_hints=False)
+
+    assert pm.characters["herb"]["show_hints"] is False
+    assert pm.hints_enabled() is False
+
+
+def test_old_save_without_hint_keys_migrates(temp_config_dir):
+    pm = ProfileManager(config_dir=temp_config_dir)
+    pm.create_character("herb")
+    del pm.characters["herb"]["seen_entities"]
+    del pm.characters["herb"]["show_hints"]
+    pm.save_config()
+
+    pm2 = ProfileManager(config_dir=temp_config_dir)
+    pm2.select_character("herb")
+
+    assert pm2.hints_enabled() is True
+    assert pm2.get_seen_entities() == []
+
+
+def test_mark_entity_seen_round_trip(temp_config_dir):
+    pm = ProfileManager(config_dir=temp_config_dir)
+    pm.create_character("herb")
+    pm.mark_entity_seen("stone")
+    pm.mark_entity_seen("stone")  # duplicate: no double entry, no error
+    pm.mark_entity_seen("hill")
+
+    pm2 = ProfileManager(config_dir=temp_config_dir)
+    pm2.select_character("herb")
+
+    assert pm2.get_seen_entities() == ["stone", "hill"]
+
+
+def test_hint_accessors_without_active_character(temp_config_dir):
+    pm = ProfileManager(config_dir=temp_config_dir)
+
+    assert pm.hints_enabled() is True
+    assert pm.get_seen_entities() == []
+    pm.mark_entity_seen("stone")  # no-op, must not raise
