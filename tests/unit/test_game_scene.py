@@ -973,3 +973,21 @@ def test_hint_text_covers_all_entity_types():
         title, description = hint_text(entity_type)
         assert title and description
         assert hint_text(entity_type) == ENTITY_HINTS[entity_type]
+
+
+def test_hud_labels_added_as_children():
+    """All four HUD labels must be added as children of the hud widget.
+
+    Kivy only renders widgets that are in the canvas tree. The labels used
+    to be created without add_widget, leaving the whole HUD invisible during
+    a run (blank score/distance/character counters).
+    """
+    from quick_herbalist.game.hud import GameHud
+
+    hud = GameHud()
+
+    assert len(hud.children) == 4
+    assert hud.score_label in hud.children
+    assert hud.distance_label in hud.children
+    assert hud.effect_label in hud.children
+    assert hud.char_label in hud.children
