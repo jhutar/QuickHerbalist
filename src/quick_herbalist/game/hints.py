@@ -58,9 +58,9 @@ class HintBox(Widget):
     """Centered tutorial popup for one entity, shown while the run is paused.
 
     Layout: entity image left, title upper-right, description lower-right,
-    cross button in the upper-right corner. Closes via the cross or a touch
-    outside the box; keyboard dismissal (Esc/Enter/Space) is handled by the
-    scene. Swallows every touch while open so no game input gets through.
+    cross button in the upper-right corner. Closes via the cross button or
+    keyboard (Esc/Enter/Space, handled by the scene); any other touch is
+    swallowed while open so no game input gets through.
     """
 
     def __init__(self, sprite_manager, sprite_name, title, description, on_close, **kwargs):
@@ -115,14 +115,10 @@ class HintBox(Widget):
         )
 
     def on_touch_down(self, touch):
-        """Close on touch of the cross or outside the box; swallow all touches."""
-        if not self._touch_in(touch.pos, self.box_rect):
-            self._on_close()
-            return True
+        """Close on touch of the cross; swallow all other touches."""
         if self._touch_in(touch.pos, self.close_rect):
             self._on_close()
-            return True
-        return True  # touch inside the box: consume, no dismissal
+        return True  # cross closes; everything else is consumed without dismissal
 
     @staticmethod
     def _touch_in(pos, rect):

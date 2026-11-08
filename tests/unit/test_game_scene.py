@@ -41,12 +41,22 @@ class RealWidget:
         self.size = (100, 100)
         self.pos = (0, 0)
         self.canvas = FakeCanvas()
+        self.children = []
 
-    def add_widget(self, *args, **kwargs):
-        pass
+    def add_widget(self, child, *args, **kwargs):
+        # Mirror Kivy: new child at index 0 (front of z-order).
+        self.children.insert(0, child)
 
-    def remove_widget(self, *args, **kwargs):
-        pass
+    def remove_widget(self, child, *args, **kwargs):
+        if child in self.children:
+            self.children.remove(child)
+
+    def on_touch_down(self, touch):
+        """Default propagation: most-recently-added child gets the touch first."""
+        for child in self.children[:]:
+            if hasattr(child, "on_touch_down") and child.on_touch_down(touch):
+                return True
+        return False
 
     def bind(self, *args, **kwargs):
         pass
@@ -866,8 +876,8 @@ def test_stop_game_closes_open_hint():
     assert view._hint_queue == []
 
 
-def test_hint_box_closes_on_outside_touch():
-    """A touch outside the box dismisses the hint."""
+def test_hint_box_outside_touch_swallowed():
+    """A touch outside the box is consumed without dismissing (cross only)."""
     from types import SimpleNamespace
 
     closed = []
@@ -876,7 +886,7 @@ def test_hint_box_closes_on_outside_touch():
     )
 
     assert box.on_touch_down(SimpleNamespace(pos=(10, 10))) is True
-    assert len(closed) == 1
+    assert closed == []
 
 
 def test_hint_box_closes_on_cross_touch():
@@ -905,6 +915,44 @@ def test_hint_box_inside_touch_swallowed():
 
     assert box.on_touch_down(SimpleNamespace(pos=mid)) is True
     assert closed == []
+
+
+def test_game_view_touch_goes_to_child_first():
+    """GameView.on_touch_down must let a child consume the touch before movement.
+
+    Regression: without the super() call the whole child subtree (HintBox
+    included) is starved of touches, because Kivy dispatches to children only
+    inside the default Widget.on_touch_down.
+    """
+    from types import SimpleNamespace
+
+    view = _make_game_view()
+    received = []
+
+    class SwallowingChild(RealWidget):
+        def on_touch_down(self, touch):
+            received.append(touch.pos)
+            return True
+
+    view.add_widget(SwallowingChild())
+    touch = SimpleNamespace(pos=(42, 42), y=42)
+
+    assert view.on_touch_down(touch) is True
+    assert received == [(42, 42)]
+    assert view.touch_active is False
+
+
+def test_game_view_touch_still_moves_without_child():
+    """With no consuming child, GameView takes over for hero movement."""
+    from types import SimpleNamespace
+
+    view = _make_game_view()
+    view.children.clear()
+    touch = SimpleNamespace(pos=(7, 33), y=33)
+
+    assert view.on_touch_down(touch) is True
+    assert view.touch_active is True
+    assert view.target_y == 33
 
 
 def test_hint_text_covers_all_entity_types():
