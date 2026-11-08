@@ -27,6 +27,8 @@
             size_hint_y: 0.15
             Button:
                 id: start_btn
+                size_hint_y: None
+                height: 50
                 font_size: 18
                 on_release: root.start_game()
         BoxLayout:
@@ -35,15 +37,21 @@
             size_hint_y: 0.15
             Button:
                 id: new_btn
+                size_hint_y: None
+                height: 50
                 font_size: 18
                 on_release: root.manager.current = 'new_character'
             Button:
                 id: load_btn
+                size_hint_y: None
+                height: 50
                 font_size: 18
                 on_release: root.manager.current = 'load_character'
         Button:
             id: quit_btn
-            size_hint: (0.4, 0.15)
+            size_hint_x: 0.4
+            size_hint_y: None
+            height: 50
             pos_hint: {'center_x': 0.5}
             font_size: 18
             on_release: app.stop()

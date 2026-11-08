@@ -20,13 +20,17 @@
             size_hint_y: 0.4
         Button:
             id: restart_btn
-            size_hint: (0.4, 0.15)
+            size_hint_x: 0.4
+            size_hint_y: None
+            height: 50
             pos_hint: {'center_x': 0.5}
             font_size: 20
             on_release: root.restart_game()
         Button:
             id: menu_btn
-            size_hint: (0.4, 0.15)
+            size_hint_x: 0.4
+            size_hint_y: None
+            height: 50
             pos_hint: {'center_x': 0.5}
             font_size: 20
             on_release: root.goto_menu()
