@@ -13,9 +13,8 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
-_LEVEL_KEYS = {"name", "background", "distance", "start_speed", "max_speed", "flower", "stone"}
-_FLOWER_KEYS = {"sprite", "interval"}
-_STONE_KEYS = {"sprite", "interval", "ramp_to"}
+_LEVEL_KEYS = {"name", "background", "distance", "start_speed", "max_speed", "entities"}
+_ENTITY_KEYS = {"type", "sprite", "interval", "ramp_to"}
 
 
 class LevelConfigError(ValueError):
@@ -28,20 +27,16 @@ class LevelConfigError(ValueError):
 
 
 @dataclass(frozen=True)
-class SpawnDefinition:
-    """One spawnable entity type: which sprite, at what interval (seconds)."""
+class EntityDefinition:
+    """One spawnable entity type of a level: kind, sprite, spawn pacing.
 
-    sprite: str
-    interval: float
-
-
-@dataclass(frozen=True)
-class StoneDefinition(SpawnDefinition):
-    """Stone spawn definition with optional in-level ramp (minimum interval).
-
-    ramp_to None means the interval stays constant for the whole level.
+    ramp_to None means the interval stays constant for the whole level;
+    otherwise each spawn shrinks the interval toward that floor.
     """
 
+    type: str
+    sprite: str
+    interval: float
     ramp_to: float | None = None
 
 
@@ -54,8 +49,7 @@ class LevelDefinition:
     distance: float
     start_speed: float
     max_speed: float
-    flower: SpawnDefinition
-    stone: StoneDefinition
+    entities: tuple[EntityDefinition, ...]
 
 
 def _positive_number(value) -> bool:
@@ -84,26 +78,50 @@ def _check_number(entry, key, label, errors):
         errors.append(f"{label}: '{key}' must be a positive number")
 
 
-def _validate_spawn(entry, key, allowed_keys, label, sprite_names, errors):
-    """Validate a spawn sub-mapping (flower/stone); return its values or None.
+def _validate_entity(item, index, label, sprite_names, errors):
+    """Validate one entry of the level's entities list; return it or None.
 
-    Appends all problems found for this sub-mapping to errors.
+    All problems found for this item are appended to errors.
     """
-    sub = entry.get(key)
-    if not isinstance(sub, dict):
-        errors.append(f"{label}: '{key}' must be a mapping")
+    item_label = f"{label}: entities[{index}]"
+    if not isinstance(item, dict):
+        errors.append(f"{item_label}: must be a mapping")
         return None
-    unknown = set(sub) - allowed_keys
+
+    unknown = set(item) - _ENTITY_KEYS
     if unknown:
-        errors.append(f"{label}: {key}: unknown key(s): {sorted(unknown)}")
-    if not isinstance(sub.get("sprite"), str) or not sub.get("sprite"):
-        errors.append(f"{label}: {key}.sprite must be a non-empty string")
-    elif sub["sprite"] not in sprite_names:
-        errors.append(f"{label}: {key}: unknown sprite '{sub['sprite']}'")
-    if not _positive_number(sub.get("interval")):
-        errors.append(f"{label}: {key}.interval must be a positive number")
+        errors.append(f"{item_label}: unknown key(s): {sorted(unknown)}")
+    if not isinstance(item.get("type"), str) or not item.get("type"):
+        errors.append(f"{item_label}: 'type' must be a non-empty string")
+    _check_sprite(item, "sprite", item_label, sprite_names, errors)
+    _check_number(item, "interval", item_label, errors)
+    if "ramp_to" in item and not _positive_number(item["ramp_to"]):
+        errors.append(f"{item_label}: 'ramp_to' must be a positive number")
+
+    if any(e.startswith(item_label) for e in errors):
         return None
-    return sub["sprite"], sub["interval"]
+    ramp_to = item.get("ramp_to")
+    return EntityDefinition(
+        type=item["type"],
+        sprite=item["sprite"],
+        interval=item["interval"],
+        ramp_to=ramp_to if ramp_to is not None else None,
+    )
+
+
+def _validate_entities(entry, label, sprite_names, errors):
+    """Validate the level's entities list; return its definitions or None."""
+    items = entry.get("entities")
+    if not isinstance(items, list) or not items:
+        errors.append(f"{label}: 'entities' must be a non-empty list")
+        return None
+
+    definitions = []
+    for index, item in enumerate(items):
+        definition = _validate_entity(item, index, label, sprite_names, errors)
+        if definition is not None:
+            definitions.append(definition)
+    return tuple(definitions) if definitions else None
 
 
 def _validate_level(index, entry, sprite_names, seen_names, errors):
@@ -113,14 +131,13 @@ def _validate_level(index, entry, sprite_names, seen_names, errors):
     other levels so one raise lists everything).
     """
     label = _label(index, entry)
-    local_errors: list[str] = []
     if not isinstance(entry, dict):
         errors.append(f"{label}: must be a mapping")
         return None
 
     unknown = set(entry) - _LEVEL_KEYS
     if unknown:
-        local_errors.append(f"{label}: unknown key(s): {sorted(unknown)}")
+        errors.append(f"{label}: unknown key(s): {sorted(unknown)}")
 
     name = entry.get("name")
     if not isinstance(name, str) or not name:
@@ -130,23 +147,13 @@ def _validate_level(index, entry, sprite_names, seen_names, errors):
     else:
         seen_names.add(name)
 
-    _check_sprite(entry, "background", label, sprite_names, local_errors)
+    _check_sprite(entry, "background", label, sprite_names, errors)
     for key in ("distance", "start_speed", "max_speed"):
-        _check_number(entry, key, label, local_errors)
+        _check_number(entry, key, label, errors)
 
-    flower = _validate_spawn(entry, "flower", _FLOWER_KEYS, label, sprite_names, local_errors)
-    stone = _validate_spawn(entry, "stone", _STONE_KEYS, label, sprite_names, local_errors)
+    entities = _validate_entities(entry, label, sprite_names, errors)
 
-    ramp_to = None
-    if stone is not None and entry["stone"].get("ramp_to") is not None:
-        if not _positive_number(entry["stone"]["ramp_to"]):
-            local_errors.append(f"{label}: stone.ramp_to must be a positive number")
-            flower = stone = None
-        else:
-            ramp_to = entry["stone"]["ramp_to"]
-
-    errors.extend(local_errors)
-    if flower is None or stone is None or local_errors:
+    if entities is None or any(e.startswith(label) for e in errors):
         return None
     return LevelDefinition(
         name=name,
@@ -154,8 +161,7 @@ def _validate_level(index, entry, sprite_names, seen_names, errors):
         distance=entry["distance"],
         start_speed=entry["start_speed"],
         max_speed=entry["max_speed"],
-        flower=SpawnDefinition(*flower),
-        stone=StoneDefinition(sprite=stone[0], interval=stone[1], ramp_to=ramp_to),
+        entities=entities,
     )
 
 

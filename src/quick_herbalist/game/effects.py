@@ -5,8 +5,8 @@ EFFECT_FACTORIES keyed by the potion id from recipes.yaml.
 """
 
 import math
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 
 class RunEffect:
@@ -17,34 +17,36 @@ class RunEffect:
 
 
 class MagnetEffect(RunEffect):
-    """Pull live flowers toward the player while within its radius."""
+    """Pull live magnetic entities toward the player while within its radius."""
 
     RADIUS = 100.0
     MIN_SPEED = 1.0
     MAX_SPEED = 10.0
 
-    def __init__(self, hero, flowers):
-        """Bind the effect to the hero widget and the live flower list."""
+    def __init__(self, hero, entities):
+        """Bind the effect to the hero widget and the live entity list."""
         self.hero = hero
-        self.flowers = flowers
+        self.entities = entities
 
     def tick(self, frame_factor):
-        """Pull each flower within RADIUS toward the hero center."""
+        """Pull each magnetic entity within RADIUS toward the hero center."""
         hx, hy = self.hero.pos
         hw, hh = self.hero.size
         px, py = hx + hw / 2, hy + hh / 2
-        for flower in self.flowers:
-            fx, fy = flower.pos
-            fw, fh = flower.size
-            dx = px - (fx + fw / 2)
-            dy = py - (fy + fh / 2)
+        for entity in self.entities:
+            if not entity.MAGNETIC:
+                continue
+            ex, ey = entity.pos
+            ew, eh = entity.size
+            dx = px - (ex + ew / 2)
+            dy = py - (ey + eh / 2)
             dist = math.hypot(dx, dy)
             if dist == 0 or dist > self.RADIUS:
                 continue
             speed = self.MAX_SPEED - (self.MAX_SPEED - self.MIN_SPEED) * dist / self.RADIUS
-            flower.pos = (
-                fx + dx / dist * speed * frame_factor,
-                fy + dy / dist * speed * frame_factor,
+            entity.pos = (
+                ex + dx / dist * speed * frame_factor,
+                ey + dy / dist * speed * frame_factor,
             )
 
 
@@ -59,7 +61,7 @@ class ActiveEffect:
 
 def _make_magnet(view):
     """Create the magnetism effect bound to the given GameView."""
-    return MagnetEffect(view.hero, view.entities["flower"])
+    return MagnetEffect(view.hero, view.entities)
 
 
 # Registry: potion id -> factory(GameView) -> RunEffect.
