@@ -1,4 +1,4 @@
-"""Regression tests for Flower/Stone construction in game_scene.
+"""Regression tests for the game scene: entities, spawning, and potion effects.
 
 Verifies the MovingWidget signature: subclasses must forward
 sprite_manager as the first positional argument (regression from
@@ -44,6 +44,9 @@ class RealWidget:
     def add_widget(self, *args, **kwargs):
         pass
 
+    def remove_widget(self, widget):
+        pass
+
     def bind(self, *args, **kwargs):
         pass
 
@@ -70,13 +73,26 @@ kivy_graphics_module.Rectangle = MagicMock()
 kivy_label_module.Label = MagicMock()
 
 # Import the code under test
-from quick_herbalist.game_scene import SCREEN_W, SPAWN_POSITION_RETRIES, Flower, Stone  # noqa: E402
+from quick_herbalist.game import (  # noqa: E402
+    SCREEN_W,
+    SPAWN_POSITION_RETRIES,
+    Flower,
+    GameView,  # noqa: E402
+    Stone,
+)
+from quick_herbalist.game.effects import ActiveEffect, MagnetEffect  # noqa: E402
+from quick_herbalist.game.scene import EntitySpec  # noqa: E402
 
 
 def _make_sprite_manager():
     sprite_manager = MagicMock()
     sprite_manager.get.return_value = MagicMock()
     return sprite_manager
+
+
+def _spec(view, key):
+    """Return the EntitySpec on the view for the given entity key."""
+    return next(s for s in view._specs if s.key == key)
 
 
 def test_flower_forwards_sprite_manager_and_sprite_name():
@@ -107,7 +123,6 @@ def _make_game_view():
     """Build a GameView with mocked dependencies for spawn tests."""
     levels = [_make_level(1)]
     profile_manager = MagicMock(active_character_name="herb", next_level_number=lambda: 1)
-    from quick_herbalist.game_scene import GameView
 
     return GameView(profile_manager, _make_sprite_manager(), levels)
 
@@ -115,7 +130,7 @@ def _make_game_view():
 def test_spawn_position_rejects_overlapping_spot():
     """_overlaps_entity must detect AABB overlap with a live entity."""
     view = _make_game_view()
-    view.stones.append(Stone(_make_sprite_manager(), "lvl_stone", 900, 100))
+    view.entities["stone"].append(Stone(_make_sprite_manager(), "lvl_stone", 900, 100))
 
     # Same spot -> overlap. Shifted just past the stone's edge -> no overlap.
     assert view._overlaps_entity(900, 100, (32, 32)) is True
@@ -135,32 +150,34 @@ def _patched_randint(candidates):
         current[0] = next(values)
         return current[0][0]
 
-    return patch("quick_herbalist.game_scene.random.randint", side_effect=fake)
+    return patch("quick_herbalist.game.scene.random.randint", side_effect=fake)
 
 
 def test_spawn_flower_does_not_overlap_existing_entity():
-    """spawn_flower must never place a flower on top of an existing entity."""
+    """spawning a flower must never place it on top of an existing entity."""
     view = _make_game_view()
-    view.stones.append(Stone(_make_sprite_manager(), "lvl_stone", SCREEN_W + 120, 100))
+    view.entities["stone"].append(Stone(_make_sprite_manager(), "lvl_stone", SCREEN_W + 120, 100))
 
     # First candidate lands on the stone; second candidate is free.
     with _patched_randint([(120, 100), (150, 200)]):
-        view.spawn_flower(0)
+        view._spawn(0, _spec(view, "flower"))
 
-    assert len(view.flowers) == 1
-    assert view.flowers[0].pos == (SCREEN_W + 150, 200)
+    assert len(view.entities["flower"]) == 1
+    assert view.entities["flower"][0].pos == (SCREEN_W + 150, 200)
 
 
 def test_spawn_stone_does_not_overlap_existing_entity():
-    """spawn_stone must never place a stone on top of an existing entity."""
+    """spawning a stone must never place it on top of an existing entity."""
     view = _make_game_view()
-    view.flowers.append(Flower(_make_sprite_manager(), "lvl_flower", SCREEN_W + 120, 100))
+    view.entities["flower"].append(
+        Flower(_make_sprite_manager(), "lvl_flower", SCREEN_W + 120, 100)
+    )
 
     with _patched_randint([(120, 100), (150, 200)]):
-        view.spawn_stone(0)
+        view._spawn(0, _spec(view, "stone"))
 
-    assert len(view.stones) == 1
-    assert view.stones[0].pos == (SCREEN_W + 150, 200)
+    assert len(view.entities["stone"]) == 1
+    assert view.entities["stone"][0].pos == (SCREEN_W + 150, 200)
 
 
 def test_spawn_skipped_when_all_candidates_overlap():
@@ -168,16 +185,83 @@ def test_spawn_skipped_when_all_candidates_overlap():
     candidates = [(120, 100)] * SPAWN_POSITION_RETRIES
 
     view = _make_game_view()
-    view.stones.append(Stone(_make_sprite_manager(), "lvl_stone", SCREEN_W + 120, 100))
+    view.entities["stone"].append(Stone(_make_sprite_manager(), "lvl_stone", SCREEN_W + 120, 100))
     with _patched_randint(candidates):
-        view.spawn_flower(0)
-    assert view.flowers == []
+        view._spawn(0, _spec(view, "flower"))
+    assert view.entities["flower"] == []
 
     view2 = _make_game_view()
-    view2.flowers.append(Flower(_make_sprite_manager(), "lvl_flower", SCREEN_W + 120, 100))
+    view2.entities["flower"].append(
+        Flower(_make_sprite_manager(), "lvl_flower", SCREEN_W + 120, 100)
+    )
     with _patched_randint(candidates):
-        view2.spawn_stone(0)
-    assert view2.stones == []
+        view2._spawn(0, _spec(view2, "stone"))
+    assert view2.entities["stone"] == []
+
+
+def test_new_entity_type_spawns_into_its_own_list():
+    """A custom MovingWidget subclass can be spawned via its own EntitySpec."""
+    from quick_herbalist.game.entities import MovingWidget
+
+    view = _make_game_view()
+
+    class Ghost(MovingWidget):
+        """Test-only entity type."""
+
+        SIZE = (16, 16)
+        SPAWN_X_MIN = 0
+        SPAWN_X_MAX = 10
+
+    spec = EntitySpec(
+        key="ghost", widget_cls=Ghost, sprite="lvl_flower", interval=1.0, hit="collect"
+    )
+    view._specs = (spec,)
+    view.entities = {spec.key: []}
+
+    view._spawn(0, spec)
+
+    assert len(view.entities["ghost"]) == 1
+    assert view.entities["ghost"][0].size == (16, 16)
+
+
+def test_collect_hit_adds_score_and_removes_entity():
+    """A collected (colliding) flower adds score and is removed from the scene."""
+    view = _make_game_view()
+    flower = Flower(_make_sprite_manager(), "lvl_flower", 10, 10)
+    flower.update = lambda speed: True
+    view.entities["flower"].append(flower)
+    view.hero.collide_widget = lambda entity: True
+
+    view._update_entities(_spec(view, "flower"), 1.0)
+
+    assert view.rules.score == 1
+    assert view.entities["flower"] == []
+
+
+def test_damage_hit_ends_run():
+    """A colliding damage entity ends the run and is removed from the scene."""
+    view = _make_game_view()
+    stone = Stone(_make_sprite_manager(), "lvl_stone", 10, 10)
+    stone.update = lambda speed: True
+    view.entities["stone"].append(stone)
+    view.hero.collide_widget = lambda entity: True
+
+    view._update_entities(_spec(view, "stone"), 1.0)
+
+    assert view.rules.dead is True
+    assert view.entities["stone"] == []
+
+
+def test_offscreen_entity_is_culled():
+    """An entity that reports off-screen is removed without a collision."""
+    view = _make_game_view()
+    flower = Flower(_make_sprite_manager(), "lvl_flower", -100, 10)
+    flower.update = lambda speed: False
+    view.entities["flower"].append(flower)
+
+    view._update_entities(_spec(view, "flower"), 1.0)
+
+    assert view.entities["flower"] == []
 
 
 def _make_level(number, background="lvl_bg", flower="lvl_flower", stone="lvl_stone"):
@@ -205,16 +289,14 @@ def test_game_view_uses_level_sprite_names():
     profile_manager = MagicMock(active_character_name="herb", next_level_number=lambda: 2)
     sprite_manager = _make_sprite_manager()
 
-    from quick_herbalist.game_scene import GameView
-
     view = GameView(profile_manager, sprite_manager, levels)
 
     requested = [call.args[0] for call in sprite_manager.get.call_args_list]
     assert "b_bg" in requested  # level 2 background
     assert "a_bg" not in requested
 
-    view.spawn_flower(0)
-    view.spawn_stone(0)
+    view._spawn(0, _spec(view, "flower"))
+    view._spawn(0, _spec(view, "stone"))
     requested = [call.args[0] for call in sprite_manager.get.call_args_list]
     assert "lvl_flower" in requested
     assert "lvl_stone" in requested
@@ -243,7 +325,6 @@ def _make_effect_view():
     """Build a GameView with a mocked profile manager and the magnet recipe."""
     levels = [_make_level(1)]
     profile_manager = MagicMock(active_character_name="herb", next_level_number=lambda: 1)
-    from quick_herbalist.game_scene import GameView
 
     return GameView(
         profile_manager, _make_sprite_manager(), levels, recipes=[_make_magnet_recipe()]
@@ -257,7 +338,8 @@ def test_hotkey_uses_filled_slot_and_activates_effect():
 
     assert view.on_keyboard_down("1") is True
     view.profile_manager.use_run_slot.assert_called_once_with(0)
-    assert view.active_effects == [["potion_magnetism", 30.0]]
+    assert view.active_effects == [("potion_magnetism", 30.0)]
+    assert view.active_effects and isinstance(view._active_effects[0].effect, MagnetEffect)
 
 
 def test_hotkey_with_empty_slot_is_noop():
@@ -280,15 +362,44 @@ def test_hotkey_unknown_potion_skips_effect():
     assert view.active_effects == []
 
 
+def test_potion_without_registered_effect_is_consumed_and_listed():
+    """A potion with a recipe but no effect factory is consumed, listed, and inert."""
+    from quick_herbalist.potions import Recipe
+
+    view = _make_effect_view()
+    view.recipes.append(
+        Recipe(
+            id="potion_bubble",
+            name_key="potion_bubble_name",
+            description_key="potion_bubble_description",
+            ingredients={"flower_sprite": 1},
+            duration_seconds=10.0,
+        )
+    )
+    view.profile_manager.get_run_loadout.return_value = ["potion_bubble", None, None]
+
+    view.on_keyboard_down("1")
+
+    view.profile_manager.use_run_slot.assert_called_once_with(0)
+    assert view.active_effects == [("potion_bubble", 10.0)]
+    view._step_effects(1.0, 1.0)
+    assert view.active_effects == [("potion_bubble", 9.0)]
+
+
+def _magnet(view):
+    """Create the magnet effect bound to the view's hero and live flowers."""
+    return MagnetEffect(view.hero, view.entities["flower"])
+
+
 def test_magnet_pulls_flower_at_edge_of_radius_slowly():
     """A flower 100 px from the player center is pulled ~1 px/tick toward the player."""
     view = _make_effect_view()
     px, py = view.hero.pos
     center_x, center_y = px + view.hero.size[0] / 2, py + view.hero.size[1] / 2
     flower = Flower(_make_sprite_manager(), "lvl_flower", center_x + 100 - 16, center_y - 16)
-    view.flowers = [flower]
+    view.entities["flower"] = [flower]
 
-    view._tick_magnet(1.0)
+    _magnet(view).tick(1.0)
     # speed = 10 - 9 * 100/100 = 1 px/tick, straight left
     assert flower.pos == (pytest.approx(center_x + 100 - 1 - 16), pytest.approx(center_y - 16))
 
@@ -301,9 +412,9 @@ def test_magnet_pulls_near_flower_fast_and_vertically():
 
     near = Flower(_make_sprite_manager(), "lvl_flower", center_x + 50 - 16, center_y - 16)
     below = Flower(_make_sprite_manager(), "lvl_flower", center_x - 16, center_y + 60 - 16)
-    view.flowers = [near, below]
+    view.entities["flower"] = [near, below]
 
-    view._tick_magnet(1.0)
+    _magnet(view).tick(1.0)
     # dist 50 -> speed 5.5 left; dist 60 -> speed 4.6 up
     assert near.pos[0] == pytest.approx(center_x + 50 - 5.5 - 16)
     assert below.pos[1] == pytest.approx(center_y + 60 - 4.6 - 16)
@@ -316,10 +427,10 @@ def test_magnet_ignores_flowers_outside_radius_and_stones():
     center_x, center_y = px + view.hero.size[0] / 2, py + view.hero.size[1] / 2
     far = Flower(_make_sprite_manager(), "lvl_flower", center_x + 150 - 16, center_y - 16)
     stone = Stone(_make_sprite_manager(), "lvl_stone", center_x + 50 - 32, center_y - 53)
-    view.flowers = [far]
-    view.stones = [stone]
+    view.entities["flower"] = [far]
+    view.entities["stone"] = [stone]
 
-    view._tick_magnet(1.0)
+    _magnet(view).tick(1.0)
     assert far.pos == (center_x + 150 - 16, center_y - 16)
     assert stone.pos == (center_x + 50 - 32, center_y - 53)
 
@@ -330,9 +441,9 @@ def test_magnet_pull_scales_with_frame_factor():
     px, py = view.hero.pos
     center_x, center_y = px + view.hero.size[0] / 2, py + view.hero.size[1] / 2
     flower = Flower(_make_sprite_manager(), "lvl_flower", center_x + 100 - 16, center_y - 16)
-    view.flowers = [flower]
+    view.entities["flower"] = [flower]
 
-    view._tick_magnet(2.0)
+    _magnet(view).tick(2.0)
     assert flower.pos == (pytest.approx(center_x + 100 - 2 - 16), pytest.approx(center_y - 16))
 
 
@@ -348,26 +459,26 @@ def test_effects_stack_across_slots():
     view.on_keyboard_down("1")
     view.on_keyboard_down("2")
     assert view.active_effects == [
-        ["potion_magnetism", 30.0],
-        ["potion_magnetism", 30.0],
+        ("potion_magnetism", 30.0),
+        ("potion_magnetism", 30.0),
     ]
 
 
 def test_effect_expires_and_label_cleared():
     """An effect dropped by the countdown is removed and the HUD label empties."""
     view = _make_effect_view()
-    view.active_effects = [["potion_magnetism", 0.5]]
+    view._active_effects = [ActiveEffect("potion_magnetism", 0.5, None)]
 
     view._step_effects(1.0, 1.0)
     assert view.active_effects == []
-    assert view.effect_label.text == ""
+    assert view.hud.effect_label.text == ""
 
 
 def test_effect_label_shows_name_and_whole_seconds():
     """The HUD label lists each active effect with remaining seconds rounded up."""
     view = _make_effect_view()
-    view.active_effects = [["potion_magnetism", 12.5]]
+    view._active_effects = [ActiveEffect("potion_magnetism", 12.5, None)]
 
     view._step_effects(0.5, 1.0)
-    assert view.active_effects == [["potion_magnetism", 12.0]]
-    assert view.effect_label.text == "potion_magnetism_name 12"
+    assert view.active_effects == [("potion_magnetism", 12.0)]
+    assert view.hud.effect_label.text == "potion_magnetism_name 12"
