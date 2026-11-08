@@ -1,0 +1,30 @@
+<LoadCharacterScreen>:
+    canvas.before:
+        Color:
+            rgb: 0, 0, 0
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 50
+        spacing: 20
+        Label:
+            id: title
+            font_size: 32
+            color: 1, 1, 1, 1
+            size_hint_y: 0.2
+        ScrollView:
+            size_hint_y: 0.6
+            BoxLayout:
+                id: list_layout
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: 10
+        Button:
+            id: back_btn
+            size_hint: (0.4, 0.15)
+            pos_hint: {'center_x': 0.5}
+            font_size: 20
+            on_release: root.back_to_menu()

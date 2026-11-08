@@ -1,0 +1,32 @@
+<GameWonScreen>:
+    canvas.before:
+        Color:
+            rgb: 0, 0, 0
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 50
+        spacing: 20
+        Label:
+            id: title
+            font_size: 50
+            color: 0.2, 0.8, 0.2, 1
+        BoxLayout:
+            id: harvest_box
+            orientation: 'vertical'
+            spacing: 10
+            size_hint_y: 0.4
+        Button:
+            id: restart_btn
+            size_hint: (0.4, 0.15)
+            pos_hint: {'center_x': 0.5}
+            font_size: 20
+            on_release: root.restart_game()
+        Button:
+            id: menu_btn
+            size_hint: (0.4, 0.15)
+            pos_hint: {'center_x': 0.5}
+            font_size: 20
+            on_release: root.goto_menu()

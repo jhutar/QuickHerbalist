@@ -1,0 +1,49 @@
+<MenuScreen>:
+    canvas.before:
+        Color:
+            rgb: 0, 0, 0
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 40
+        spacing: 15
+        Label:
+            id: title
+            font_size: 40
+            color: 1, 1, 1, 1
+        Label:
+            id: active_char_lbl
+            font_size: 22
+            color: 0.8, 0.8, 0.2, 1
+        Label:
+            id: subtitle
+            font_size: 20
+            color: 1, 1, 1, 1
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: 10
+            size_hint_y: 0.15
+            Button:
+                id: start_btn
+                font_size: 18
+                on_release: root.start_game()
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: 10
+            size_hint_y: 0.15
+            Button:
+                id: new_btn
+                font_size: 18
+                on_release: root.manager.current = 'new_character'
+            Button:
+                id: load_btn
+                font_size: 18
+                on_release: root.manager.current = 'load_character'
+        Button:
+            id: quit_btn
+            size_hint: (0.4, 0.15)
+            pos_hint: {'center_x': 0.5}
+            font_size: 18
+            on_release: app.stop()
