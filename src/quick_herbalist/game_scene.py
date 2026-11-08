@@ -1,6 +1,7 @@
 """Game scene widgets: background, player, obstacles, and the GameView."""
 
 import logging
+import math
 import random
 
 from kivy.app import App
@@ -18,6 +19,9 @@ logger = logging.getLogger(__name__)
 SCREEN_W = 800
 SCREEN_H = 600
 SPAWN_POSITION_RETRIES = 10
+
+# Maps a potion id to the name of its in-run effect handler on GameView.
+POTION_EFFECTS = {"potion_magnetism": "magnet"}
 
 
 class Background(Widget):
@@ -154,12 +158,17 @@ class Stone(MovingWidget):
 class GameView(Widget):
     """Game view widget managing the game scene for one level definition."""
 
-    def __init__(self, profile_manager, sprite_manager, levels, level_number=None, **kwargs):
+    def __init__(
+        self, profile_manager, sprite_manager, levels, level_number=None, recipes=None, **kwargs
+    ):
         """Initialize game view with widgets, labels, and the level definition."""
         super().__init__(**kwargs)
         self.active = True
         self.profile_manager = profile_manager
         self.sprite_manager = sprite_manager
+        self.recipes = list(recipes or [])
+        self.active_effects = []
+        self._effect_handlers = {"magnet": self._tick_magnet}
         if level_number is None:
             level_number = profile_manager.next_level_number()
         self.level_number = level_number
@@ -209,6 +218,17 @@ class GameView(Widget):
         )
         self.distance_label.bind(size=self.distance_label.setter("text_size"))
         self.add_widget(self.distance_label)
+
+        self.effect_label = Label(
+            text="",
+            font_size=20,
+            color=(0, 0, 0, 1),
+            pos=(10, 420),
+            size=(250, 90),
+            halign="left",
+            valign="top",
+        )
+        self.add_widget(self.effect_label)
 
         # HUD Active Character Name Label
         self.char_label = Label(
@@ -327,6 +347,8 @@ class GameView(Widget):
             elif self.moving_down:
                 self.hero.move_by(-step)
 
+        self._step_effects(dt, frame_factor)
+
         for flower in self.flowers[:]:
             alive = flower.update(self.rules.game_speed * frame_factor)
             if not alive:
@@ -347,6 +369,61 @@ class GameView(Widget):
                 self.game_over()
 
         self.update_labels()
+
+    def _use_slot(self, slot_index):
+        """Use the potion in the given run slot, activating its timed effect."""
+        loadout = self.profile_manager.get_run_loadout()
+        potion_id = loadout[slot_index]
+        if potion_id is None:
+            return
+        recipe = next((r for r in self.recipes if r.id == potion_id), None)
+        if recipe is None:
+            logger.warning("No recipe found for potion '%s', effect skipped", potion_id)
+            return
+        self.profile_manager.use_run_slot(slot_index)
+        self.active_effects.append([potion_id, recipe.duration_seconds])
+
+    def _step_effects(self, dt, frame_factor):
+        """Advance active potion effects: countdown, tick handlers, drop expired."""
+        for effect in self.active_effects:
+            effect[1] -= dt
+        self.active_effects = [effect for effect in self.active_effects if effect[1] > 0]
+        for potion_id, _left in self.active_effects:
+            effect_name = POTION_EFFECTS.get(potion_id)
+            if effect_name is not None:
+                self._effect_handlers[effect_name](frame_factor)
+        self._update_effect_label()
+
+    def _tick_magnet(self, frame_factor):
+        """Pull live flowers toward the player while within the magnet radius."""
+        radius = 100.0
+        min_speed = 1.0
+        max_speed = 10.0
+        hx, hy = self.hero.pos
+        hw, hh = self.hero.size
+        px, py = hx + hw / 2, hy + hh / 2
+        for flower in self.flowers:
+            fx, fy = flower.pos
+            fw, fh = flower.size
+            dx = px - (fx + fw / 2)
+            dy = py - (fy + fh / 2)
+            dist = math.hypot(dx, dy)
+            if dist == 0 or dist > radius:
+                continue
+            speed = max_speed - (max_speed - min_speed) * dist / radius
+            flower.pos = (
+                fx + dx / dist * speed * frame_factor,
+                fy + dy / dist * speed * frame_factor,
+            )
+
+    def _update_effect_label(self):
+        """Show each active effect with its remaining whole seconds in the HUD."""
+        lines = []
+        for potion_id, left in self.active_effects:
+            recipe = next((r for r in self.recipes if r.id == potion_id), None)
+            name = _(recipe.name_key) if recipe else potion_id
+            lines.append(f"{name} {math.ceil(left)}")
+        self.effect_label.text = "\n".join(lines)
 
     def game_over(self):
         """Handle game over: stop game and show game over screen."""
@@ -389,7 +466,10 @@ class GameView(Widget):
         return True
 
     def on_keyboard_down(self, key):
-        """Handle keyboard key down for player movement."""
+        """Handle keyboard key down for player movement and potion slots."""
+        if key in ("1", "2", "3"):
+            self._use_slot(int(key) - 1)
+            return True
         if key in ("up", "w"):
             self.moving_up = True
             return True

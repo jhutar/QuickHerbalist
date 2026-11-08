@@ -533,6 +533,51 @@ def test_release_run_slot_empty(temp_config_dir):
     assert exc.value.code == ProfileErrorCode.RUN_SLOT_EMPTY
 
 
+def test_use_run_slot_consumes_potion(temp_config_dir):
+    # Using a slot empties it permanently; the potion is not returned to inventory
+    pm = _pm_with_character(temp_config_dir)
+    pm.add_potion("potion_magnetism", 2)
+    pm.assign_potion_to_slot("potion_magnetism")
+    pm.use_run_slot(0)
+
+    assert pm.get_run_loadout() == [None, None, None]
+    assert pm.get_potion_count("potion_magnetism") == 1
+
+
+def test_use_run_slot_persists(temp_config_dir):
+    # An emptied slot stays empty across a save/load cycle
+    pm = _pm_with_character(temp_config_dir)
+    pm.add_potion("potion_magnetism", 2)
+    pm.assign_potion_to_slot("potion_magnetism", slot_index=2)
+    pm.use_run_slot(2)
+
+    pm2 = ProfileManager(config_dir=temp_config_dir)
+    pm2.select_character("herb")
+    assert pm2.get_run_loadout() == [None, None, None]
+    assert pm2.get_potion_count("potion_magnetism") == 1
+
+
+def test_use_run_slot_empty(temp_config_dir):
+    # Using an empty slot fails fast
+    pm = _pm_with_character(temp_config_dir)
+
+    with pytest.raises(ProfileError) as exc:
+        pm.use_run_slot(0)
+    assert exc.value.code == ProfileErrorCode.RUN_SLOT_EMPTY
+
+
+def test_use_run_slot_bad_slot_index(temp_config_dir):
+    # Out-of-range or non-int slot indices are rejected
+    pm = _pm_with_character(temp_config_dir)
+    pm.add_potion("potion_magnetism")
+    pm.assign_potion_to_slot("potion_magnetism")
+
+    for bad in (-1, 3, "0", True):
+        with pytest.raises(ProfileError) as exc:
+            pm.use_run_slot(bad)
+        assert exc.value.code == ProfileErrorCode.INVALID_SLOT_INDEX
+
+
 def test_potions_loadout_cauldron_persist_round_trip(temp_config_dir):
     # Potions, run loadout and cauldron survive a save/load cycle
     pm = _pm_with_character(temp_config_dir)

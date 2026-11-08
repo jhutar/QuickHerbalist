@@ -676,6 +676,7 @@ class GameScreen(Screen):
             app.sprite_manager,
             app.levels,
             level_number=app.selected_level_number,
+            recipes=app.recipes,
         )
         self.add_widget(self.game_view)
         self.game_view.start_game()
