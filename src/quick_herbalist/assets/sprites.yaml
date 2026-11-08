@@ -37,12 +37,12 @@ sprites:
     frames:
     - atlas_id: hill_sprite_0
       duration_ms: 250
-  # Placeholder sprites reusing existing atlas tiles until dedicated art
-  # lands (see docs/add_new_sprite.md); swap the atlas_id to update the art.
   spider_sprite:
     frames:
-    - atlas_id: stone_sprite_0
+    - atlas_id: spider_sprite_0
       duration_ms: 250
+  # Placeholder sprite reusing an existing atlas tile until dedicated art
+  # lands (see docs/add_new_sprite.md); swap the atlas_id to update the art.
   rock_sprite:
     frames:
     - atlas_id: stone_sprite_0
