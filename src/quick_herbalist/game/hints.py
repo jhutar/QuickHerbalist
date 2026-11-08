@@ -41,7 +41,7 @@ BOX_H = 220
 BOX_X = (SCREEN_W - BOX_W) / 2
 BOX_Y = (SCREEN_H - BOX_H) / 2
 IMAGE_SIZE = 96
-CLOSE_BTN_SIZE = 36
+CLOSE_BTN_SIZE = 48
 
 _TITLE_FONT = 28
 _DESC_FONT = 18
@@ -70,8 +70,12 @@ class HintBox(Widget):
         self.pos = (0, 0)
         self._on_close = on_close
         self.box_rect = (BOX_X, BOX_Y, BOX_W, BOX_H)
-        self.close_rect = (BOX_X + BOX_W - CLOSE_BTN_SIZE - 10, BOX_Y + BOX_H - CLOSE_BTN_SIZE - 10,
-                           CLOSE_BTN_SIZE, CLOSE_BTN_SIZE)
+        self.close_rect = (
+            BOX_X + BOX_W - CLOSE_BTN_SIZE - 10,
+            BOX_Y + BOX_H - CLOSE_BTN_SIZE - 10,
+            CLOSE_BTN_SIZE,
+            CLOSE_BTN_SIZE,
+        )
 
         image = sprite_manager.get(sprite_name)
         image.pos = (BOX_X + 20, BOX_Y + (BOX_H - IMAGE_SIZE) / 2)
