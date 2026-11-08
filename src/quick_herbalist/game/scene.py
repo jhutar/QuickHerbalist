@@ -29,8 +29,9 @@ RAMP_STEP = 0.05
 # How many px an entity must be inside the right viewport edge before its
 # first-seen tutorial hint fires.
 HINT_TRIGGER_DEPTH = 100
-# Keys that dismiss an open hint box (Kivy key names).
-HINT_CLOSE_KEYS = ("esc", "escape", "enter", "space")
+# Keys that dismiss an open hint box (Kivy key names, see kivy.core.window
+# keycodes: Esc is 'escape', Space is 'spacebar').
+HINT_CLOSE_KEYS = ("escape", "enter", "spacebar")
 
 
 class SpawnPacer:

@@ -35,6 +35,10 @@ class GameScreen(KeyboardScreen):
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
         """Handle keyboard shortcuts for the game screen."""
         key = keycode[1]
+        # An open hint box owns the keyboard: its close keys must win over
+        # the quit shortcut below, so route to the game view first.
+        if self.game_view.hint_active:
+            return self.game_view.on_keyboard_down(key)
         if key in ("escape", "q"):
             self.manager.current = "quit"
             return True

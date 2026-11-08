@@ -837,7 +837,19 @@ def test_keyboard_closes_hint_box():
     assert view.hint_active is True
     assert view.moving_up is False
 
-    assert view.on_keyboard_down("esc") is True
+    assert view.on_keyboard_down("spacebar") is True
+    assert view.hint_active is False
+
+
+def test_keyboard_escape_closes_hint_box():
+    """Kivy names the Esc key 'escape'; it must dismiss the hint box."""
+    view = _view_with_hint_mocks()
+    stone = Stone(_make_sprite_manager(), "stone_sprite", SCREEN_W - 100, 10)
+    view.entities.append(stone)
+    view._check_hints()
+    assert view.hint_active is True
+
+    assert view.on_keyboard_down("escape") is True
     assert view.hint_active is False
 
 

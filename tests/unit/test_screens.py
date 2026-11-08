@@ -569,3 +569,36 @@ def test_potions_screen_spoon_uses_spoon_image():
 
     assert screen.ids.spoon_img.source == get_asset_path("spoon.png")
     assert screen.ids.spoon.drag_image_source == get_asset_path("spoon.png")
+
+
+def test_game_screen_esc_routes_to_hint_not_quit():
+    """While a hint box is open, Esc goes to the game view, not the quit screen."""
+    from quick_herbalist.screens.game_flow import GameScreen
+
+    screen = GameScreen()
+    screen.manager = MagicMock()
+    view = MagicMock()
+    view.hint_active = True
+    view.on_keyboard_down.return_value = True
+    screen.game_view = view
+
+    handled = screen._on_keyboard_down(None, (27, "escape"), "", ())
+
+    assert handled is True
+    view.on_keyboard_down.assert_called_once_with("escape")
+    assert screen.manager.current != "quit"
+
+
+def test_game_screen_esc_goes_to_quit_without_hint():
+    """Without an open hint, Esc keeps the old quit behaviour."""
+    from quick_herbalist.screens.game_flow import GameScreen
+
+    screen = GameScreen()
+    screen.manager = MagicMock()
+    view = MagicMock()
+    view.hint_active = False
+    screen.game_view = view
+
+    screen._on_keyboard_down(None, (27, "escape"), "", ())
+
+    assert screen.manager.current == "quit"
