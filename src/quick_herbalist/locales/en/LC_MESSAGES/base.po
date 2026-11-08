@@ -98,3 +98,47 @@ msgstr "Magnetism Potion"
 #: potions.py
 msgid "potion_magnetism_description"
 msgstr "Drags flowers up to X pixels from you towards you automatically"
+
+#: hints.py
+msgid "Flower"
+msgstr ""
+
+#: hints.py
+msgid "Flowers are collectible. Run through them to add them to your harvest."
+msgstr ""
+
+#: hints.py
+msgid "Stone"
+msgstr ""
+
+#: hints.py
+msgid "Stones are obstacles you need to avoid. If you run into them, your mission is over."
+msgstr ""
+
+#: hints.py
+msgid "Rock"
+msgstr ""
+
+#: hints.py
+msgid "Rocks are huge obstacles you cannot pass. If you run into them, your mission is over."
+msgstr ""
+
+#: hints.py
+msgid "Spider"
+msgstr ""
+
+#: hints.py
+msgid "Spiders crawl toward you and their sting ends the run. Keep your distance."
+msgstr ""
+
+#: hints.py
+msgid "Hill"
+msgstr ""
+
+#: hints.py
+msgid "Hills are safe, but they slow you down while you run through them."
+msgstr ""
+
+#: menu.py
+msgid "Show in-game hints"
+msgstr ""

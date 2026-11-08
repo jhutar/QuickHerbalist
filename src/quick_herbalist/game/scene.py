@@ -4,6 +4,7 @@ import logging
 import math
 import random
 from dataclasses import dataclass, field
+from functools import partial
 
 from kivy.app import App
 from kivy.clock import Clock
@@ -12,6 +13,7 @@ from kivy.uix.widget import Widget
 from quick_herbalist.core.level_config import level_for
 from quick_herbalist.game.effects import EFFECT_FACTORIES, ActiveEffect
 from quick_herbalist.game.entities import ENTITY_TYPES, FrameState, GameEntity
+from quick_herbalist.game.hints import HintBox, hint_text
 from quick_herbalist.game.hud import GameHud
 from quick_herbalist.game.widgets import SCREEN_W, Background, Player
 from quick_herbalist.game_rules import GameRules
@@ -24,6 +26,11 @@ SPAWN_POSITION_RETRIES = 10
 # Random per-spawn decay step (seconds) applied while an interval ramps
 # down toward its level's floor.
 RAMP_STEP = 0.05
+# How many px an entity must be inside the right viewport edge before its
+# first-seen tutorial hint fires.
+HINT_TRIGGER_DEPTH = 100
+# Keys that dismiss an open hint box (Kivy key names).
+HINT_CLOSE_KEYS = ("esc", "escape", "enter", "space")
 
 
 class SpawnPacer:
@@ -83,6 +90,7 @@ class GameView(Widget):
 
         self._specs = self._build_specs()
         self.entities: list[GameEntity] = []
+        self._spawn_events: list = []
 
         self.moving_up = False
         self.moving_down = False
@@ -98,6 +106,9 @@ class GameView(Widget):
 
         self.hud = GameHud()
         self.add_widget(self.hud)
+
+        self._hint_queue: list[tuple[str, str]] = []
+        self._hint_box: HintBox | None = None
 
         self._update_hud()
 
@@ -124,21 +135,37 @@ class GameView(Widget):
         return tuple(specs)
 
     @property
+    def hint_active(self):
+        """True while a tutorial hint box is on screen (run paused)."""
+        return self._hint_box is not None
+
+    @property
     def active_effects(self):
         """Active potion effects as (potion_id, remaining) pairs."""
         return [(effect.potion_id, effect.remaining) for effect in self._active_effects]
 
+    def _schedule_spawn(self, spec):
+        """Schedule the next spawn for one spec; returns the clock event.
+
+        Kivy's schedule_once does not forward extra callback arguments, so
+        the spec is bound via functools.partial.
+        """
+        return Clock.schedule_once(partial(self._spawn, spec=spec), spec.pacer.next_delay())
+
     def start_game(self):
         """Start the game loop and all entity spawn timers."""
+        self._spawn_events = [self._schedule_spawn(spec) for spec in self._specs]
         Clock.schedule_interval(self.update, 1.0 / 60)
-        for spec in self._specs:
-            Clock.schedule_once(self._spawn, spec.pacer.next_delay(), spec)
 
     def stop_game(self):
-        """Stop the game loop and all spawn timers."""
+        """Stop the game loop, all spawn timers, and any open hint box."""
         self.active = False
+        self._close_hint_box()
+        self._hint_queue = []
         Clock.unschedule(self.update)
-        Clock.unschedule(self._spawn)
+        for event in self._spawn_events:
+            Clock.unschedule(event.callback)
+        self._spawn_events = []
 
     def _spawn_position(self, cls):
         """Pick a random spawn position that does not overlap live entities.
@@ -173,7 +200,7 @@ class GameView(Widget):
 
     def _spawn(self, dt, spec):
         """Spawn one entity of the given type at a free position, then reschedule."""
-        if not self.active:
+        if not self.active or self.hint_active:
             return
         position = self._spawn_position(spec.cls)
         if position is None:
@@ -183,7 +210,8 @@ class GameView(Widget):
             self.add_widget(entity)
             self.entities.append(entity)
 
-        Clock.schedule_once(self._spawn, spec.pacer.next_delay(), spec)
+        if self.active and not self.hint_active:
+            self._spawn_events.append(self._schedule_spawn(spec))
 
     def _frame_state(self, dt):
         """Build the per-frame data handed to entities."""
@@ -277,9 +305,55 @@ class GameView(Widget):
         self.hud.set_score(self.rules.score)
         self.hud.set_distance(self.rules.distance)
 
+    def _check_hints(self):
+        """Queue hints for every unseen entity type that crossed the trigger line.
+
+        An instance crosses once its left edge is HINT_TRIGGER_DEPTH px inside
+        the right viewport edge. Seen types (and already-triggered instances)
+        are skipped. The profile is marked at queue time, never at close time.
+        """
+        if not self.profile_manager.hints_enabled():
+            return
+        seen = set(self.profile_manager.get_seen_entities())
+        queue = []
+        for entity in self.entities:
+            if entity.hint_triggered or entity.x > SCREEN_W - HINT_TRIGGER_DEPTH:
+                continue
+            entity.hint_triggered = True
+            if entity.TYPE in seen:
+                continue
+            seen.add(entity.TYPE)
+            queue.append((entity.TYPE, entity.sprite_name))
+        if not queue:
+            return
+        for entity_type, _sprite in queue:
+            self.profile_manager.mark_entity_seen(entity_type)
+        self._hint_queue = queue
+        self._open_hint_box()
+
+    def _open_hint_box(self):
+        """Pop the next queued hint and show it, pausing the run."""
+        if not self._hint_queue:
+            return
+        entity_type, sprite_name = self._hint_queue.pop(0)
+        title, description = hint_text(entity_type)
+        box = HintBox(
+            self.sprite_manager, sprite_name, title, description, on_close=self._close_hint_box
+        )
+        self.add_widget(box)
+        self._hint_box = box
+
+    def _close_hint_box(self):
+        """Dismiss the open hint box; open the next queued one or resume the run."""
+        if self._hint_box is None:
+            return
+        self.remove_widget(self._hint_box)
+        self._hint_box = None
+        self._open_hint_box()
+
     def update(self, dt):
         """Update game state each frame."""
-        if not self.active:
+        if not self.active or self.hint_active:
             return
 
         self.hero.animate(dt)
@@ -295,6 +369,8 @@ class GameView(Widget):
         if self.rules.dead:
             self.game_over()
             return
+
+        self._check_hints()
 
         self.background.update(frame.game_speed)
 
@@ -347,6 +423,10 @@ class GameView(Widget):
 
     def on_keyboard_down(self, key):
         """Handle keyboard key down for player movement and potion slots."""
+        if self.hint_active:
+            if key in HINT_CLOSE_KEYS:
+                self._close_hint_box()
+            return True  # all game input is dead while a hint is on screen
         if key in ("1", "2", "3"):
             self._use_slot(int(key) - 1)
             return True

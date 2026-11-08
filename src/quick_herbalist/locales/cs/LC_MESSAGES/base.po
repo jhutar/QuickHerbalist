@@ -98,3 +98,47 @@ msgstr "Magnetická píl"
 #: potions.py
 msgid "potion_magnetism_description"
 msgstr "Automaticky táhne květy ve vzdálenosti do X pixelů směrem k tobě"
+
+#: hints.py
+msgid "Flower"
+msgstr "Květiny"
+
+#: hints.py
+msgid "Flowers are collectible. Run through them to add them to your harvest."
+msgstr "Květiny jsou sbíratelné. Projížděj přes ně a přidáš je do své sběre."
+
+#: hints.py
+msgid "Stone"
+msgstr "Kámen"
+
+#: hints.py
+msgid "Stones are obstacles you need to avoid. If you run into them, your mission is over."
+msgstr "Kameny jsou překážky, které musíš obejít. Pokud do kamene narazíš, tvá mise je skončena."
+
+#: hints.py
+msgid "Rock"
+msgstr "Skála"
+
+#: hints.py
+msgid "Rocks are huge obstacles you cannot pass. If you run into them, your mission is over."
+msgstr "Skály jsou obrovské překážky, kterými neprojdeš. Pokud do skály narazíš, tvá mise je skončena."
+
+#: hints.py
+msgid "Spider"
+msgstr "Pavouk"
+
+#: hints.py
+msgid "Spiders crawl toward you and their sting ends the run. Keep your distance."
+msgstr "Pavouci se plazí po zemi směrem k tobě a jejich štípnutí ukončí výpravu. Drž od nich odstoup."
+
+#: hints.py
+msgid "Hill"
+msgstr "Kopeček"
+
+#: hints.py
+msgid "Hills are safe, but they slow you down while you run through them."
+msgstr "Kopečky jsou bezpečné, ale zpomalí tě, zatím jimi projíždíš."
+
+#: menu.py
+msgid "Show in-game hints"
+msgstr "Zobrazovat nápovědy ve hře"

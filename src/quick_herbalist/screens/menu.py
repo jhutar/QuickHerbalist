@@ -109,6 +109,8 @@ class NewCharacterScreen(Screen):
         """Initialize character creation UI."""
         self.ids.title.text = _("Enter Character Name")
         self.ids.name_input.text = ""
+        self.ids.hints_checkbox.active = True
+        self.ids.hints_checkbox.text = _("Show in-game hints")
         self.ids.error_label.text = ""
         self.ids.confirm_btn.text = _("Confirm")
 
@@ -126,8 +128,9 @@ class NewCharacterScreen(Screen):
         """Create new character with input name."""
         app = App.get_running_app()
         name = self.ids.name_input.text
+        show_hints = self.ids.hints_checkbox.active
         try:
-            app.profile_manager.create_character(name)
+            app.profile_manager.create_character(name, show_hints=show_hints)
             self.manager.current = "menu"
         except ProfileError as e:
             messages = {

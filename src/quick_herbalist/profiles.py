@@ -121,6 +121,8 @@ class ProfileManager:
                 continue
             char.setdefault("potions", {})
             char.setdefault("cauldron", {})
+            char.setdefault("seen_entities", [])
+            char.setdefault("show_hints", True)
             loadout = char.get("run_loadout")
             if not isinstance(loadout, list):
                 char["run_loadout"] = [None] * RUN_SLOT_COUNT
@@ -154,8 +156,8 @@ class ProfileManager:
         """Get currently active character or None."""
         return self.characters.get(self.active_character_name)
 
-    def create_character(self, name):
-        """Create new character with given name."""
+    def create_character(self, name, show_hints=True):
+        """Create new character with given name; hints enabled unless show_hints is False."""
         if not name or not isinstance(name, str):
             raise ProfileError(ProfileErrorCode.EMPTY_NAME, "Name cannot be empty.")
 
@@ -173,6 +175,8 @@ class ProfileManager:
             "potions": {},
             "run_loadout": [None] * RUN_SLOT_COUNT,
             "cauldron": {},
+            "seen_entities": [],
+            "show_hints": bool(show_hints),
         }
 
         self.active_character_name = stripped_name
@@ -185,6 +189,30 @@ class ProfileManager:
 
         self.active_character_name = name
         self.save_config()
+
+    def hints_enabled(self):
+        """Return whether in-run tutorial hints are enabled for the active character."""
+        char = self.active_character
+        if char is None:
+            return True
+        return bool(char.get("show_hints", True))
+
+    def get_seen_entities(self):
+        """Return the list of entity types whose hint the active character was shown."""
+        char = self.active_character
+        if char is None:
+            return []
+        return list(char.get("seen_entities", []))
+
+    def mark_entity_seen(self, entity_type):
+        """Record that the active character was shown the hint for entity_type."""
+        char = self.active_character
+        if char is None:
+            return
+        seen = char.setdefault("seen_entities", [])
+        if entity_type not in seen:
+            seen.append(entity_type)
+            self.save_config()
 
     def next_level_number(self):
         """Return the 1-based level number the active character plays next."""
