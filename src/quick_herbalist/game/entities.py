@@ -115,8 +115,57 @@ class Stone(GameEntity):
         self.done = True
 
 
+class Rock(Stone):
+    """Bigger stone (pillar-sized) that ends the run on contact."""
+
+    SIZE = (96, 128)
+
+
+class Spider(GameEntity):
+    """Crawling hazard: scrolls at half world speed and chases the hero
+    vertically; stings (ends the run) on contact."""
+
+    SIZE = (32, 32)
+    SPAWN_X_MIN = 50
+    SPAWN_X_MAX = 200
+    CHASE_SPEED = 3.0  # px/frame at 60 fps; hero can outrun it
+    SCROLL_FACTOR = 0.5  # scrolls at a share of the world speed
+
+    def move(self, frame):
+        """Scroll with the world and steer vertically toward the hero."""
+        self.x -= frame.game_speed * self.SCROLL_FACTOR
+        dy = frame.hero.center_y - self.center_y
+        step = self.CHASE_SPEED * frame.frame_factor
+        self.y += max(-step, min(step, dy))
+
+    def on_enter(self, frame):
+        """Sting the hero: end the run and despawn the spider."""
+        frame.rules.on_damaged()
+        self.done = True
+
+
+class Hill(GameEntity):
+    """Large mound the hero passes through; slows hero movement while inside.
+
+    Non-lethal: it never despawns on contact and scrolls off-screen like
+    any other entity.
+    """
+
+    SIZE = (96, 96)
+    SPAWN_X_MIN = 100
+    SPAWN_X_MAX = 300
+    SPEED_FACTOR = 0.5
+
+    def hero_speed_factor(self):
+        """Halve the hero's movement speed while overlapping the hill."""
+        return self.SPEED_FACTOR
+
+
 # Entity type names usable in levels.yaml -> widget class.
 ENTITY_TYPES: dict[str, type[GameEntity]] = {
     "flower": Flower,
     "stone": Stone,
+    "rock": Rock,
+    "spider": Spider,
+    "hill": Hill,
 }

@@ -16,6 +16,9 @@ levels:
         sprite: stone_sprite
         interval: 3.0
         ramp_to: 0.05
+      - type: hill
+        sprite: hill_sprite
+        interval: 4.0
   - name: desert
     background: background_desert_sprite
     distance: 240
@@ -29,6 +32,9 @@ levels:
         sprite: stone_sprite
         interval: 2.5
         ramp_to: 0.05
+      - type: spider
+        sprite: spider_sprite
+        interval: 3.0
   - name: ice
     background: background_ice_sprite
     distance: 280
@@ -41,4 +47,8 @@ levels:
       - type: stone
         sprite: stone_sprite
         interval: 2.0
+        ramp_to: 0.05
+      - type: rock
+        sprite: rock_sprite
+        interval: 2.5
         ramp_to: 0.05
