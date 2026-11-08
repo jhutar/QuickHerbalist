@@ -120,7 +120,7 @@ class NewCharacterScreen(Screen):
         else:
             self.ids.back_btn.opacity = 1
             self.ids.back_btn.disabled = False
-            self.ids.back_btn.text = _("Back to Menu")
+            self.ids.back_btn.text = _("Back to Main Menu")
 
     def confirm(self):
         """Create new character with input name."""
@@ -147,7 +147,7 @@ class LoadCharacterScreen(KeyboardScreen):
     def on_pre_enter(self):
         """Populate character list before entering."""
         self.ids.title.text = _("Select Character")
-        self.ids.back_btn.text = _("Back to Menu")
+        self.ids.back_btn.text = _("Back to Main Menu")
 
         self.ids.list_layout.clear_widgets()
 

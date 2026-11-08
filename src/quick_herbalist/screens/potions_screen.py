@@ -67,7 +67,7 @@ class PotionsScreen(KeyboardScreen):
         self.ids.title.text = _("Potion Crafting")
         self.ids.message_lbl.text = ""
         self.ids.spoon_lbl.text = _("Drag onto cauldron to mix")
-        self.ids.back_btn.text = _("Back to Menu")
+        self.ids.back_btn.text = _("Back to Game Menu")
         self.ids.cauldron_img.source = get_asset_path("cauldron.png")
         self.ids.book_img.source = get_asset_path("recipes.png")
         self.ids.spoon_img.source = get_asset_path("spoon.png")

@@ -57,7 +57,7 @@ class GameWonScreen(KeyboardScreen):
         self.ids.title.text = _("LEVEL COMPLETED!")
         self._render_harvest()
         self.ids.restart_btn.text = _("Next Level")
-        self.ids.menu_btn.text = _("Main Menu")
+        self.ids.menu_btn.text = _("Game Menu")
 
     def _render_harvest(self):
         """Render one icon + name + count row per flower type collected this run."""
@@ -98,7 +98,7 @@ class GameOverScreen(KeyboardScreen):
         self.ids.score_lbl.text = _("Collected: ") + str(self.score)
         self.ids.distance_lbl.text = _("Distance: ") + str(int(self.distance))
         self.ids.restart_btn.text = _("Play Again")
-        self.ids.menu_btn.text = _("Main Menu")
+        self.ids.menu_btn.text = _("Game Menu")
 
     def on_back(self):
         """Quit the app from the game over screen."""

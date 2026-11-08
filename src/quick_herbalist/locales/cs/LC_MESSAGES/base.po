@@ -60,8 +60,16 @@ msgid "Potion Crafting"
 msgstr "Vytváření lektvarů"
 
 #: screens.py
-msgid "Back to Menu"
-msgstr "Zpět do menu"
+msgid "Back to Game Menu"
+msgstr "Zpět do herního menu"
+
+#: screens.py
+msgid "Game Menu"
+msgstr "Herní menu"
+
+#: screens.py
+msgid "Back to Main Menu"
+msgstr "Zpět do hlavního menu"
 
 #: screens.py
 msgid "Drag onto cauldron to mix"
