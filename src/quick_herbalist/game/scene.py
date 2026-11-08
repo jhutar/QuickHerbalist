@@ -32,6 +32,8 @@ HINT_TRIGGER_DEPTH = 100
 # Keys that dismiss an open hint box (Kivy key names, see kivy.core.window
 # keycodes: Esc is 'escape', Space is 'spacebar').
 HINT_CLOSE_KEYS = ("escape", "enter", "spacebar")
+# Poll interval (seconds) a spawn waits in while a hint box pauses the run.
+HINT_SPAWN_POLL = 0.1
 
 
 class SpawnPacer:
@@ -200,8 +202,18 @@ class GameView(Widget):
         )
 
     def _spawn(self, dt, spec):
-        """Spawn one entity of the given type at a free position, then reschedule."""
-        if not self.active or self.hint_active:
+        """Spawn one entity of the given type at a free position, then reschedule.
+
+        A spawn due while a hint box pauses the run is deferred (re-polled
+        until the box closes), never dropped: dropping it would kill the
+        whole spawn chain for that entity type for the rest of the run.
+        """
+        if not self.active:
+            return
+        if self.hint_active:
+            self._spawn_events.append(
+                Clock.schedule_once(partial(self._spawn, spec=spec), HINT_SPAWN_POLL)
+            )
             return
         position = self._spawn_position(spec.cls)
         if position is None:
