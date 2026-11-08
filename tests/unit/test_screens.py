@@ -2,6 +2,7 @@
 
 import sys
 import types
+from pathlib import Path
 from unittest.mock import MagicMock, call
 
 # Setup mocks for Kivy BEFORE importing anything that uses it
@@ -602,3 +603,36 @@ def test_game_screen_esc_goes_to_quit_without_hint():
     screen._on_keyboard_down(None, (27, "escape"), "", ())
 
     assert screen.manager.current == "quit"
+
+
+def _kv_button_block(kv_text, button_id):
+    """Return the kv block of the Button whose id is button_id."""
+    lines = kv_text.splitlines()
+    for i, line in enumerate(lines):
+        if f"id: {button_id}" in line:
+            indent = len(line) - len(line.lstrip())
+            block = [line]
+            for next_line in lines[i + 1 :]:
+                if not next_line.strip():
+                    continue
+                if len(next_line) - len(next_line.lstrip()) < indent:
+                    break
+                block.append(next_line)
+            return "\n".join(block)
+    raise AssertionError(f"Button id {button_id} not found in kv text")
+
+
+def test_menu_game_over_game_won_buttons_match_game_menu_height():
+    """Main menu / game over / game won buttons use fixed 50px height like game menu."""
+    kv_dir = Path(__file__).resolve().parents[2] / "src" / "quick_herbalist" / "screens" / "kv"
+    expected = {
+        "menu.kv": ["start_btn", "new_btn", "load_btn", "quit_btn"],
+        "game_over.kv": ["restart_btn", "menu_btn"],
+        "game_won.kv": ["restart_btn", "menu_btn"],
+    }
+    for kv_name, button_ids in expected.items():
+        text = (kv_dir / kv_name).read_text(encoding="utf-8")
+        for button_id in button_ids:
+            block = _kv_button_block(text, button_id)
+            assert "height: 50" in block, f"{kv_name} {button_id} missing height: 50"
+            assert "size_hint_y: None" in block, f"{kv_name} {button_id} missing size_hint_y: None"
