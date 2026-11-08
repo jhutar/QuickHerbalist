@@ -1,4 +1,4 @@
-# Level definitions, in play order. Schema: docs/multi_level_design.md.
+# Level definitions, in play order. Schema: docs/add_new_level.md.
 # Strict schema: unknown keys, missing keys, and sprite names not present in
 # sprites.yaml are load errors. Levels beyond the last entry repeat it.
 levels:

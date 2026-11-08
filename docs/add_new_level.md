@@ -1,8 +1,13 @@
 # Adding a new level
 
 Levels live in `src/quick_herbalist/assets/levels.yaml`, in play order.
-Levels beyond the last entry repeat the last one. Full design rationale:
-`docs/multi_level_design.md`.
+A run plays level `levels_completed + 1` of the active character: a win
+persists the completion, a game over restarts the same level. Levels
+beyond the last entry repeat the last one endlessly (no hidden difficulty
+bump).
+
+Only append new entries at the end. Inserting or reordering shifts what a
+player's saved `levels_completed: n` points at.
 
 Schema is strict: unknown keys, missing keys, duplicate names, or a sprite
 name not present in `sprites.yaml` are load errors (`LevelConfigError` lists
@@ -13,15 +18,15 @@ every problem at once).
 ```yaml
   - name: my_level
     background: background_my_level_sprite
-    distance: 1200
-    start_speed: 4.0
-    max_speed: 17.0
+    distance: 320
+    start_speed: 6.0
+    max_speed: 20.0
     flower:
       sprite: flower_sprite
-      interval: 1.0
+      interval: 0.7
     stone:
       sprite: stone_sprite
-      interval: 3.0
+      interval: 1.8
       ramp_to: 0.05
 ```
 
@@ -34,12 +39,18 @@ every problem at once).
 - `start_speed` / `max_speed` — scroll speed in pixels/frame at level start
   and at level end.
 - `flower.sprite` / `flower.interval` — flower sprite and spawn interval in
-  seconds.
+  seconds. The flower type is also the only source of potion brewing
+  ingredients (see `docs/add_new_potion.md`).
 - `stone.sprite` / `stone.interval` / `stone.ramp_to` — stone sprite, spawn
-  interval in seconds, and the minimum interval to ramp down to over the
-  level (omit `ramp_to` to keep the interval constant).
+  interval in seconds, and the floor the interval ramps down to: each spawn
+  shrinks the interval by a random 0–0.05 s (`STONE_RAMP_STEP` in
+  `game_rules.py`) down to that floor (omit `ramp_to` to keep the interval
+  constant).
 
 All numbers must be positive.
+
+Sprite *sizes* are per-type widget constants; per-level sizing is not
+supported.
 
 ## Steps
 
@@ -61,4 +72,6 @@ All numbers must be positive.
 
 Keep the difficulty ramp monotonic: each level should be at least as long,
 fast, and dense as the one before it. Lower `start_speed`/`interval` or raise
-`distance` to make a level harder.
+`distance` to make a level harder. Compare against the last shipped entry
+in `levels.yaml`, not the template — the template values are a starting
+guess.
