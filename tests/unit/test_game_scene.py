@@ -114,12 +114,15 @@ kivy_label_module.Label = MagicMock()
 # Import the code under test
 from quick_herbalist.core.level_config import EntityDefinition  # noqa: E402
 from quick_herbalist.game import (  # noqa: E402
+    ENTITY_TYPES,
     SCREEN_W,
     SPAWN_POSITION_RETRIES,
     Flower,
-    GameEntity,
     GameView,
+    Hill,
+    Rock,
     SpawnPacer,
+    Spider,
     Stone,
 )
 from quick_herbalist.game.effects import ActiveEffect, MagnetEffect  # noqa: E402
@@ -394,70 +397,63 @@ def test_pacer_never_increases():
         previous = delay
 
 
-# --- Extension point demos: new behaviors via subclass only ---
+# --- Entity types: rock, spider, hill ---
 
 
-def test_bigger_stone_subclass_is_a_size_override():
-    """A bigger rock is a Stone subclass with a larger SIZE; nothing else to write."""
+def test_registry_covers_shipped_level_types():
+    """Every type used in levels.yaml resolves to a widget class."""
+    assert {"flower", "stone", "rock", "spider", "hill"} <= set(ENTITY_TYPES)
 
-    class Rock(Stone):
-        """Test-only bigger stone."""
 
-        SIZE = (96, 128)
-
+def test_rock_is_bigger_stone_that_damages():
+    """Rock inherits stone damage but renders pillar-sized."""
     rock = Rock(_make_sprite_manager(), "lvl_stone", 10, 0)
     assert rock.size == (96, 128)
-    assert rock.hero_speed_factor() == 1.0
-
-
-def test_chasing_entity_follows_hero_and_damages():
-    """Spider-like entity: custom move() chases the hero, on_enter damages."""
-
-    class Spider(GameEntity):
-        """Test-only chasing hazard."""
-
-        SIZE = (32, 32)
-        CHASE = 4.0
-
-        def move(self, frame):
-            """Scroll with half world speed and chase the hero vertically."""
-            self.x -= frame.game_speed * 0.5
-            dy = frame.hero.center_y - self.center_y
-            step = self.CHASE * frame.frame_factor
-            self.y += max(-step, min(step, dy))
-
-        def on_enter(self, frame):
-            """Sting: end the run and despawn."""
-            frame.rules.on_damaged()
-            self.done = True
 
     view = _make_game_view()
     _always_overlap(view)
-    spider = Spider(_make_sprite_manager(), "lvl_stone", 400, view.hero.center_y - 50)
-    view.entities.append(spider)
-
-    frame = view._frame_state(1.0 / 60)
-    view._step_entities(frame)
+    view.entities.append(rock)
+    view._step_entities(_frame(view))
 
     assert view.rules.dead is True
     assert view.entities == []
-    # It scrolled and chased in the same frame before despawning.
+
+
+def test_spider_chases_hero_vertically():
+    """Spider scrolls at half world speed and steers toward the hero center."""
+    view = _make_game_view()
+    _always_overlap(view, overlap=False)
+    spider = Spider(_make_sprite_manager(), "lvl_stone", 400, view.hero.center_y - 50)
+    view.entities.append(spider)
+
+    view._step_entities(_frame(view))
+
+    # world speed 3.0 px/frame * 0.5 scroll factor; chase step 3.0 px/frame
     assert spider.x == 400 - 1.5
-    assert spider.y == view.hero.center_y - 50 + 4
+    assert spider.y == view.hero.center_y - 50 + 3.0
+
+    # From below the hero it steers upward instead.
+    below = Spider(_make_sprite_manager(), "lvl_stone", 400, view.hero.center_y + 100)
+    view.entities.append(below)
+    view._step_entities(_frame(view))
+    assert below.y < view.hero.center_y + 100
 
 
-def test_slowing_entity_halves_hero_step_while_overlapping():
-    """Hill-like entity: hero_speed_factor scales the hero movement step."""
+def test_spider_stings_on_contact():
+    """A spider reaching the hero ends the run and despawns."""
+    view = _make_game_view()
+    _always_overlap(view)
+    spider = Spider(_make_sprite_manager(), "lvl_stone", 10, 10)
+    view.entities.append(spider)
 
-    class Hill(GameEntity):
-        """Test-only slowing region."""
+    view._step_entities(_frame(view))
 
-        SIZE = (64, 64)
+    assert view.rules.dead is True
+    assert view.entities == []
 
-        def hero_speed_factor(self):
-            """Slow the hero to half speed while inside the hill."""
-            return 0.5
 
+def test_hill_halves_hero_step_and_survives_overlap():
+    """A hill slows the hero while inside it and keeps scrolling, undamaged."""
     view = _make_game_view()
     hill = Hill(_make_sprite_manager(), "lvl_bg", 100, 100)
     hill.overlapping = True
@@ -466,8 +462,13 @@ def test_slowing_entity_halves_hero_step_while_overlapping():
     start_y = view.hero.y
 
     view._move_hero(view._frame_state(1.0 / 60))
-
     assert view.hero.y == start_y + 3.0  # 6 px step halved
+
+    # An overlapping frame does not despawn the hill or damage the hero.
+    _always_overlap(view)
+    view._step_entities(_frame(view))
+    assert view.entities == [hill]
+    assert view.rules.dead is False
 
 
 def test_hero_moves_full_step_without_slowing_entity():

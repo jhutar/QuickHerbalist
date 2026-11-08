@@ -17,6 +17,9 @@ SPRITE_NAMES = {
     "flower_sprite",
     "flower2_sprite",
     "stone_sprite",
+    "hill_sprite",
+    "spider_sprite",
+    "rock_sprite",
     "background_desert_sprite",
     "background_ice_sprite",
 }
@@ -91,7 +94,11 @@ def test_shipped_levels_yaml_loads():
     )
     levels = load_levels(str(path), SPRITE_NAMES)
     assert [level.name for level in levels] == ["meadow", "desert", "ice"]
-    assert all(level.entities for level in levels)
+    assert [[entity.type for entity in level.entities] for level in levels] == [
+        ["flower", "stone", "hill"],
+        ["flower", "stone", "spider"],
+        ["flower", "stone", "rock"],
+    ]
 
 
 def test_duplicate_entity_types_allowed(tmp_path):
@@ -172,9 +179,9 @@ def test_unknown_sprite_rejected(tmp_path):
 def test_unknown_entity_sprite_rejected(tmp_path):
     """Entity sprites not in the sprite config are load errors."""
     yaml_text = VALID_YAML.replace(
-        "        sprite: stone_sprite\n", "        sprite: rock_sprite\n"
+        "        sprite: stone_sprite\n", "        sprite: mushroom_sprite\n"
     )
-    with pytest.raises(LevelConfigError, match="unknown sprite 'rock_sprite'"):
+    with pytest.raises(LevelConfigError, match="unknown sprite 'mushroom_sprite'"):
         load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
 
 
