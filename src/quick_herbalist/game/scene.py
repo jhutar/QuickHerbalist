@@ -406,7 +406,14 @@ class GameView(Widget):
         app.root.current = "game_won"
 
     def on_touch_down(self, touch):
-        """Handle touch down for touch-based movement."""
+        """Propagate touch to children first; handle movement only if no child consumed it.
+
+        Calling super() is required: without it this override starves the whole
+        child subtree (hud, HintBox, ...) of all touches, because Kivy's child
+        dispatch loop lives in the default Widget.on_touch_down.
+        """
+        if super().on_touch_down(touch):
+            return True
         self.touch_active = True
         self.target_y = touch.y
         return True
