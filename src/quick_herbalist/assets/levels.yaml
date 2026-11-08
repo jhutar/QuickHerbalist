@@ -10,7 +10,7 @@ levels:
     max_speed: 15.0
     entities:
       - type: flower
-        sprite: flower_sprite
+        sprite: dandelion_sprite
         interval: 1.0
       - type: stone
         sprite: stone_sprite
@@ -26,7 +26,7 @@ levels:
     max_speed: 17.0
     entities:
       - type: flower
-        sprite: flower2_sprite
+        sprite: bluebell_sprite
         interval: 0.9
       - type: stone
         sprite: stone_sprite
@@ -42,7 +42,7 @@ levels:
     max_speed: 18.0
     entities:
       - type: flower
-        sprite: flower2_sprite
+        sprite: bluebell_sprite
         interval: 0.8
       - type: stone
         sprite: stone_sprite

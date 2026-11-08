@@ -37,7 +37,7 @@ Append to `recipes.yaml`:
     name_key: potion_speed_name
     description_key: potion_speed_description
     ingredients:
-      flower_sprite: 3
+      dandelion_sprite: 3
     duration_seconds: 15
 ```
 

@@ -48,11 +48,11 @@ msgid "GAME OVER!"
 msgstr "KONEC HRY!"
 
 #: screens.py
-msgid "flower_sprite"
+msgid "dandelion_sprite"
 msgstr "Pampeliška"
 
 #: screens.py
-msgid "flower2_sprite"
+msgid "bluebell_sprite"
 msgstr "Zvonkovka"
 
 #: screens.py
