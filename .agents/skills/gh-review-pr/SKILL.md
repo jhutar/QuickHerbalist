@@ -1,11 +1,13 @@
 ---
 name: gh-review-pr
-description: Review a PR in jhutar/nasdracak against the Core Rules in AGENTS.md and post structured review comments (diff-level where possible) so another agent can fix them. User-triggered only.
+description: Review a PR in the current repository (resolved from git remote origin) against the Core Rules in AGENTS.md and post structured review comments (diff-level where possible) so another agent can fix them. User-triggered only.
 ---
 
 # Review PR against Core Rules
 
-Review a PR in `jhutar/nasdracak`. Output is machine-actionable review feedback:
+Review a PR in the **current repository**. Resolve it once before any gh command: run `gh repo view --json nameWithOwner -q .nameWithOwner` (falls back to `git remote get-url origin`) and use the result as `REPO` (`owner/repo`) in every command below. Never hardcode a repo name.
+
+Output is machine-actionable review feedback:
 one comment per issue, precise location, concrete fix direction. The audience is
 *another agent* — be exact, no prose it has to guess on.
 
@@ -18,10 +20,11 @@ User provides a PR number or URL. Extract the number.
 1. **Fetch context:**
 
    ```bash
-   gh pr view <n> --repo jhutar/nasdracak --json title,body,headRefName,baseRefName,additions,deletions,files
-   gh pr diff <n> --repo jhutar/nasdracak
+   REPO=<resolved owner/repo>
+   gh pr view <n> --repo $REPO --json title,body,headRefName,baseRefName,additions,deletions,files
+   gh pr diff <n> --repo $REPO
    # Read the linked issue if referenced in the PR body, for intent check
-   gh pr checks <n> --repo jhutar/nasdracak
+   gh pr checks <n> --repo $REPO
    ```
 
 2. **Read full changed files** in the repo (checkout the head ref if local repo
@@ -54,7 +57,7 @@ User provides a PR number or URL. Extract the number.
    - **Diff-level** for issues tied to specific lines — these are the most
      actionable for a fixing agent:
      ```bash
-     gh api repos/jhutar/nasdracak/pulls/<n>/comments -f body="<comment>" \
+     gh api repos/$REPO/pulls/<n>/comments -f body="<comment>" \
        -f path="<file>" -F line=<line> -F side=RIGHT
      ```
      (Use the file/line in the *new* version. For deleted lines use `side=LEFT`
@@ -63,7 +66,7 @@ User provides a PR number or URL. Extract the number.
    - **General review body** with the overall verdict and any repo-level
      (non-line-specific) findings:
      ```bash
-     gh pr review <n> --repo jhutar/nasdracak --comment --body-file /tmp/review.md
+     gh pr review <n> --repo $REPO --comment --body-file /tmp/review.md
      ```
 
 ## Comment format
