@@ -38,3 +38,10 @@ Thumbs.db
 .idea/
 *.swp
 *.tmp
+
+# Phase 0 web spike (issue #10)
+spike/web/*.whl
+spike/node_modules/
+spike/.chromium-libs/
+spike/package-lock.json
+spike/screenshot-error.png
