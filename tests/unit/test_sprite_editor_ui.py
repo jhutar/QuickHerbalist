@@ -130,6 +130,8 @@ sys.modules["kivy.properties"].ListProperty = ListProperty
 sys.modules["kivy.properties"].StringProperty = StringProperty
 
 sys.modules["kivy.uix"] = MagicMock()
+sys.modules["kivy.uix.widget"] = MagicMock()
+sys.modules["kivy.uix.widget"].Widget = MockWidget
 sys.modules["kivy.uix.boxlayout"] = MagicMock()
 sys.modules["kivy.uix.boxlayout"].BoxLayout = BoxLayout
 
@@ -163,6 +165,8 @@ sys.modules["kivy.app"].App = App
 sys.modules["kivy.clock"] = MagicMock()
 sys.modules["kivy.clock"].Clock = MockClock
 
+sys.modules["kivy.graphics"] = MagicMock()
+
 sys.modules["kivy.core"] = MagicMock()
 sys.modules["kivy.core.image"] = MagicMock()
 sys.modules["kivy.core.image"].Image = MockCoreImage
@@ -170,9 +174,45 @@ sys.modules["kivy.core.image"].Image = MockCoreImage
 
 # 2. Import components under test now that mocks are active
 from quick_herbalist.tools.sprite_editor.ui.main_layout import SpriteEditorMainLayout  # noqa: E402
+from quick_herbalist.tools.sprite_editor.ui.preview import SpritePreviewWidget  # noqa: E402
 from quick_herbalist.tools.sprite_editor.ui.sequence_editor import (  # noqa: E402
+    FrameCard,
     SequenceEditorWidget,
 )
+
+
+def _positional_param_count(fn):
+    """Count self/positional parameters of a callable for arity checks."""
+    import inspect
+
+    kinds = (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+    return sum(1 for p in inspect.signature(fn).parameters.values() if p.kind in kinds)
+
+
+@pytest.mark.parametrize(
+    "owner,method",
+    [
+        (SpritePreviewWidget, "zoom_in"),
+        (SpritePreviewWidget, "zoom_out"),
+        (SpritePreviewWidget, "reset_zoom"),
+        (FrameCard, "_on_select_clicked"),
+        (FrameCard, "_on_remove_clicked"),
+        (FrameCard, "_on_move_up_clicked"),
+        (FrameCard, "_on_move_down_clicked"),
+        (FrameCard, "_open_file_chooser"),
+        (SequenceEditorWidget, "add_frame"),
+        (SequenceEditorWidget, "save_sequence"),
+        (SpriteEditorMainLayout, "create_sprite"),
+        (SpriteEditorMainLayout, "delete_sprite"),
+    ],
+)
+def test_on_release_handlers_accept_kivy3_instance_and_touch(owner, method):
+    """Kivy 3 dispatches on_release callbacks as (instance, touch).
+
+    Every bound handler must take at least self plus two positional args, or
+    each button click TypeErrors under Kivy 3.
+    """
+    assert _positional_param_count(getattr(owner, method)) >= 3
 
 
 @pytest.fixture

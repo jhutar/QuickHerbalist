@@ -153,6 +153,24 @@ def test_game_menu_level_button_starts_chosen_level():
     assert screen.manager.current == "game"
 
 
+def test_game_menu_level_button_release_survives_kivy3_touch_arg():
+    """Kivy 3 dispatches on_release as (instance, touch).
+
+    The touch must not be captured by the level closure variable.
+    """
+    app = _make_app(next_level=2)
+    kivy_button_module.Button.reset_mock()
+
+    screen = GameMenuScreen()
+    screen.on_pre_enter()
+
+    buttons = [c.args[0] for c in screen.ids.level_buttons.add_widget.call_args_list]
+    for expected_level, btn in enumerate(buttons, start=1):
+        callback = btn.bind.call_args.kwargs["on_release"]
+        callback(btn, object())
+        assert app.selected_level_number == expected_level
+
+
 def test_main_menu_start_goes_to_game_menu():
     """Main menu Start Game must open the game menu hub, not the game."""
     screen = MenuScreen()
