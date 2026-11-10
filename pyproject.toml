@@ -5,7 +5,10 @@ description = "A quick 2D items collecting game"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "kivy[base]>=2.3.0",
+    # Kivy 3.0.0 is not on PyPI; pinned to upstream kivy/kivy master commit
+    # (MAJOR/MINOR/MICRO = 3.0.0 in kivy/_version.py). The WASM/web build
+    # (issue #10) uses psychowasp/kivy branch "wasm-support" instead.
+    "kivy @ git+https://github.com/kivy/kivy.git@0f23a55ccc59a55d2e726d079fedcca03c5ca068",
     "pyyaml>=6.0",
 ]
 
@@ -23,6 +26,10 @@ quick-herbalist = "quick_herbalist.app:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+# Kivy 3.0.0 is pinned by git URL in project.dependencies.
+allow-direct-references = true
 
 [tool.ruff]
 line-length = 100
