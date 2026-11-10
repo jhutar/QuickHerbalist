@@ -58,7 +58,7 @@ class SpritePreviewWidget(BoxLayout):
         )
         self.add_widget(self.debug_label)
 
-    def zoom_in(self, instance=None):
+    def zoom_in(self, instance=None, touch=None):
         """Increment zoom level to the next preset value."""
         levels = [0.25, 0.5, 1.0, 2.0, 4.0]
         try:
@@ -69,7 +69,7 @@ class SpritePreviewWidget(BoxLayout):
             self.zoom_level = 1.0
         self._update_zoom_ui()
 
-    def zoom_out(self, instance=None):
+    def zoom_out(self, instance=None, touch=None):
         """Decrement zoom level to the previous preset value."""
         levels = [0.25, 0.5, 1.0, 2.0, 4.0]
         try:
@@ -80,7 +80,7 @@ class SpritePreviewWidget(BoxLayout):
             self.zoom_level = 1.0
         self._update_zoom_ui()
 
-    def reset_zoom(self, instance=None):
+    def reset_zoom(self, instance=None, touch=None):
         """Reset zoom to 100% (1.0 factor)."""
         self.zoom_level = 1.0
         self._update_zoom_ui()

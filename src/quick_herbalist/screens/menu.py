@@ -73,7 +73,7 @@ class GameMenuScreen(KeyboardScreen):
                 height=50,
                 font_size=18,
             )
-            btn.bind(on_release=lambda _btn, n=number: self.start_level(n))
+            btn.bind(on_release=lambda _btn, touch=None, n=number: self.start_level(n))
             layout.add_widget(btn)
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
@@ -160,7 +160,7 @@ class LoadCharacterScreen(KeyboardScreen):
             btn.bind(on_release=self.select_and_return)
             self.ids.list_layout.add_widget(btn)
 
-    def select_and_return(self, btn):
+    def select_and_return(self, btn, touch=None):
         """Select character and return to menu."""
         app = App.get_running_app()
         app.profile_manager.select_character(btn.text)

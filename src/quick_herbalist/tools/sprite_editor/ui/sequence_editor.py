@@ -210,7 +210,7 @@ class FrameCard(BoxLayout):
             self.status_label.text = "[❌]"
             self.status_label.color = [1, 0, 0, 1]
 
-    def _open_file_chooser(self, instance):
+    def _open_file_chooser(self, instance, touch=None):
         content = BoxLayout(orientation="vertical", spacing=10, padding=10)
 
         assets_dir = get_asset_path("")
@@ -230,7 +230,7 @@ class FrameCard(BoxLayout):
 
         popup = Popup(title="Choose Image File from Assets", content=content, size_hint=(0.9, 0.9))
 
-        def on_select(btn_instance):
+        def on_select(btn_instance, touch=None):
             if file_chooser.selection:
                 selected_path = file_chooser.selection[0]
                 filename = os.path.basename(selected_path)
@@ -242,19 +242,19 @@ class FrameCard(BoxLayout):
         cancel_btn.bind(on_release=popup.dismiss)
         popup.open()
 
-    def _on_select_clicked(self, instance):
+    def _on_select_clicked(self, instance, touch=None):
         if self.on_select_cb:
             self.on_select_cb(self.index)
 
-    def _on_remove_clicked(self, instance):
+    def _on_remove_clicked(self, instance, touch=None):
         if self.on_remove_cb:
             self.on_remove_cb(self.index)
 
-    def _on_move_up_clicked(self, instance):
+    def _on_move_up_clicked(self, instance, touch=None):
         if self.on_move_up_cb:
             self.on_move_up_cb(self.index)
 
-    def _on_move_down_clicked(self, instance):
+    def _on_move_down_clicked(self, instance, touch=None):
         if self.on_move_down_cb:
             self.on_move_down_cb(self.index)
 
@@ -383,7 +383,7 @@ class SequenceEditorWidget(BoxLayout):
             if self.frames_changed_callback:
                 self.frames_changed_callback(self.frames)
 
-    def add_frame(self, instance):
+    def add_frame(self, instance, touch=None):
         if not self.sprite_name:
             # Cannot add frame without selected sprite
             return
@@ -466,6 +466,6 @@ class SequenceEditorWidget(BoxLayout):
             if self.frames_changed_callback:
                 self.frames_changed_callback(self.frames)
 
-    def save_sequence(self, instance):
+    def save_sequence(self, instance, touch=None):
         if self.save_callback:
             self.save_callback(self.sprite_name, self.frames)

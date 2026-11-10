@@ -81,7 +81,7 @@ class SpriteEditorMainLayout(BoxLayout):
         self.sprite_list_container.clear_widgets()
         for name in self.config.get_sprite_list():
             btn = Button(text=name, size_hint_y=None, height="35dp")
-            btn.bind(on_release=lambda instance, n=name: self.select_sprite(n))
+            btn.bind(on_release=lambda instance, touch=None, n=name: self.select_sprite(n))
             if name == self.selected_sprite:
                 btn.background_color = [0.2, 0.6, 1, 1]  # Highlight selected
             self.sprite_list_container.add_widget(btn)
@@ -109,7 +109,7 @@ class SpriteEditorMainLayout(BoxLayout):
         self.preview.frames = list(updated_frames)
         self.preview.force_refresh()
 
-    def create_sprite(self, instance):
+    def create_sprite(self, instance, touch=None):
         """Create a new sprite from the input field and select it."""
         name = self.new_sprite_input.text.strip()
         if not name:
@@ -121,7 +121,7 @@ class SpriteEditorMainLayout(BoxLayout):
         self.new_sprite_input.text = ""
         self.select_sprite(name)
 
-    def delete_sprite(self, instance):
+    def delete_sprite(self, instance, touch=None):
         """Delete the currently selected sprite and clear editor/preview."""
         if not self.selected_sprite:
             return

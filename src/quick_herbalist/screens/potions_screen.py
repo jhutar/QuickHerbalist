@@ -212,7 +212,7 @@ class PotionsScreen(KeyboardScreen):
         for index, potion_id in enumerate(app.profile_manager.get_run_loadout()):
             text = _(potion_id + "_name") if potion_id else str(index + 1)
             btn = Button(text=text, font_size=16)
-            btn.bind(on_release=lambda _btn, i=index: self._on_run_slot_clicked(i))
+            btn.bind(on_release=lambda _btn, touch=None, i=index: self._on_run_slot_clicked(i))
             box.add_widget(btn)
             self._slot_buttons.append(btn)
 
