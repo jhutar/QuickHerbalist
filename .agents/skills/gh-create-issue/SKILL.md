@@ -1,6 +1,6 @@
 ---
 name: gh-create-issue
-description: Create a standalone GitHub issue in the current repository (resolved from git remote origin) using gh. User-triggered only. Produces a self-sufficient technical issue body (context, root cause, affected files, acceptance criteria) so another agent can work on it in a fresh session without extra context.
+description: Create a standalone GitHub issue in the current repository (gh auto-detects from git remote) using gh. User-triggered only. Produces a self-sufficient technical issue body (context, root cause, affected files, acceptance criteria) so another agent can work on it in a fresh session without extra context.
 ---
 
 # Create standalone GitHub issue
@@ -9,7 +9,7 @@ Create an issue in the **current repository** that a *fresh agent session* can w
 
 ## Process
 
-0. **Resolve the repo.** Run `gh repo view --json nameWithOwner -q .nameWithOwner` (falls back to `git remote get-url origin`) and use the result as `--repo` / API path in every gh command below. Never hardcode a repo name.
+0. **Repo context.** Run all gh commands from inside a checkout of the target repository — `gh` auto-detects the repo from the git remote. Add explicit `--repo owner/repo` only when running outside a checkout. Never hardcode a repo name.
 1. **Investigate first.** Before writing, reproduce or trace the problem in the codebase:
    - Read the relevant files, run the failing command/test, capture the exact error.
    - Identify the root cause at file/function level, not just the symptom.
@@ -19,7 +19,7 @@ Create an issue in the **current repository** that a *fresh agent session* can w
 4. **Create it:**
 
    ```bash
-   gh issue create --repo <resolved-owner/repo> --title "<title>" --body-file /tmp/issue-body.md
+   gh issue create --title "<title>" --body-file /tmp/issue-body.md
    ```
 
    Write the body to a temp file (avoid shell-escaping problems), pass via `--body-file`, delete the temp file after.
