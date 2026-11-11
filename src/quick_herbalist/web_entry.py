@@ -27,9 +27,8 @@ def is_web() -> bool:
 
 def _load_state() -> None:
     """Restore previously saved DATA_DIR files from localStorage into the FS."""
-    from pyodide.ffi import JsNull
-
     from js import localStorage
+    from pyodide.ffi import JsNull
 
     raw = localStorage.getItem(LOCALSTORAGE_KEY)
     if raw is None or isinstance(raw, JsNull):
@@ -41,9 +40,8 @@ def _load_state() -> None:
 
 def _save_state() -> None:
     """Serialize DATA_DIR files to localStorage as base64 JSON."""
-    from pyodide.ffi import to_js
-
     from js import localStorage
+    from pyodide.ffi import to_js
 
     state = {}
     for name in os.listdir(DATA_DIR):

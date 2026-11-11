@@ -7,8 +7,7 @@ from unittest import mock
 
 import pytest
 
-from quick_herbalist import profiles
-from quick_herbalist import web_entry
+from quick_herbalist import profiles, web_entry
 
 
 class _JsNull:
@@ -37,11 +36,14 @@ def web_env(tmp_path, monkeypatch):
     monkeypatch.setattr(web_entry, "DATA_DIR", str(tmp_path))
     # prepare() monkeypatches ProfileManager; restore the originals on teardown
     monkeypatch.setattr(
-        profiles.ProfileManager, "_resolve_config_dir",
+        profiles.ProfileManager,
+        "_resolve_config_dir",
         profiles.ProfileManager._resolve_config_dir,
     )
     monkeypatch.setattr(
-        profiles.ProfileManager, "save_config", profiles.ProfileManager.save_config,
+        profiles.ProfileManager,
+        "save_config",
+        profiles.ProfileManager.save_config,
     )
     return store, tmp_path
 
