@@ -53,3 +53,19 @@ Automated spec-kit task runner (implements unchecked tasks in a spec's `tasks.md
 ```bash
 scripts/run_yolo_tasks.sh specs/<spec-dir>
 ```
+
+### Web build (browser)
+
+Build the static web bundle locally (Kivy 3 WASM + pyodide). Needs `uv` and
+network access, no docker. The same script runs in CI on `v*` tags and
+publishes the result to GitHub Pages:
+
+```bash
+sh web/build.sh
+python3 -m http.server 8080 -d web/dist
+# open http://127.0.0.1:8080
+```
+
+Profile saves persist per browser (localStorage). Headless smoke tests:
+`web/probe.mjs` (boot + input) and `web/probe_persist.mjs` (save survives
+reload) — run with the static server from above.

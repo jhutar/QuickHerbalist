@@ -45,3 +45,7 @@ spike/node_modules/
 spike/.chromium-libs/
 spike/package-lock.json
 spike/screenshot-error.png
+spike/probe-screenshot*.png
+
+# Web build output (issue #10)
+web/dist/
