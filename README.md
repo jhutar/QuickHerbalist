@@ -2,6 +2,12 @@
 
 A quick 2D items-collecting game built with Kivy 3.
 
+## Play in your browser
+
+[Play the web (WASM) build](https://jhutar.github.io/QuickHerbalist/).
+First load takes some time — the browser downloads the Python runtime and
+the whole game (~17 MB); later loads use the browser cache.
+
 ## Graphics backend
 
 Kivy 3.0.0 is not on PyPI, so `pyproject.toml` pins an upstream `kivy/kivy`
