@@ -16,6 +16,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    # Kivy 3 is not on PyPI; `uv sync` builds it from source and links
+    # against system SDL3 (+ satellites), ThorVG and GL dev headers.
+    - name: Install system build deps
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y --no-install-recommends \
+          libsdl3-dev libsdl3-image-dev libsdl3-mixer-dev libsdl3-ttf-dev \
+          libthorvg-dev libgl1-mesa-dev libwayland-dev libx11-dev
+
     - name: Set up uv
       uses: astral-sh/setup-uv@v6
       with:
@@ -44,6 +53,14 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Install system build deps (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y --no-install-recommends \
+          libsdl3-dev libsdl3-image-dev libsdl3-mixer-dev libsdl3-ttf-dev \
+          libthorvg-dev libgl1-mesa-dev libwayland-dev libx11-dev
 
     - name: Set up uv
       uses: astral-sh/setup-uv@v6
@@ -113,6 +130,13 @@ jobs:
 
     - name: Configure Pages
       uses: actions/configure-pages@v5
+
+    - name: Install system build deps
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y --no-install-recommends \
+          libsdl3-dev libsdl3-image-dev libsdl3-mixer-dev libsdl3-ttf-dev \
+          libthorvg-dev libgl1-mesa-dev libwayland-dev libx11-dev
 
     - name: Set up uv
       uses: astral-sh/setup-uv@v6
