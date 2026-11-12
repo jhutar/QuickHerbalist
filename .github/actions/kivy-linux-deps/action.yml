@@ -1,0 +1,39 @@
+# Builds the native dependencies Kivy 3 links against on Linux and exposes
+# them via KIVY_DEPS_ROOT, so `uv sync` can compile Kivy from source.
+# Kivy 3 is not on PyPI and no Ubuntu release ships all the required
+# libraries (resolute/26.04 has no SDL3_mixer or ThorVG packages at all),
+# so the libraries are built from source exactly like Kivy's own
+# Ubuntu CI (.ci/ubuntu_ci.sh + tools/build_linux_dependencies.sh at
+# the pinned Kivy commit in pyproject.toml).
+name: Build Kivy 3 Linux dependencies
+runs:
+  using: composite
+  steps:
+  - name: Install system build deps
+    shell: bash
+    run: |
+      sudo apt-get update
+      sudo apt-get -y install build-essential git make autoconf automake libtool \
+          libpipewire-0.3-dev libdecor-0-dev liburing-dev \
+          pkg-config cmake ninja-build meson libasound2-dev libpulse-dev \
+          libaudio-dev libfribidi-dev libjack-dev libsndio-dev libsamplerate0-dev libx11-dev \
+          libxtst-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev \
+          libwayland-dev libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
+          libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libthai-dev fcitx-libs-dev \
+          libayatana-appindicator3-dev
+  - name: Build SDL3, SDL satellites and ThorVG into kivy-dependencies/
+    shell: bash
+    run: |
+      # Same commit as the kivy dependency pinned in pyproject.toml.
+      SHA="0f23a55ccc59a55d2e726d079fedcca03c5ca068"
+      mkdir -p .kivy-deps-scripts
+      curl -fsSL -o .kivy-deps-scripts/build_linux_dependencies.sh \
+        "https://raw.githubusercontent.com/kivy/kivy/${SHA}/tools/build_linux_dependencies.sh"
+      curl -fsSL -o .kivy-deps-scripts/build_thorvg.sh \
+        "https://raw.githubusercontent.com/kivy/kivy/${SHA}/tools/build_thorvg.sh"
+      bash .kivy-deps-scripts/build_linux_dependencies.sh
+  - name: Export Kivy deps env
+    shell: bash
+    run: |
+      echo "KIVY_DEPS_ROOT=$(pwd)/kivy-dependencies" >> "$GITHUB_ENV"
+      echo "LD_LIBRARY_PATH=$(pwd)/kivy-dependencies/dist/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
