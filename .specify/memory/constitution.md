@@ -51,6 +51,6 @@ The game MUST support localization (Gettext-based) and clean asset management. A
 
 ## Governance
 
-Amendments to this Constitution require updating `.specify/memory/constitution.md`, incrementing the version, and documenting the changes in the Sync Impact Report at the top of the file. All code changes and pull requests MUST be verified against these principles. Use `GEMINI.md` as the primary runtime developer guidance file for specific technical tasks and workspace workflows.
+Amendments to this Constitution require updating `.specify/memory/constitution.md`, incrementing the version, and documenting the changes in the Sync Impact Report at the top of the file. All code changes and pull requests MUST be verified against these principles. Use `AGENTS.md` as the primary runtime developer guidance file for specific technical tasks and workspace workflows.
 
 **Version**: 1.0.0 | **Ratified**: 2026-07-18 | **Last Amended**: 2026-07-18
