@@ -1,0 +1,51 @@
+name: Web (WASM) deploy
+
+on:
+  push:
+    branches: [main]
+
+# Deploys the static WASM bundle (Kivy 3 + pyodide) for browser play to
+# GitHub Pages. Built by web/build.sh (see web/ notes in README.md).
+#
+# Lives in its own workflow (not in on-tag.yaml) because GitHub's
+# auto-generated protection rule on the github-pages environment only
+# allows deployments from the Pages source branch (main); a tag push is
+# rejected with "Tag ... is not allowed to deploy to github-pages".
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure Pages
+      uses: actions/configure-pages@v5
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        python-version: "3.12"
+
+    - name: Build web bundle
+      run: sh web/build.sh
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: web/dist/
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4

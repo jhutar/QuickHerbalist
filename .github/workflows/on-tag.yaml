@@ -118,40 +118,6 @@ jobs:
         files: dist/*
         fail_on_unmatched_files: true
 
-  # Static WASM bundle (Kivy 3 + pyodide) for browser play, deployed to
-  # GitHub Pages. Built by web/build.sh (see web/README notes in README.md).
-  web:
-    needs: sanity
-    runs-on: ubuntu-latest
-    concurrency:
-      group: pages
-      cancel-in-progress: true
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Configure Pages
-      uses: actions/configure-pages@v5
-
-    - name: Set up uv
-      uses: astral-sh/setup-uv@v6
-      with:
-        python-version: "3.12"
-
-    - name: Build web bundle
-      run: sh web/build.sh
-
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: web/dist/
-
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+  # Note: the web (WASM) Pages deploy lives in web.yaml. It must be
+  # triggered by a push to main, because the github-pages environment
+  # only accepts deployments from the Pages source branch, not tags.
