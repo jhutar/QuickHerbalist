@@ -52,6 +52,22 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       uses: ./.github/actions/kivy-linux-deps
 
+    - name: Build Kivy 3 macOS dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        # Kivy 3 builds from source and links against frameworks that no
+        # macOS image ships; build them exactly like Kivy's own OSX CI
+        # (tools/build_macos_dependencies.sh at the pinned commit).
+        brew install pkg-config cmake ninja meson
+        SHA="0f23a55ccc59a55d2e726d079fedcca03c5ca068"
+        mkdir -p .kivy-deps-scripts
+        curl -fsSL -o .kivy-deps-scripts/build_macos_dependencies.sh \
+          "https://raw.githubusercontent.com/kivy/kivy/${SHA}/tools/build_macos_dependencies.sh"
+        curl -fsSL -o .kivy-deps-scripts/build_thorvg.sh \
+          "https://raw.githubusercontent.com/kivy/kivy/${SHA}/tools/build_thorvg.sh"
+        bash .kivy-deps-scripts/build_macos_dependencies.sh
+        echo "KIVY_DEPS_ROOT=$(pwd)/kivy-dependencies" >> "$GITHUB_ENV"
+
     - name: Set up uv
       uses: astral-sh/setup-uv@v6
       with:
