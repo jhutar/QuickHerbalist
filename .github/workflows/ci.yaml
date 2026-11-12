@@ -15,6 +15,9 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Build Kivy 3 Linux dependencies
+      uses: ./.github/actions/kivy-linux-deps
+
     - name: Set up uv
       uses: astral-sh/setup-uv@v6
       with:
