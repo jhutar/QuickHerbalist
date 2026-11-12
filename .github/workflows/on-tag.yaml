@@ -65,6 +65,8 @@ jobs:
           "https://raw.githubusercontent.com/kivy/kivy/${SHA}/tools/build_macos_dependencies.sh"
         curl -fsSL -o .kivy-deps-scripts/build_thorvg.sh \
           "https://raw.githubusercontent.com/kivy/kivy/${SHA}/tools/build_thorvg.sh"
+        curl -fsSL -o .kivy-deps-scripts/macos_framework_wrapper.sh \
+          "https://raw.githubusercontent.com/kivy/kivy/${SHA}/tools/macos_framework_wrapper.sh"
         bash .kivy-deps-scripts/build_macos_dependencies.sh
         echo "KIVY_DEPS_ROOT=$(pwd)/kivy-dependencies" >> "$GITHUB_ENV"
 
