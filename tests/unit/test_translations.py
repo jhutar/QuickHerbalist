@@ -61,9 +61,7 @@ def test_every_pot_msgid_translated_in_all_locales():
 def test_empty_msgstr_is_detected(tmp_path):
     """Parser and completeness check flag an entry with an empty msgstr."""
     po = tmp_path / "base.po"
-    po.write_text(
-        'msgid "Alpha"\nmsgstr "Alfa"\n\nmsgid "Beta"\nmsgstr ""\n', encoding="utf-8"
-    )
+    po.write_text('msgid "Alpha"\nmsgstr "Alfa"\n\nmsgid "Beta"\nmsgstr ""\n', encoding="utf-8")
     catalog = parse_po(po)
     empty = {m for m, s in catalog.items() if not s}
     assert empty == {"Beta"}

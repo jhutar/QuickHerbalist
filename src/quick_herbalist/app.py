@@ -15,6 +15,7 @@ from kivy.uix.screenmanager import ScreenManager  # noqa: E402
 from quick_herbalist.core.config_parser import get_asset_path  # noqa: E402
 from quick_herbalist.core.level_config import LevelConfigError, load_levels  # noqa: E402
 from quick_herbalist.core.sprite_manager import SpriteManager  # noqa: E402
+from quick_herbalist.localization import initialize_locale, select_locale  # noqa: E402
 from quick_herbalist.potions import RecipeError, load_recipes  # noqa: E402
 from quick_herbalist.profiles import ProfileManager  # noqa: E402
 from quick_herbalist.screens import (  # noqa: E402
@@ -38,6 +39,12 @@ class QuickHerbalistApp(App):
         """Build the app with screen manager and all screens."""
         logger = logging.getLogger(__name__)
         self.profile_manager = ProfileManager()
+        try:
+            self.locale = select_locale(self.profile_manager.settings.get("locale"))
+        except ValueError as e:
+            logger.error("Refusing to start, invalid locale configuration: %s", e)
+            raise SystemExit(str(e)) from e
+        initialize_locale(self.locale)
         self.sprite_manager = SpriteManager()
         # Level chosen on the game menu; None means the next available level.
         self.selected_level_number = None
