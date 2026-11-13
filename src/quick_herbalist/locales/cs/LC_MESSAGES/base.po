@@ -142,3 +142,7 @@ msgstr "Kopečky jsou bezpečné, ale zpomalí tě, zatím jimi projíždíš."
 #: menu.py
 msgid "Show in-game hints"
 msgstr "Zobrazovat nápovědy ve hře"
+
+#: menu.py
+msgid "Tutorial popups shown the first time you encounter each game entity."
+msgstr "Tutoriálová okna zobrazovaná při prvním setkání s každým prvkem hry."
