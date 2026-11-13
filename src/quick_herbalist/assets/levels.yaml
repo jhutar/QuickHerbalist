@@ -34,7 +34,7 @@ levels:
         ramp_to: 0.05
       - type: spider
         sprite: spider_sprite
-        interval: 3.0
+        interval: 10.0
   - name: ice
     background: background_ice_sprite
     distance: 1400

@@ -134,7 +134,7 @@ class Spider(GameEntity):
     SIZE = (32, 32)
     SPAWN_X_MIN = 50
     SPAWN_X_MAX = 200
-    CHASE_SPEED = 3.0  # px/frame at 60 fps; hero can outrun it
+    CHASE_SPEED = 2.0  # px/frame at 60 fps; hero can outrun it
     SCROLL_FACTOR = 0.25  # scrolls at a share of the world speed
 
     def move(self, frame):
