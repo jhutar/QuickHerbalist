@@ -55,6 +55,14 @@ Run linters and formatting checks:
 make check-all
 ```
 
+Kivy 3.0.0.dev0 is installed from the [Kivy nightly wheels](https://kivy.org/downloads/simple/)
+(daily snapshot of Kivy master). To pick up a newer snapshot:
+```bash
+uv lock --upgrade-package kivy && uv sync
+```
+Once Kivy 3.0.0 reaches PyPI, switch the dependency in `pyproject.toml` to
+`"kivy>=3.0.0"` and remove the `kivy-nightly` index and `tool.uv.sources` entries.
+
 Automated spec-kit task runner (implements unchecked tasks in a spec's `tasks.md` in sequence):
 ```bash
 scripts/run_yolo_tasks.sh specs/<spec-dir>
