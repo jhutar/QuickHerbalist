@@ -49,3 +49,6 @@ spike/probe-screenshot*.png
 
 # Web build output (issue #10)
 web/dist/
+
+# AI tooling
+.gemini/
