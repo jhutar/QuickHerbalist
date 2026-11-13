@@ -214,6 +214,37 @@ def test_main_menu_locale_selection_persists_and_hints_restart():
     assert screen.ids.locale_hint_lbl.text == "Restart the game to apply language changes."
 
 
+def test_option_menu_header_open_and_option_select_commits_value():
+    """Header release opens the option list; a pick commits value and fires on_select."""
+    from quick_herbalist.screens.widgets import OptionMenu
+
+    menu = OptionMenu(options=["EN", "CS", "SYS"], font_size=18)
+    touch = MagicMock()
+    touch.pos = (10, 20)
+
+    menu._on_header_release(menu._header, touch)
+    assert len(menu._dropdown) == 2
+
+    menu.dispatch = MagicMock()
+    menu._select_option("CS")
+
+    assert menu.value == "CS"
+    assert menu._header.text == "CS"
+    assert menu._dropdown == []
+    menu.dispatch.assert_called_once_with("on_select")
+
+
+def test_option_menu_value_sets_header_text():
+    """The value property keeps the header label in sync."""
+    from quick_herbalist.screens.widgets import OptionMenu
+
+    menu = OptionMenu(options=["EN", "CS", "SYS"])
+    menu.value = "CS"
+
+    assert menu.value == "CS"
+    assert menu._header.text == "CS"
+
+
 def test_game_menu_s_key_starts_run():
     """Pressing 's' on the hub must go straight into the game at the next level."""
     app = _make_app(next_level=3)

@@ -7,6 +7,7 @@ from kivy.uix.screenmanager import Screen
 from quick_herbalist.localization import _
 from quick_herbalist.profiles import ProfileError, ProfileErrorCode
 from quick_herbalist.screens.base import KeyboardScreen, load_screen_kv
+from quick_herbalist.screens.widgets import OptionMenu  # noqa: F401  (Factory registration)
 
 # Locale dropdown: option label <-> settings.locale value
 _LOCALE_TO_OPTION = {"en": "EN", "cs": "CS", "system": "SYS"}
