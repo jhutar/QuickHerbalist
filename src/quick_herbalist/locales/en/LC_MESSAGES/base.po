@@ -179,10 +179,10 @@ msgid "Tutorial popups shown the first time you encounter each game entity."
 msgstr "Tutorial popups shown the first time you encounter each game entity."
 
 msgid "bluebell_sprite"
-msgstr "bluebell_sprite"
+msgstr "Bluebell"
 
 msgid "dandelion_sprite"
-msgstr "dandelion_sprite"
+msgstr "Dandelion"
 
 msgid "potion_magnetism_description"
 msgstr "potion_magnetism_description"

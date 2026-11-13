@@ -512,7 +512,7 @@ def test_potions_screen_recipe_book_lists_ingredients():
     screen = PotionsScreen()
     screen.on_pre_enter()
 
-    assert screen.ids.recipe_ingredients_lbl.text == "dandelion_sprite x2\nbluebell_sprite x1"
+    assert screen.ids.recipe_ingredients_lbl.text == "Dandelion x2\nBluebell x1"
     assert screen.ids.recipe_duration_lbl.text == "Duration: 30"
 
 
@@ -611,7 +611,7 @@ def test_potions_screen_ingredient_chip_labels_show_count():
     screen.on_pre_enter()
 
     texts = [c.kwargs.get("text") for c in kivy_uix_label_module.Label.call_args_list]
-    assert "dandelion_sprite (2x)" in texts
+    assert "Dandelion (2x)" in texts
 
 
 def test_potions_screen_spoon_uses_spoon_image():

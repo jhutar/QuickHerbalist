@@ -76,6 +76,19 @@ def test_no_obsolete_msgids_in_catalogs():
         assert not obsolete, f"{lang}: obsolete msgids {sorted(obsolete)}"
 
 
+def test_sprite_names_have_human_readable_display_names():
+    """Sprite identifier msgids must not resolve to the raw key in the en catalog."""
+    import yaml
+
+    sprites_path = LOCALES.parent / "assets" / "sprites.yaml"
+    sprite_names = set(yaml.safe_load(sprites_path.read_text(encoding="utf-8"))["sprites"])
+    catalog = parse_po(LOCALES / "en" / "LC_MESSAGES" / "base.po")
+    leaked = {
+        name: catalog[name] for name in sorted(sprite_names & set(catalog)) if catalog[name] == name
+    }
+    assert not leaked, f"en: sprite msgids copied verbatim as msgstr: {leaked}"
+
+
 def test_compiled_mo_files_cover_all_msgids():
     """Each compiled base.mo resolves every pot msgid to a non-empty string."""
     for lang in LANGS:
