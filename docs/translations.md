@@ -99,6 +99,23 @@ potion workflow.
 
 Verify: `make test` and `make check-all`.
 
+## Changing an existing string
+
+When a `msgid`'s wording changes (or a string is removed/re-added):
+
+1. Update **every** catalog that contains the msgid — `base.pot`, `en`, and `cs`
+   — in the same commit. A changed source string left with the old `msgstr` in a
+   catalog silently shows stale text for that locale. Never copy the key or the
+   English literal back into a catalog as a placeholder: every `msgstr` must be
+   the real display text (this is exactly how the `dandelion_sprite` bug shipped).
+2. Re-run `uv run python scripts/update_pot.py` after removing or rewording a
+   string in code so the pot reflects the new set of msgids.
+3. Recompile the touched catalogs (the `compile-mo` hook does this on commit) and
+   commit `.po` and `.mo` together.
+
+`tests/unit/test_translations.py` enforces msgid parity between pot and catalogs
+and flags catalog msgstrs that still equal the raw key for sprite names.
+
 ## Locale precedence
 
 Intended behavior of the shipped app, from highest to lowest priority:
