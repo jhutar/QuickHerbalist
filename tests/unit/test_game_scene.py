@@ -185,30 +185,22 @@ def _always_overlap(view, overlap=True):
     return view
 
 
-def test_flower_forwards_sprite_manager_and_sprite_name():
-    """Flower must pass sprite_manager through to GameEntity unchanged."""
+@pytest.mark.parametrize(
+    ("entity_cls", "size", "magnetic"),
+    [(Flower, (32, 32), True), (Stone, (64, 53), False)],
+    ids=["flower", "stone"],
+)
+def test_entity_forwards_sprite_manager_and_sprite_name(entity_cls, size, magnetic):
+    """Entity subclasses must pass sprite_manager through to GameEntity unchanged."""
     sprite_manager = _make_sprite_manager()
 
-    flower = Flower(sprite_manager, "dandelion_sprite", SCREEN_W + 50, 10)
+    entity = entity_cls(sprite_manager, "sprite_name", SCREEN_W + 50, 10)
 
-    sprite_manager.get.assert_called_once_with("dandelion_sprite")
-    assert flower.sprite is sprite_manager.get.return_value
-    assert flower.size == (32, 32)
-    assert flower.pos == (SCREEN_W + 50, 10)
-    assert flower.MAGNETIC is True
-
-
-def test_stone_forwards_sprite_manager_and_sprite_name():
-    """Stone must pass sprite_manager through to GameEntity unchanged."""
-    sprite_manager = _make_sprite_manager()
-
-    stone = Stone(sprite_manager, "stone_sprite", SCREEN_W + 100, 20)
-
-    sprite_manager.get.assert_called_once_with("stone_sprite")
-    assert stone.sprite is sprite_manager.get.return_value
-    assert stone.size == (64, 53)
-    assert stone.pos == (SCREEN_W + 100, 20)
-    assert stone.MAGNETIC is False
+    sprite_manager.get.assert_called_once_with("sprite_name")
+    assert entity.sprite is sprite_manager.get.return_value
+    assert entity.size == size
+    assert entity.pos == (SCREEN_W + 50, 10)
+    assert entity.MAGNETIC is magnetic
 
 
 def test_entity_scrolls_with_world_by_default():
@@ -310,13 +302,19 @@ def test_collect_hit_adds_score_and_removes_entity():
     assert view.entities == []
 
 
-def test_damage_hit_ends_run():
-    """A colliding damaging entity ends the run and despawns."""
+@pytest.mark.parametrize(
+    ("entity_cls", "expected_size"),
+    [(Stone, (64, 53)), (Rock, (96, 128)), (Spider, (32, 32))],
+    ids=["stone", "rock", "spider"],
+)
+def test_damage_hit_ends_run(entity_cls, expected_size):
+    """A colliding damaging entity ends the run, despawns, and keeps its size."""
     view = _make_game_view()
     _always_overlap(view)
-    stone = Stone(_make_sprite_manager(), "lvl_stone", 10, 10)
-    view.entities.append(stone)
+    entity = entity_cls(_make_sprite_manager(), "lvl_stone", 10, 10)
+    view.entities.append(entity)
 
+    assert entity.size == expected_size
     view._step_entities(_frame(view))
 
     assert view.rules.dead is True
@@ -438,23 +436,14 @@ def test_pacer_never_increases():
 # --- Entity types: rock, spider, hill ---
 
 
-def test_registry_covers_shipped_level_types():
-    """Every type used in levels.yaml resolves to a widget class."""
+def test_registry_types_and_hints_consistent():
+    """Registry covers shipped types, TYPE names match keys, and every type has hint text."""
     assert {"flower", "stone", "rock", "spider", "hill"} <= set(ENTITY_TYPES)
-
-
-def test_rock_is_bigger_stone_that_damages():
-    """Rock inherits stone damage but renders pillar-sized."""
-    rock = Rock(_make_sprite_manager(), "lvl_stone", 10, 0)
-    assert rock.size == (96, 128)
-
-    view = _make_game_view()
-    _always_overlap(view)
-    view.entities.append(rock)
-    view._step_entities(_frame(view))
-
-    assert view.rules.dead is True
-    assert view.entities == []
+    assert {cls.TYPE for cls in ENTITY_TYPES.values()} == set(ENTITY_TYPES)
+    for entity_type in ENTITY_TYPES:
+        title, description = hint_text(entity_type)
+        assert title and description
+        assert hint_text(entity_type) == ENTITY_HINTS[entity_type]
 
 
 def test_spider_chases_hero_vertically():
@@ -475,19 +464,6 @@ def test_spider_chases_hero_vertically():
     view.entities.append(below)
     view._step_entities(_frame(view))
     assert below.y < view.hero.center_y + 100
-
-
-def test_spider_stings_on_contact():
-    """A spider reaching the hero ends the run and despawns."""
-    view = _make_game_view()
-    _always_overlap(view)
-    spider = Spider(_make_sprite_manager(), "lvl_stone", 10, 10)
-    view.entities.append(spider)
-
-    view._step_entities(_frame(view))
-
-    assert view.rules.dead is True
-    assert view.entities == []
 
 
 def test_hill_halves_hero_step_and_survives_overlap():
@@ -606,17 +582,24 @@ def _magnet(view):
     return MagnetEffect(view.hero, view.entities)
 
 
-def test_magnet_pulls_magnetic_entity_at_edge_of_radius_slowly():
-    """A flower 100 px from the player center is pulled ~1 px/tick toward it."""
+@pytest.mark.parametrize(
+    ("tick", "expected_pull"),
+    [(1.0, 1.0), (2.0, 2.0)],
+    ids=["one_tick", "frame_factor_scales"],
+)
+def test_magnet_pull_at_edge_of_radius(tick, expected_pull):
+    """At the 100 px radius edge the pull is ~1 px/tick, scaling with the frame factor."""
     view = _make_effect_view()
     px, py = view.hero.pos
     center_x, center_y = px + view.hero.size[0] / 2, py + view.hero.size[1] / 2
     flower = Flower(_make_sprite_manager(), "lvl_flower", center_x + 100 - 16, center_y - 16)
     view.entities = [flower]
 
-    _magnet(view).tick(1.0)
-    # speed = 10 - 9 * 100/100 = 1 px/tick, straight left
-    assert flower.pos == (pytest.approx(center_x + 100 - 1 - 16), pytest.approx(center_y - 16))
+    _magnet(view).tick(tick)
+    assert flower.pos == (
+        pytest.approx(center_x + 100 - expected_pull - 16),
+        pytest.approx(center_y - 16),
+    )
 
 
 def test_magnet_pulls_near_flower_fast_and_vertically():
@@ -647,18 +630,6 @@ def test_magnet_ignores_non_magnetic_entities_and_far_flowers():
     _magnet(view).tick(1.0)
     assert far.pos == (center_x + 150 - 16, center_y - 16)
     assert stone.pos == (center_x + 50 - 32, center_y - 53)
-
-
-def test_magnet_pull_scales_with_frame_factor():
-    """Pull distance per call scales with the dt-based frame factor."""
-    view = _make_effect_view()
-    px, py = view.hero.pos
-    center_x, center_y = px + view.hero.size[0] / 2, py + view.hero.size[1] / 2
-    flower = Flower(_make_sprite_manager(), "lvl_flower", center_x + 100 - 16, center_y - 16)
-    view.entities = [flower]
-
-    _magnet(view).tick(2.0)
-    assert flower.pos == (pytest.approx(center_x + 100 - 2 - 16), pytest.approx(center_y - 16))
 
 
 def test_effects_stack_across_slots():
@@ -707,11 +678,6 @@ def _view_with_hint_mocks():
     view.profile_manager.hints_enabled.return_value = True
     view.profile_manager.get_seen_entities.return_value = []
     return view
-
-
-def test_entity_type_names_match_registry():
-    """Every registered entity class carries the TYPE name used in levels.yaml."""
-    assert {cls.TYPE for cls in ENTITY_TYPES.values()} == set(ENTITY_TYPES)
 
 
 def test_new_entities_start_untriggered():
@@ -849,7 +815,8 @@ def test_spawn_deferred_while_hint_open():
     assert len(view._spawn_events) == 2  # normal next spawn also scheduled
 
 
-def test_keyboard_closes_hint_box():
+@pytest.mark.parametrize("close_key", ["spacebar", "escape"], ids=["spacebar", "esc_key"])
+def test_keyboard_closes_hint_box(close_key):
     """Esc/Enter/Space dismiss the box; other keys are swallowed while it is open."""
     view = _view_with_hint_mocks()
     stone = Stone(_make_sprite_manager(), "stone_sprite", SCREEN_W - 100, 10)
@@ -860,19 +827,7 @@ def test_keyboard_closes_hint_box():
     assert view.hint_active is True
     assert view.moving_up is False
 
-    assert view.on_keyboard_down("spacebar") is True
-    assert view.hint_active is False
-
-
-def test_keyboard_escape_closes_hint_box():
-    """Kivy names the Esc key 'escape'; it must dismiss the hint box."""
-    view = _view_with_hint_mocks()
-    stone = Stone(_make_sprite_manager(), "stone_sprite", SCREEN_W - 100, 10)
-    view.entities.append(stone)
-    view._check_hints()
-    assert view.hint_active is True
-
-    assert view.on_keyboard_down("escape") is True
+    assert view.on_keyboard_down(close_key) is True
     assert view.hint_active is False
 
 
@@ -897,8 +852,15 @@ def test_hint_box_has_solid_background():
     assert _BG[3] == 1.0  # solid, not translucent
 
 
-def test_hint_box_outside_touch_swallowed():
-    """A touch outside the box is consumed without dismissing (cross only)."""
+@pytest.mark.parametrize(
+    ("pos_factory", "id_name"),
+    [
+        (lambda box: (10, 10), "outside_box"),  # touch outside the box
+        (lambda box: (box.box_rect[0] + 50, box.box_rect[1] + 50), "inside_box"),  # touch inside
+    ],
+)
+def test_hint_box_non_close_touch_swallowed(pos_factory, id_name):
+    """A touch outside or inside the box is consumed without dismissing (cross only)."""
     from types import SimpleNamespace
 
     closed = []
@@ -906,7 +868,7 @@ def test_hint_box_outside_touch_swallowed():
         _make_sprite_manager(), "stone_sprite", "Stone", "desc", on_close=lambda: closed.append(1)
     )
 
-    assert box.on_touch_down(SimpleNamespace(pos=(10, 10))) is True
+    assert box.on_touch_down(SimpleNamespace(pos=pos_factory(box))) is True
     assert closed == []
 
 
@@ -922,20 +884,6 @@ def test_hint_box_closes_on_cross_touch():
 
     assert box.on_touch_down(SimpleNamespace(pos=(cx, cy))) is True
     assert len(closed) == 1
-
-
-def test_hint_box_inside_touch_swallowed():
-    """A touch inside the box is consumed without dismissing."""
-    from types import SimpleNamespace
-
-    closed = []
-    box = HintBox(
-        _make_sprite_manager(), "stone_sprite", "Stone", "desc", on_close=lambda: closed.append(1)
-    )
-    mid = (box.box_rect[0] + 50, box.box_rect[1] + 50)
-
-    assert box.on_touch_down(SimpleNamespace(pos=mid)) is True
-    assert closed == []
 
 
 def test_game_view_touch_goes_to_child_first():
@@ -974,14 +922,6 @@ def test_game_view_touch_still_moves_without_child():
     assert view.on_touch_down(touch) is True
     assert view.touch_active is True
     assert view.target_y == 33
-
-
-def test_hint_text_covers_all_entity_types():
-    """Every registered entity type has a title and a non-empty description."""
-    for entity_type in ENTITY_TYPES:
-        title, description = hint_text(entity_type)
-        assert title and description
-        assert hint_text(entity_type) == ENTITY_HINTS[entity_type]
 
 
 def test_hud_labels_added_as_children():

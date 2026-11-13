@@ -132,32 +132,20 @@ def test_match_recipe_exact_match():
     assert match_recipe(content, recipes) is recipes[0]
 
 
-def test_match_recipe_extra_ingredient_fails():
-    """One extra ingredient unit means no match."""
+@pytest.mark.parametrize(
+    ("content", "reason"),
+    [
+        ({"dandelion_sprite": 2, "bluebell_sprite": 2}, "extra_ingredient_unit"),
+        ({"dandelion_sprite": 1}, "missing_ingredient_unit"),
+        ({"dandelion_sprite": 2, "bluebell_sprite": 1, "flower3_sprite": 1}, "unknown_ingredient"),
+        ({}, "empty_cauldron"),
+    ],
+)
+def test_match_recipe_no_match(content, reason):
+    """Any deviation from the recipe multiset (extra/missing/unknown/empty) means no match."""
     recipes = [_recipe({"dandelion_sprite": 2, "bluebell_sprite": 1})]
 
-    assert match_recipe({"dandelion_sprite": 2, "bluebell_sprite": 2}, recipes) is None
-
-
-def test_match_recipe_missing_ingredient_fails():
-    """One missing ingredient unit means no match."""
-    recipes = [_recipe({"dandelion_sprite": 2, "bluebell_sprite": 1})]
-
-    assert match_recipe({"dandelion_sprite": 1}, recipes) is None
-
-
-def test_match_recipe_unknown_ingredient_fails():
-    """Ingredients not in the recipe mean no match."""
-    recipes = [_recipe({"dandelion_sprite": 2})]
-
-    assert match_recipe({"dandelion_sprite": 2, "flower3_sprite": 1}, recipes) is None
-
-
-def test_match_recipe_empty_cauldron_fails():
-    """An empty cauldron never matches a recipe."""
-    recipes = [_recipe({"dandelion_sprite": 2})]
-
-    assert match_recipe({}, recipes) is None
+    assert match_recipe(content, recipes) is None
 
 
 def test_match_recipe_zero_counts_ignored():

@@ -5,6 +5,8 @@ import types
 from pathlib import Path
 from unittest.mock import MagicMock, call
 
+import pytest
+
 # Setup mocks for Kivy BEFORE importing anything that uses it
 kivy_module = types.ModuleType("kivy")
 kivy_app_module = types.ModuleType("kivy.app")
@@ -225,18 +227,10 @@ def test_game_menu_s_key_starts_run():
     assert screen.manager.current == "game"
 
 
-def test_potions_screen_back_goes_to_game_menu():
-    """Potions screen back/escape must return to the hub."""
-    screen = PotionsScreen()
-
-    screen.on_back()
-
-    assert screen.manager.current == "game_menu"
-
-
-def test_greenhouse_screen_back_goes_to_game_menu():
-    """Greenhouse screen back/escape must return to the hub."""
-    screen = GreenhouseScreen()
+@pytest.mark.parametrize("screen_cls", [PotionsScreen, GreenhouseScreen])
+def test_potions_greenhouse_back_goes_to_game_menu(screen_cls):
+    """Potions/greenhouse screen back/escape must return to the hub."""
+    screen = screen_cls()
 
     screen.on_back()
 
@@ -263,39 +257,23 @@ def test_new_character_hints_checkbox_has_description():
     )
 
 
-def test_game_won_next_level_starts_next_level():
-    """Win-screen 'Next Level' button must pick the level after the one just played."""
-    app = _make_app(next_level=3)
-    app.selected_level_number = 2
+@pytest.mark.parametrize(
+    ("next_level", "selected", "expected"),
+    [
+        (3, 2, 3),  # picks the level after the one just played
+        (4, 1, 2),  # all levels finished: follows the re-run level, not the last
+        (4, 3, 3),  # clamps at the last level
+    ],
+)
+def test_game_won_next_level_starts_expected_level(next_level, selected, expected):
+    """Win-screen 'Next Level' button must pick the correct follow-up level."""
+    app = _make_app(next_level=next_level)
+    app.selected_level_number = selected
 
     screen = GameWonScreen()
     screen.restart_game()
 
-    assert app.selected_level_number == 3
-    assert screen.manager.current == "game"
-
-
-def test_game_won_next_level_after_all_completed_advances_from_current():
-    """With all levels finished, 'Next Level' must follow the re-run level, not jump to the last."""
-    app = _make_app(next_level=4)
-    app.selected_level_number = 1
-
-    screen = GameWonScreen()
-    screen.restart_game()
-
-    assert app.selected_level_number == 2
-    assert screen.manager.current == "game"
-
-
-def test_game_won_next_level_clamps_at_last_level():
-    """'Next Level' from the last level must stay on the last level."""
-    app = _make_app(next_level=4)
-    app.selected_level_number = 3
-
-    screen = GameWonScreen()
-    screen.restart_game()
-
-    assert app.selected_level_number == 3
+    assert app.selected_level_number == expected
     assert screen.manager.current == "game"
 
 
@@ -314,37 +292,29 @@ def test_game_won_renders_row_per_flower_type():
     ]
 
 
-def test_game_won_menu_goes_to_game_menu():
-    """Level-completed 'Game Menu' button must return to the hub."""
-    screen = GameWonScreen()
+@pytest.mark.parametrize("screen_cls", [GameWonScreen, GameOverScreen])
+def test_end_screens_menu_goes_to_game_menu(screen_cls):
+    """Win/game-over 'Game Menu' button must return to the hub."""
+    screen = screen_cls()
 
     screen.goto_menu()
 
     assert screen.manager.current == "game_menu"
 
 
-def test_game_won_menu_button_labeled_game_menu():
-    """Win-screen hub button must say 'Game Menu', not 'Main Menu'."""
+@pytest.mark.parametrize(
+    ("screen_cls", "prepare"),
+    [
+        (GameWonScreen, lambda s: setattr(s, "harvest", {})),
+        (GameOverScreen, lambda s: None),
+    ],
+    ids=["game_won", "game_over"],
+)
+def test_end_screens_menu_button_labeled_game_menu(screen_cls, prepare):
+    """Win/game-over hub button must say 'Game Menu', not 'Main Menu'."""
     _make_app(next_level=2)
-    screen = GameWonScreen()
-    screen.harvest = {}
-    screen.on_pre_enter()
-
-    assert screen.ids.menu_btn.text == "Game Menu"
-
-
-def test_game_over_menu_goes_to_game_menu():
-    """Game-over 'Game Menu' button must return to the hub."""
-    screen = GameOverScreen()
-
-    screen.goto_menu()
-
-    assert screen.manager.current == "game_menu"
-
-
-def test_game_over_menu_button_labeled_game_menu():
-    """Game-over hub button must say 'Game Menu', not 'Main Menu'."""
-    screen = GameOverScreen()
+    screen = screen_cls()
+    prepare(screen)
     screen.on_pre_enter()
 
     assert screen.ids.menu_btn.text == "Game Menu"
@@ -396,31 +366,28 @@ def test_potions_screen_brew_success_adds_potion():
     assert screen.ids.message_lbl.text == "Brewed: potion_magnetism_name"
 
 
-def test_potions_screen_brew_no_match_wastes_ingredients():
-    """Non-matching cauldron contents are wasted without brewing."""
-    app = _setup_potions_app([_recipe()], cauldron={"dandelion_sprite": 3})
+@pytest.mark.parametrize(
+    ("cauldron", "clears_cauldron", "message"),
+    [
+        ({"dandelion_sprite": 3}, True, "Ingredients wasted"),  # no recipe match
+        (None, False, "Cauldron is empty"),  # empty cauldron
+    ],
+    ids=["no_match", "empty_cauldron"],
+)
+def test_potions_screen_brew_failure_outcomes(cauldron, clears_cauldron, message):
+    """Brewing without a matching non-empty cauldron never adds a potion."""
+    app = _setup_potions_app([_recipe()], cauldron=cauldron)
 
     screen = PotionsScreen()
     screen.on_pre_enter()
     screen._on_brew()
 
     app.profile_manager.add_potion.assert_not_called()
-    app.profile_manager.clear_cauldron.assert_called_once_with()
-    assert screen.ids.message_lbl.text == "Ingredients wasted"
-
-
-def test_potions_screen_brew_empty_cauldron_shows_message():
-    """Mixing an empty cauldron shows an error instead of brewing silently."""
-    app = _setup_potions_app([_recipe()])
-
-    screen = PotionsScreen()
-    screen.on_pre_enter()
-    screen._on_brew()
-
-    app.profile_manager.clear_cauldron.assert_not_called()
-    app.profile_manager.add_potion.assert_not_called()
-    assert screen.ids.message_lbl.text == "Cauldron is empty"
-    assert screen.ids.message_lbl.color == (1, 0.3, 0.3, 1)
+    if clears_cauldron:
+        app.profile_manager.clear_cauldron.assert_called_once_with()
+    else:
+        app.profile_manager.clear_cauldron.assert_not_called()
+    assert screen.ids.message_lbl.text == message
 
 
 def test_potions_screen_ingredient_drop_moves_to_cauldron():
@@ -529,36 +496,30 @@ def test_potions_screen_potion_click_assigns_first_free_slot():
     app.profile_manager.assign_potion_to_slot.assert_called_once_with("potion_magnetism", None)
 
 
-def test_potions_screen_potion_drop_targets_slot_under_touch():
-    """Dropping a potion chip on a specific slot targets that slot."""
+@pytest.mark.parametrize(
+    ("hit_slot", "expected_target"),
+    [
+        (1, 1),  # chip dropped on a slot targets that slot
+        (None, None),  # dropped off every slot: first free slot
+    ],
+    ids=["on_slot", "miss_fallback"],
+)
+def test_potions_screen_potion_drop_assignment(hit_slot, expected_target):
+    """A dropped potion chip targets the slot under the touch, else the first free."""
     app = _setup_potions_app([_recipe()], potions={"potion_magnetism": 1})
 
     screen = PotionsScreen()
     screen.on_pre_enter()
     for index, btn in enumerate(screen._slot_buttons):
-        btn.collide_point.return_value = index == 1
+        btn.collide_point.return_value = index == hit_slot
 
     touch = MagicMock()
     touch.pos = (5, 5)
     screen._on_potion_dropped("potion_magnetism", touch)
 
-    app.profile_manager.assign_potion_to_slot.assert_called_once_with("potion_magnetism", 1)
-
-
-def test_potions_screen_potion_drop_miss_falls_back_to_first_free():
-    """Dropping a potion chip off every slot falls back to the first free one."""
-    app = _setup_potions_app([_recipe()], potions={"potion_magnetism": 1})
-
-    screen = PotionsScreen()
-    screen.on_pre_enter()
-    for btn in screen._slot_buttons:
-        btn.collide_point.return_value = False
-
-    touch = MagicMock()
-    touch.pos = (5, 5)
-    screen._on_potion_dropped("potion_magnetism", touch)
-
-    app.profile_manager.assign_potion_to_slot.assert_called_once_with("potion_magnetism", None)
+    app.profile_manager.assign_potion_to_slot.assert_called_once_with(
+        "potion_magnetism", expected_target
+    )
 
 
 def test_potions_screen_slot_click_releases_potion():

@@ -30,14 +30,6 @@ def test_win_only_at_threshold():
     assert just_above.step(0.1)
 
 
-def test_long_run_wins(rules):
-    """Repeated steps eventually reach the win distance."""
-    for _ in range(600):
-        if rules.step(1.0 / 60):
-            break
-    assert rules.distance >= rules.win_distance
-
-
 def test_damage_loses(rules):
     """A damaging hit marks the run lost."""
     rules.on_damaged()

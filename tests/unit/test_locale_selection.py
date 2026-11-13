@@ -14,6 +14,7 @@ def _set_env_locale(monkeypatch, loc, encoding="UTF-8"):
 
 def _set_unparseable_env(monkeypatch):
     """Make locale.getlocale() raise ValueError, as with an unparseable env locale."""
+
     def raise_value_error(*args):
         raise ValueError("unsupported locale setting")
 
@@ -31,57 +32,42 @@ def restore_default_gettext():
 class TestSelectLocale:
     """select_locale precedence and validation."""
 
-    def test_config_en_wins_over_cs_env(self, monkeypatch):
-        """Explicit en in config beats a Czech environment locale."""
-        _set_env_locale(monkeypatch, "cs_CZ")
-        assert localization.select_locale("en") == "en"
-
-    def test_config_cs_wins_over_en_env(self, monkeypatch):
-        """Explicit cs in config beats an English environment locale."""
-        _set_env_locale(monkeypatch, "en_US")
-        assert localization.select_locale("cs") == "cs"
-
-    def test_system_with_cs_env(self, monkeypatch):
-        """system follows a cs environment locale to cs."""
-        _set_env_locale(monkeypatch, "cs_CZ")
-        assert localization.select_locale("system") == "cs"
-
-    def test_system_with_bare_cs_env(self, monkeypatch):
-        """system with a bare 'cs' locale (no territory) resolves to cs."""
-        _set_env_locale(monkeypatch, "cs")
-        assert localization.select_locale("system") == "cs"
-
-    def test_system_with_dashed_cs_env(self, monkeypatch):
-        """system with a cs-CZ (dash-separated) locale resolves to cs."""
-        _set_env_locale(monkeypatch, "cs-CZ")
-        assert localization.select_locale("system") == "cs"
-
-    def test_system_with_non_cs_env(self, monkeypatch):
-        """system with a non-Czech environment locale falls back to en."""
-        _set_env_locale(monkeypatch, "de_DE")
-        assert localization.select_locale("system") == "en"
-
-    def test_system_with_english_env(self, monkeypatch):
-        """system with an English environment locale resolves to en."""
-        _set_env_locale(monkeypatch, "en_US")
-        assert localization.select_locale("system") == "en"
-
-    def test_system_with_unset_env(self, monkeypatch):
-        """system with no environment locale falls back to en."""
-        _set_env_locale(monkeypatch, None)
-        assert localization.select_locale("system") == "en"
+    @pytest.mark.parametrize(
+        ("config", "env", "expected"),
+        [
+            ("en", "cs_CZ", "en"),  # explicit en beats a Czech environment locale
+            ("cs", "en_US", "cs"),  # explicit cs beats an English environment locale
+            ("system", "cs_CZ", "cs"),  # system follows a cs environment locale
+            ("system", "cs", "cs"),  # bare 'cs' (no territory)
+            ("system", "cs-CZ", "cs"),  # dash-separated
+            ("system", "de_DE", "en"),  # non-Czech environment falls back to en
+            ("system", "en_US", "en"),  # English environment
+            ("system", None, "en"),  # no environment locale
+            (None, "cs_CZ", "cs"),  # missing config key behaves like system
+            (None, "de_DE", "en"),
+        ],
+        ids=[
+            "config_en_over_cs_env",
+            "config_cs_over_en_env",
+            "system_cs_env",
+            "system_bare_cs_env",
+            "system_dashed_cs_env",
+            "system_non_cs_env",
+            "system_english_env",
+            "system_unset_env",
+            "missing_key_cs_env",
+            "missing_key_non_cs_env",
+        ],
+    )
+    def test_select_locale_precedence(self, monkeypatch, config, env, expected):
+        """Explicit config beats env; system/None follow env (cs-like -> cs, else en)."""
+        _set_env_locale(monkeypatch, env)
+        assert localization.select_locale(config) == expected
 
     def test_system_with_unparseable_env(self, monkeypatch):
         """system with an unparseable environment locale falls back to en."""
         _set_unparseable_env(monkeypatch)
         assert localization.select_locale("system") == "en"
-
-    def test_missing_key_behaves_as_system(self, monkeypatch):
-        """None (missing config key) behaves exactly like system."""
-        _set_env_locale(monkeypatch, "cs_CZ")
-        assert localization.select_locale(None) == "cs"
-        _set_env_locale(monkeypatch, "de_DE")
-        assert localization.select_locale(None) == "en"
 
     @pytest.mark.parametrize("bad_value", ["cz", "fr", "EN", 123, ["cs"]])
     def test_invalid_config_value_raises(self, bad_value):

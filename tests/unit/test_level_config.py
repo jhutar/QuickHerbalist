@@ -108,123 +108,106 @@ def test_duplicate_entity_types_allowed(tmp_path):
     assert len(levels[0].entities) == 3
 
 
-def test_unknown_top_level_key_rejected(tmp_path):
-    """A not-yet-implemented option (e.g. magnetism) is a load error, not ignored."""
-    yaml_text = VALID_YAML.replace(
-        "    max_speed: 15.0\n", "    max_speed: 15.0\n    magnetism_bonuses: 0.5\n"
-    )
-    with pytest.raises(LevelConfigError, match="magnetism_bonuses"):
-        load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
-
-
-def test_unknown_key_inside_entity_rejected(tmp_path):
-    """Unknown keys inside entity items are load errors."""
-    yaml_text = VALID_YAML.replace(
-        "        interval: 1.0\n", "        interval: 1.0\n        count: 3\n"
-    )
-    with pytest.raises(
-        LevelConfigError, match="entities\\[0\\]: unknown key\\(s\\): \\['count'\\]"
-    ):
-        load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
-
-
-def test_missing_entities_rejected(tmp_path):
-    """A level without an entities list is a load error."""
-    yaml_text = (
-        VALID_YAML.replace("    entities:\n", "").replace(FLOWER_BLOCK, "").replace(STONE_BLOCK, "")
-    )
-    with pytest.raises(LevelConfigError, match="'entities' must be a non-empty list"):
-        load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
-
-
-def test_empty_entities_list_rejected(tmp_path):
-    """An empty entities list is a load error."""
-    yaml_text = (
-        VALID_YAML.replace("    entities:\n", "    entities: []\n")
-        .replace(FLOWER_BLOCK, "")
-        .replace(STONE_BLOCK, "")
-    )
-    with pytest.raises(LevelConfigError, match="'entities' must be a non-empty list"):
-        load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
-
-
-def test_empty_type_rejected(tmp_path):
-    """An empty entity type name is a load error."""
-    yaml_text = VALID_YAML.replace("      - type: flower\n", "      - type: ''\n")
-    with pytest.raises(LevelConfigError, match="'type' must be a non-empty string"):
-        load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
-
-
-def test_missing_required_key_rejected(tmp_path):
-    """Any missing required key (here: distance) is a load error."""
-    yaml_text = VALID_YAML.replace("    distance: 1000\n", "")
-    with pytest.raises(LevelConfigError, match="'distance' must be a positive number"):
-        load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
-
-
-def test_wrong_type_rejected(tmp_path):
-    """Non-numeric distance and non-string sprite names are load errors."""
-    yaml_text = VALID_YAML.replace("    distance: 1000\n", "    distance: far\n")
-    with pytest.raises(LevelConfigError, match="'distance' must be a positive number"):
-        load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
-
-
-def test_unknown_sprite_rejected(tmp_path):
-    """Sprite names not in the sprite config are load errors, named in the message."""
-    yaml_text = VALID_YAML.replace("background: grass_sprite", "background: desert_floer")
-    with pytest.raises(LevelConfigError, match="unknown sprite 'desert_floer'"):
-        load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
-
-
-def test_unknown_entity_sprite_rejected(tmp_path):
-    """Entity sprites not in the sprite config are load errors."""
-    yaml_text = VALID_YAML.replace(
-        "        sprite: stone_sprite\n", "        sprite: mushroom_sprite\n"
-    )
-    with pytest.raises(LevelConfigError, match="unknown sprite 'mushroom_sprite'"):
-        load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
-
-
-def test_duplicate_name_rejected(tmp_path):
-    """Two levels sharing a name is a load error."""
-    level = VALID_YAML.split("levels:\n")[1]
-    yaml_text = "levels:\n" + level + level
-    with pytest.raises(LevelConfigError, match="duplicate name 'meadow'"):
-        load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
-
-
-def test_negative_interval_rejected(tmp_path):
-    """Zero and negative intervals are load errors."""
-    yaml_text = VALID_YAML.replace("        interval: 3.0\n", "        interval: -1.0\n")
-    with pytest.raises(
-        LevelConfigError, match="entities\\[1\\]: 'interval' must be a positive number"
-    ):
-        load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
-
-
-def test_invalid_ramp_to_rejected(tmp_path):
-    """A zero or negative ramp_to is a load error."""
-    yaml_text = VALID_YAML.replace("        ramp_to: 0.05\n", "        ramp_to: -1\n")
-    with pytest.raises(LevelConfigError, match="'ramp_to' must be a positive number"):
-        load_levels(_write(tmp_path, yaml_text), SPRITE_NAMES)
-
-
-def test_empty_levels_list_rejected(tmp_path):
-    """An empty levels list is a load error."""
-    with pytest.raises(LevelConfigError, match="non-empty 'levels' list"):
-        load_levels(_write(tmp_path, "levels: []\n"), SPRITE_NAMES)
-
-
-def test_missing_file_rejected(tmp_path):
-    """A missing levels file is a load error, not a silent default."""
-    with pytest.raises(LevelConfigError, match="file not found"):
-        load_levels(str(tmp_path / "nope.yaml"), SPRITE_NAMES)
-
-
-def test_malformed_yaml_rejected(tmp_path):
-    """Broken YAML is a load error, not a crash with a raw yaml exception."""
-    with pytest.raises(LevelConfigError, match="YAML parse error"):
-        load_levels(_write(tmp_path, "levels: [unclosed\n"), SPRITE_NAMES)
+@pytest.mark.parametrize(
+    ("yaml_text", "expected_error"),
+    [
+        (None, "file not found"),  # missing file, not a silent default
+        ("levels: [unclosed\n", "YAML parse error"),  # broken YAML, not a raw exception
+        ("levels: []\n", "non-empty 'levels' list"),  # empty levels list
+        # a not-yet-implemented option (e.g. magnetism) is an error, not ignored
+        (
+            VALID_YAML.replace(
+                "    max_speed: 15.0\n", "    max_speed: 15.0\n    magnetism_bonuses: 0.5\n"
+            ),
+            "magnetism_bonuses",
+        ),
+        # unknown keys inside entity items
+        (
+            VALID_YAML.replace(
+                "        interval: 1.0\n", "        interval: 1.0\n        count: 3\n"
+            ),
+            "entities\\[0\\]: unknown key\\(s\\)",
+        ),
+        # level without an entities list
+        (
+            VALID_YAML.replace("    entities:\n", "")
+            .replace(FLOWER_BLOCK, "")
+            .replace(STONE_BLOCK, ""),
+            "'entities' must be a non-empty list",
+        ),
+        # empty entities list
+        (
+            VALID_YAML.replace("    entities:\n", "    entities: []\n")
+            .replace(FLOWER_BLOCK, "")
+            .replace(STONE_BLOCK, ""),
+            "'entities' must be a non-empty list",
+        ),
+        # empty entity type name
+        (
+            VALID_YAML.replace("      - type: flower\n", "      - type: ''\n"),
+            "'type' must be a non-empty string",
+        ),
+        # missing required key (distance)
+        (
+            VALID_YAML.replace("    distance: 1000\n", ""),
+            "'distance' must be a positive number",
+        ),
+        # non-numeric distance
+        (
+            VALID_YAML.replace("    distance: 1000\n", "    distance: far\n"),
+            "'distance' must be a positive number",
+        ),
+        # background sprite not in the sprite config, named in the message
+        (
+            VALID_YAML.replace("background: grass_sprite", "background: desert_floer"),
+            "unknown sprite 'desert_floer'",
+        ),
+        # entity sprite not in the sprite config
+        (
+            VALID_YAML.replace(
+                "        sprite: stone_sprite\n", "        sprite: mushroom_sprite\n"
+            ),
+            "unknown sprite 'mushroom_sprite'",
+        ),
+        # two levels sharing a name
+        ("levels:\n" + VALID_YAML.split("levels:\n")[1] * 2, "duplicate name 'meadow'"),
+        # negative interval
+        (
+            VALID_YAML.replace("        interval: 3.0\n", "        interval: -1.0\n"),
+            "entities\\[1\\]: 'interval' must be a positive number",
+        ),
+        # negative ramp_to
+        (
+            VALID_YAML.replace("        ramp_to: 0.05\n", "        ramp_to: -1\n"),
+            "'ramp_to' must be a positive number",
+        ),
+    ],
+    ids=[
+        "missing_file",
+        "malformed_yaml",
+        "empty_levels_list",
+        "unknown_top_level_key",
+        "unknown_key_inside_entity",
+        "missing_entities",
+        "empty_entities_list",
+        "empty_type",
+        "missing_required_key",
+        "wrong_type",
+        "unknown_sprite",
+        "unknown_entity_sprite",
+        "duplicate_name",
+        "negative_interval",
+        "invalid_ramp_to",
+    ],
+)
+def test_invalid_levels_rejected(tmp_path, yaml_text, expected_error):
+    """Any invalid levels file is a load error naming the problem, never a silent default."""
+    if yaml_text is None:
+        path = str(tmp_path / "nope.yaml")
+    else:
+        path = _write(tmp_path, yaml_text)
+    with pytest.raises(LevelConfigError, match=expected_error):
+        load_levels(path, SPRITE_NAMES)
 
 
 def test_all_errors_collected(tmp_path):

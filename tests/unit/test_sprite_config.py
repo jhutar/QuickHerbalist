@@ -74,77 +74,88 @@ def test_resolve_frames_success(config):
     ]
 
 
-def test_resolve_frames_missing_sprite(config):
-    with pytest.raises(ValueError, match="not found"):
-        config.resolve_frames("non_existent")
-
-
-def test_resolve_frames_no_frames(config_files):
-    yaml_path, atlas_path = config_files
-    with open(yaml_path, "w", encoding="utf-8") as f:
-        f.write("sprites: { hero_run: { frames: [] } }")
-    config = SpriteConfig(yaml_path, atlas_path)
-    with pytest.raises(ValueError, match="No frames for sprite"):
-        config.resolve_frames("hero_run")
-
-
-def test_resolve_frames_frame_without_atlas_id(config_files):
-    yaml_path, atlas_path = config_files
-    with open(yaml_path, "w", encoding="utf-8") as f:
-        yaml.dump({"sprites": {"hero_run": {"frames": [{"duration_ms": 100}]}}}, f)
-    config = SpriteConfig(yaml_path, atlas_path)
-    with pytest.raises(ValueError, match="no atlas_id"):
-        config.resolve_frames("hero_run")
-
-
-def test_resolve_frames_unknown_atlas_id_raises_no_guessing(config_files):
-    """Missing atlas region must raise, never fall back to a guessed image."""
-    yaml_path, atlas_path = config_files
-    with open(atlas_path, "w", encoding="utf-8") as f:
-        json.dump({"hero.png": {}}, f)
-    config = SpriteConfig(yaml_path, atlas_path)
-    with pytest.raises(ValueError, match="not found"):
-        config.resolve_frames("hero_run")
-
-
-def test_resolve_frames_invalid_region_raises(config_files):
-    yaml_path, atlas_path = config_files
-    with open(atlas_path, "w", encoding="utf-8") as f:
-        json.dump({"hero.png": {"frame_0": [0, 0, 32]}}, f)
-    config = SpriteConfig(yaml_path, atlas_path)
-    with pytest.raises(ValueError, match="Invalid atlas region"):
-        config.resolve_frames("hero_run")
-
-
-def test_resolve_frames_missing_duration_ms_raises(config_files):
-    yaml_path, atlas_path = config_files
-    with open(yaml_path, "w", encoding="utf-8") as f:
-        yaml.dump({"sprites": {"hero_run": {"frames": [{"atlas_id": "frame_0"}]}}}, f)
-    config = SpriteConfig(yaml_path, atlas_path)
-    with pytest.raises(ValueError, match="duration_ms"):
-        config.resolve_frames("hero_run")
-
-
-def test_resolve_frames_zero_duration_ms_raises(config_files):
-    yaml_path, atlas_path = config_files
-    with open(yaml_path, "w", encoding="utf-8") as f:
-        yaml.dump(
+@pytest.mark.parametrize(
+    ("sprite", "yaml_data", "atlas_data", "expected_error"),
+    [
+        ("non_existent", None, None, "not found"),  # sprite missing from yaml
+        (
+            "hero_run",
+            {"sprites": {"hero_run": {"frames": []}}},
+            None,
+            "No frames for sprite",
+        ),  # sprite with an empty frame list
+        (
+            "hero_run",
+            {"sprites": {"hero_run": {"frames": [{"duration_ms": 100}]}}},
+            None,
+            "no atlas_id",
+        ),  # frame without atlas_id
+        (
+            "hero_run",
+            None,
+            {"hero.png": {}},
+            "not found",
+        ),  # unknown atlas region: raise, never fall back to a guessed image
+        (
+            "hero_run",
+            None,
+            {"hero.png": {"frame_0": [0, 0, 32]}},
+            "Invalid atlas region",
+        ),  # atlas rect with the wrong number of values
+        (
+            "hero_run",
+            {"sprites": {"hero_run": {"frames": [{"atlas_id": "frame_0"}]}}},
+            None,
+            "duration_ms",
+        ),  # frame without duration_ms
+        (
+            "hero_run",
             {"sprites": {"hero_run": {"frames": [{"atlas_id": "frame_0", "duration_ms": 0}]}}},
-            f,
-        )
+            None,
+            "duration_ms",
+        ),  # zero duration_ms
+    ],
+    ids=[
+        "missing_sprite",
+        "no_frames",
+        "frame_without_atlas_id",
+        "unknown_atlas_id",
+        "invalid_region",
+        "missing_duration_ms",
+        "zero_duration_ms",
+    ],
+)
+def test_resolve_frames_invalid_raises(config_files, sprite, yaml_data, atlas_data, expected_error):
+    """Malformed sprite/frame/atlas data raises ValueError, never a guessed image."""
+    yaml_path, atlas_path = config_files
+    if yaml_data is not None:
+        with open(yaml_path, "w", encoding="utf-8") as f:
+            yaml.dump(yaml_data, f)
+    if atlas_data is not None:
+        with open(atlas_path, "w", encoding="utf-8") as f:
+            json.dump(atlas_data, f)
     config = SpriteConfig(yaml_path, atlas_path)
-    with pytest.raises(ValueError, match="duration_ms"):
-        config.resolve_frames("hero_run")
+    with pytest.raises(ValueError, match=expected_error):
+        config.resolve_frames(sprite)
 
 
 def _write_pair(temp_assets_dir, yaml_data, atlas_data):
-    """Write a yaml/atlas pair and return (yaml_path, atlas_path) as strings."""
+    """Write a yaml/atlas pair and return (yaml_path, atlas_path) as strings.
+
+    Each side may be a data structure (dumped) or a raw string (written verbatim).
+    """
     yaml_path = temp_assets_dir / "sprites.yaml"
     atlas_path = temp_assets_dir / "sprites.atlas"
     with open(yaml_path, "w", encoding="utf-8") as f:
-        yaml.dump(yaml_data, f)
+        if isinstance(yaml_data, str):
+            f.write(yaml_data)
+        else:
+            yaml.dump(yaml_data, f)
     with open(atlas_path, "w", encoding="utf-8") as f:
-        json.dump(atlas_data, f)
+        if isinstance(atlas_data, str):
+            f.write(atlas_data)
+        else:
+            json.dump(atlas_data, f)
     return str(yaml_path), str(atlas_path)
 
 
@@ -155,87 +166,59 @@ def temp_assets_dir(tmp_path):
     return assets_dir
 
 
-def test_validate_success(temp_assets_dir):
-    yaml_path, atlas_path = _write_pair(
-        temp_assets_dir,
-        {"sprites": {"hero": {"frames": []}}},
-        {"frames": []},
-    )
-    assert SpriteConfig.validate(yaml_path, atlas_path) is True
-
-
-def test_validate_unknown_atlas_id(temp_assets_dir):
-    # YAML refers to an atlas_id that doesn't exist in the atlas
-    yaml_path, atlas_path = _write_pair(
-        temp_assets_dir,
-        {"sprites": {"hero": {"frames": [{"atlas_id": "missing_atlas"}]}}},
-        {"frames": []},
-    )
-    assert SpriteConfig.validate(yaml_path, atlas_path) is False
-
-
-def test_validate_malformed_yaml(temp_assets_dir):
-    yaml_path = temp_assets_dir / "sprites.yaml"
-    atlas_path = temp_assets_dir / "sprites.atlas"
-    with open(yaml_path, "w", encoding="utf-8") as f:
-        f.write("invalid: yaml: : :")
-    with open(atlas_path, "w", encoding="utf-8") as f:
-        json.dump({}, f)
-    assert SpriteConfig.validate(str(yaml_path), str(atlas_path)) is False
-
-
-def test_validate_malformed_atlas(temp_assets_dir):
-    yaml_path = temp_assets_dir / "sprites.yaml"
-    atlas_path = temp_assets_dir / "sprites.atlas"
-    with open(yaml_path, "w", encoding="utf-8") as f:
-        yaml.dump({"sprites": {}}, f)
-    with open(atlas_path, "w", encoding="utf-8") as f:
-        f.write("{invalid json}")
-    assert SpriteConfig.validate(str(yaml_path), str(atlas_path)) is False
-
-
-def test_validate_sprites_not_dict(temp_assets_dir):
-    # sprites is a list, not a dict
-    yaml_path, atlas_path = _write_pair(temp_assets_dir, {"sprites": []}, {})
-    assert SpriteConfig.validate(yaml_path, atlas_path) is False
-
-
-def test_validate_frame_missing_atlas_id(temp_assets_dir):
-    yaml_path, atlas_path = _write_pair(
-        temp_assets_dir,
-        {"sprites": {"hero": {"frames": [{"duration_ms": 100}]}}},
-        {"hero_region": {"hero_id": {}}},
-    )
-    assert SpriteConfig.validate(yaml_path, atlas_path) is False
-
-
-def test_validate_frame_missing_duration_ms(temp_assets_dir):
-    yaml_path, atlas_path = _write_pair(
-        temp_assets_dir,
-        {"sprites": {"hero": {"frames": [{"atlas_id": "reg1"}]}}},
-        {"img.png": {"reg1": [0, 0, 32, 32]}},
-    )
-    assert SpriteConfig.validate(yaml_path, atlas_path) is False
-
-
-def test_validate_invalid_duration(temp_assets_dir):
-    # duration_ms is 0
-    yaml_path, atlas_path = _write_pair(
-        temp_assets_dir,
-        {"sprites": {"hero": {"frames": [{"atlas_id": "reg1", "duration_ms": 0}]}}},
-        {"img.png": {"reg1": [0, 0, 32, 32]}},
-    )
-    assert SpriteConfig.validate(yaml_path, atlas_path) is False
-
-
-def test_validate_invalid_atlas_rect(temp_assets_dir):
-    # Atlas rect has negative value
-    yaml_path, atlas_path = _write_pair(
-        temp_assets_dir,
-        {"sprites": {"hero": {"frames": [{"atlas_id": "reg1", "duration_ms": 100}]}}},
-        {"img.png": {"reg1": [0, -1, 32, 32]}},
-    )
-    assert SpriteConfig.validate(yaml_path, atlas_path) is False
+@pytest.mark.parametrize(
+    ("yaml_data", "atlas_data", "expected"),
+    [
+        ({"sprites": {"hero": {"frames": []}}}, {"frames": []}, True),  # consistent pair
+        # yaml refers to an atlas_id that doesn't exist in the atlas
+        ({"sprites": {"hero": {"frames": [{"atlas_id": "missing_atlas"}]}}}, {"frames": []}, False),
+        # broken yaml
+        ("invalid: yaml: : :", {}, False),
+        # broken atlas json
+        ({"sprites": {}}, "{invalid json}", False),
+        # sprites is a list, not a dict
+        ({"sprites": []}, {}, False),
+        # frame without atlas_id
+        (
+            {"sprites": {"hero": {"frames": [{"duration_ms": 100}]}}},
+            {"hero_region": {"hero_id": {}}},
+            False,
+        ),
+        # frame without duration_ms
+        (
+            {"sprites": {"hero": {"frames": [{"atlas_id": "reg1"}]}}},
+            {"img.png": {"reg1": [0, 0, 32, 32]}},
+            False,
+        ),
+        # duration_ms is 0
+        (
+            {"sprites": {"hero": {"frames": [{"atlas_id": "reg1", "duration_ms": 0}]}}},
+            {"img.png": {"reg1": [0, 0, 32, 32]}},
+            False,
+        ),
+        # atlas rect has a negative value
+        (
+            {"sprites": {"hero": {"frames": [{"atlas_id": "reg1", "duration_ms": 100}]}}},
+            {"img.png": {"reg1": [0, -1, 32, 32]}},
+            False,
+        ),
+    ],
+    ids=[
+        "success",
+        "unknown_atlas_id",
+        "malformed_yaml",
+        "malformed_atlas",
+        "sprites_not_dict",
+        "frame_missing_atlas_id",
+        "frame_missing_duration_ms",
+        "invalid_duration",
+        "invalid_atlas_rect",
+    ],
+)
+def test_validate_outcome(temp_assets_dir, yaml_data, atlas_data, expected):
+    """validate() returns True only for fully consistent yaml/atlas pairs."""
+    yaml_path, atlas_path = _write_pair(temp_assets_dir, yaml_data, atlas_data)
+    assert SpriteConfig.validate(yaml_path, atlas_path) is expected
 
 
 def test_create_sprite_success(config):

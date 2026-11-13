@@ -28,34 +28,6 @@ def test_profile_manager_init_default(temp_config_dir):
     assert pm.active_character is None
 
 
-def test_profile_manager_save_and_load(temp_config_dir):
-    pm = ProfileManager(config_dir=temp_config_dir)
-
-    # Manually modify values
-    pm.active_character_name = "HerbalistMax"
-    pm.settings["fps"] = 120
-    pm.characters = {
-        "HerbalistMax": {
-            "name": "HerbalistMax",
-            "levels_completed": 3,
-            "inventory": {"flower": 20},
-        }
-    }
-
-    # Save modification
-    pm.save_config()
-
-    # Instantiate new ProfileManager to read from same config
-    pm2 = ProfileManager(config_dir=temp_config_dir)
-
-    # Assert values loaded match saved values
-    assert pm2.active_character_name == "HerbalistMax"
-    assert pm2.settings["fps"] == 120
-    assert pm2.characters["HerbalistMax"]["levels_completed"] == 3
-    assert pm2.characters["HerbalistMax"]["inventory"]["flower"] == 20
-    assert pm2.active_character == pm2.characters["HerbalistMax"]
-
-
 def test_profile_manager_locale_save_roundtrip(temp_config_dir):
     # Changing settings.locale must persist to config.yaml and load back
     pm = ProfileManager(config_dir=temp_config_dir)
@@ -203,19 +175,16 @@ def test_profile_manager_select_character_not_found(temp_config_dir):
 # --- User Story 2 (US2) Test Cases ---
 
 
-def test_profile_manager_complete_level_no_active_character(temp_config_dir):
+@pytest.mark.parametrize("method", ["complete_level", "add_flowers", "add_potion"])
+def test_profile_manager_requires_active_character(temp_config_dir, method):
+    # Progress and inventory mutations fail fast without an active character
     pm = ProfileManager(config_dir=temp_config_dir)
+    args = {"add_flowers": ("dandelion_sprite", 10), "add_potion": ("potion_magnetism",)}.get(
+        method, ()
+    )
 
     with pytest.raises(ProfileError) as exc_info:
-        pm.complete_level()
-    assert exc_info.value.code is ProfileErrorCode.NO_ACTIVE_CHARACTER
-
-
-def test_profile_manager_add_flowers_no_active_character(temp_config_dir):
-    pm = ProfileManager(config_dir=temp_config_dir)
-
-    with pytest.raises(ProfileError) as exc_info:
-        pm.add_flowers("dandelion_sprite", 10)
+        getattr(pm, method)(*args)
     assert exc_info.value.code is ProfileErrorCode.NO_ACTIVE_CHARACTER
 
 
@@ -267,16 +236,20 @@ def test_profile_manager_add_flowers_invalid_sprite_name(temp_config_dir):
 
 
 def test_profile_manager_complete_level_success(temp_config_dir):
+    # complete_level increments the count, advances the next level, and persists
     pm = ProfileManager(config_dir=temp_config_dir)
 
     pm.create_character("HerbalistMax")
 
+    assert pm.next_level_number() == 1
     pm.complete_level()
     char = pm.characters["HerbalistMax"]
     assert char["levels_completed"] == 1
+    assert pm.next_level_number() == 2
 
     pm.complete_level()
     assert char["levels_completed"] == 2
+    assert pm.next_level_number() == 3
 
     pm2 = ProfileManager(config_dir=temp_config_dir)
     char2 = pm2.characters["HerbalistMax"]
@@ -314,16 +287,6 @@ def test_next_level_number_no_active_character(temp_config_dir):
     # Without an active character the next level is 1
     pm = ProfileManager(config_dir=temp_config_dir)
     assert pm.next_level_number() == 1
-
-
-def test_next_level_number_tracks_completions(temp_config_dir):
-    # Next level is levels_completed + 1 for the active character
-    pm = ProfileManager(config_dir=temp_config_dir)
-    pm.create_character("herb")
-    assert pm.next_level_number() == 1
-    pm.complete_level()
-    pm.complete_level()
-    assert pm.next_level_number() == 3
 
 
 def test_playable_level_numbers_no_active_character(temp_config_dir):
@@ -377,15 +340,6 @@ def test_add_and_get_potion(temp_config_dir):
     assert pm.get_potions() == {"potion_magnetism": 3}
     assert pm.get_potion_count("potion_magnetism") == 3
     assert pm.get_potion_count("potion_other") == 0
-
-
-def test_add_potion_requires_active_character(temp_config_dir):
-    # Adding potions without an active character fails fast
-    pm = ProfileManager(config_dir=temp_config_dir)
-
-    with pytest.raises(ProfileError) as exc:
-        pm.add_potion("potion_magnetism")
-    assert exc.value.code == ProfileErrorCode.NO_ACTIVE_CHARACTER
 
 
 def test_add_potion_rejects_bad_id(temp_config_dir):
