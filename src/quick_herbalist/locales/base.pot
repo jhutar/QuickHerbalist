@@ -131,6 +131,9 @@ msgstr ""
 msgid "Quit"
 msgstr ""
 
+msgid "Restart the game to apply language changes."
+msgstr ""
+
 msgid "Rock"
 msgstr ""
 

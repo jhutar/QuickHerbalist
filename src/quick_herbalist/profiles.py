@@ -65,7 +65,12 @@ class ProfileManager:
         """Return default configuration dictionary."""
         return {
             "active_character": None,
-            "settings": {"fps": 60, "win_distance": 1000.0, "game_speed_start": 3.0},
+            "settings": {
+                "fps": 60,
+                "win_distance": 1000.0,
+                "game_speed_start": 3.0,
+                "locale": "system",
+            },
             "characters": {},
         }
 

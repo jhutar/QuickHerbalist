@@ -23,6 +23,7 @@ def test_profile_manager_init_default(temp_config_dir):
     assert pm.settings["fps"] == 60
     assert pm.settings["win_distance"] == 1000.0
     assert pm.settings["game_speed_start"] == 3.0
+    assert pm.settings["locale"] == "system"
     assert pm.characters == {}
     assert pm.active_character is None
 
@@ -53,6 +54,30 @@ def test_profile_manager_save_and_load(temp_config_dir):
     assert pm2.characters["HerbalistMax"]["levels_completed"] == 3
     assert pm2.characters["HerbalistMax"]["inventory"]["flower"] == 20
     assert pm2.active_character == pm2.characters["HerbalistMax"]
+
+
+def test_profile_manager_locale_save_roundtrip(temp_config_dir):
+    # Changing settings.locale must persist to config.yaml and load back
+    pm = ProfileManager(config_dir=temp_config_dir)
+    pm.settings["locale"] = "cs"
+    pm.save_config()
+
+    pm2 = ProfileManager(config_dir=temp_config_dir)
+
+    assert pm2.settings["locale"] == "cs"
+    with open(pm2.config_path, encoding="utf-8") as f:
+        assert yaml.safe_load(f)["settings"]["locale"] == "cs"
+
+
+def test_profile_manager_locale_default_system(temp_config_dir):
+    # Config without the locale key must fall back to the system default
+    config_path = os.path.join(temp_config_dir, "config.yaml")
+    with open(config_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump({"active_character": None, "settings": {"fps": 60}}, f)
+
+    pm = ProfileManager(config_dir=temp_config_dir)
+
+    assert pm.settings["locale"] == "system"
 
 
 def test_profile_manager_fallback_on_corrupt_yaml(temp_config_dir):

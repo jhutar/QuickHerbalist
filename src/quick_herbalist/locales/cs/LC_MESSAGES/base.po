@@ -119,6 +119,10 @@ msgstr "Kameny jsou překážky, které musíš obejít. Pokud do kamene narazí
 msgid "Rock"
 msgstr "Skála"
 
+#: menu.py
+msgid "Restart the game to apply language changes."
+msgstr "Restartuj hru pro aplikování změny jazyka."
+
 #: hints.py
 msgid "Rocks are huge obstacles you cannot pass. If you run into them, your mission is over."
 msgstr "Skály jsou obrovské překážky, kterými neprojdeš. Pokud do skály narazíš, tvá mise je skončena."

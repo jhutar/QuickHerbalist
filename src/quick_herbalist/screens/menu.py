@@ -8,6 +8,10 @@ from quick_herbalist.localization import _
 from quick_herbalist.profiles import ProfileError, ProfileErrorCode
 from quick_herbalist.screens.base import KeyboardScreen, load_screen_kv
 
+# Locale dropdown: option label <-> settings.locale value
+_LOCALE_TO_OPTION = {"en": "EN", "cs": "CS", "system": "SYS"}
+_OPTION_TO_LOCALE = {"EN": "en", "CS": "cs", "SYS": "system"}
+
 
 class MenuScreen(KeyboardScreen):
     """Main menu screen."""
@@ -25,6 +29,19 @@ class MenuScreen(KeyboardScreen):
         self.ids.new_btn.text = _("New Character")
         self.ids.load_btn.text = _("Load Character")
         self.ids.quit_btn.text = _("Quit")
+        self.ids.locale_options.value = _LOCALE_TO_OPTION.get(
+            app.profile_manager.settings.get("locale"), "SYS"
+        )
+        self.ids.locale_hint_lbl.text = ""
+
+    def _on_locale_selected(self):
+        """Persist the selected locale and show the restart-to-apply hint."""
+        app = App.get_running_app()
+        app.profile_manager.settings["locale"] = _OPTION_TO_LOCALE.get(
+            self.ids.locale_options.value, "system"
+        )
+        app.profile_manager.save_config()
+        self.ids.locale_hint_lbl.text = _("Restart the game to apply language changes.")
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
         """Handle menu keyboard shortcuts."""

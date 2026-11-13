@@ -181,6 +181,37 @@ def test_main_menu_start_goes_to_game_menu():
     assert screen.manager.current == "game_menu"
 
 
+def test_main_menu_locale_dropdown_reflects_saved_config():
+    """Dropdown shows the saved settings.locale; unset defaults to SYS."""
+    app = _make_app()
+    app.profile_manager.settings = {"locale": "cs"}
+
+    screen = MenuScreen()
+    screen.on_pre_enter()
+
+    assert screen.ids.locale_options.value == "CS"
+
+    app.profile_manager.settings = {}
+    screen.on_pre_enter()
+    assert screen.ids.locale_options.value == "SYS"
+
+
+def test_main_menu_locale_selection_persists_and_hints_restart():
+    """Selecting a locale saves settings.locale immediately and shows the hint."""
+    app = _make_app()
+    app.profile_manager.settings = {"locale": "system"}
+    app.profile_manager.save_config.reset_mock()
+
+    screen = MenuScreen()
+    screen.on_pre_enter()
+    screen.ids.locale_options.value = "CS"
+    screen._on_locale_selected()
+
+    assert app.profile_manager.settings["locale"] == "cs"
+    app.profile_manager.save_config.assert_called_once_with()
+    assert screen.ids.locale_hint_lbl.text == "Restart the game to apply language changes."
+
+
 def test_game_menu_s_key_starts_run():
     """Pressing 's' on the hub must go straight into the game at the next level."""
     app = _make_app(next_level=3)

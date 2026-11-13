@@ -119,6 +119,10 @@ msgstr ""
 msgid "Rock"
 msgstr ""
 
+#: menu.py
+msgid "Restart the game to apply language changes."
+msgstr ""
+
 #: hints.py
 msgid "Rocks are huge obstacles you cannot pass. If you run into them, your mission is over."
 msgstr ""

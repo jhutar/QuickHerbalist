@@ -49,6 +49,21 @@
                 height: 50
                 font_size: 18
                 on_release: root.manager.current = 'load_character'
+        OptionMenu:
+            id: locale_options
+            options: ['EN', 'CS', 'SYS']
+            size_hint_x: 0.4
+            size_hint_y: None
+            height: 50
+            pos_hint: {'center_x': 0.5}
+            font_size: 18
+            on_release: root._on_locale_selected()
+        Label:
+            id: locale_hint_lbl
+            font_size: 18
+            color: 1, 0.8, 0.3, 1
+            halign: 'center'
+            text: ''
         Button:
             id: quit_btn
             size_hint_x: 0.4
