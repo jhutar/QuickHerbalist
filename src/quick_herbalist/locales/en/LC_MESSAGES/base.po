@@ -142,3 +142,7 @@ msgstr ""
 #: menu.py
 msgid "Show in-game hints"
 msgstr ""
+
+#: menu.py
+msgid "Tutorial popups shown the first time you encounter each game entity."
+msgstr ""

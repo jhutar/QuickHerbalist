@@ -114,6 +114,7 @@ from quick_herbalist.screens import (  # noqa: E402
     GameWonScreen,
     GreenhouseScreen,
     MenuScreen,
+    NewCharacterScreen,
     PotionsScreen,
 )
 
@@ -216,6 +217,18 @@ def test_greenhouse_back_button_labeled_game_menu():
     screen.on_pre_enter()
 
     assert screen.ids.back_btn.text == "Back to Game Menu"
+
+
+def test_new_character_hints_checkbox_has_description():
+    """New-character hints checkbox must be accompanied by a description label."""
+    _make_app()
+    screen = NewCharacterScreen()
+    screen.on_pre_enter()
+
+    assert screen.ids.hints_checkbox.text == "Show in-game hints"
+    assert screen.ids.hints_desc.text == (
+        "Tutorial popups shown the first time you encounter each game entity."
+    )
 
 
 def test_game_won_next_level_starts_next_level():

@@ -111,6 +111,9 @@ class NewCharacterScreen(Screen):
         self.ids.name_input.text = ""
         self.ids.hints_checkbox.active = True
         self.ids.hints_checkbox.text = _("Show in-game hints")
+        self.ids.hints_desc.text = _(
+            "Tutorial popups shown the first time you encounter each game entity."
+        )
         self.ids.error_label.text = ""
         self.ids.confirm_btn.text = _("Confirm")
 
