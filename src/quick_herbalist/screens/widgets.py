@@ -76,6 +76,8 @@ class OptionMenu(Widget):
     A full-window catcher swallows outside touches and closes the list.
     """
 
+    __events__ = ["on_select"]
+
     def __init__(self, **kwargs):
         """Build the header button and store the dropdown options."""
         self.options = kwargs.pop("options", [])
@@ -100,6 +102,9 @@ class OptionMenu(Widget):
         """Update the selected option and the header text."""
         self._value = new_value
         self._header.text = str(new_value)
+
+    def on_select(self):
+        """Default handler for the on_select event."""
 
     def _sync_header(self, *args):
         """Keep the header button covering the whole OptionMenu area."""
