@@ -90,6 +90,7 @@ kivy_uix_floatlayout_module.FloatLayout = RealWidget
 kivy_uix_image_module.Image = RealWidget
 kivy_uix_label_module.Label = MagicMock()
 kivy_clock_module.Clock = MagicMock()
+kivy_graphics_module.Color = MagicMock()
 kivy_graphics_module.Rectangle = MagicMock()
 
 sys.modules["kivy.uix.boxlayout"] = kivy_boxlayout_module

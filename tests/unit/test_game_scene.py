@@ -118,6 +118,7 @@ sys.modules["kivy.graphics"] = kivy_graphics_module
 
 kivy_app_module.App = MagicMock()
 kivy_clock_module.Clock = MagicMock()
+kivy_graphics_module.Color = MagicMock()
 kivy_graphics_module.Rectangle = MagicMock()
 kivy_label_module.Label = MagicMock()
 
@@ -137,7 +138,7 @@ from quick_herbalist.game import (  # noqa: E402
     Stone,
 )
 from quick_herbalist.game.effects import ActiveEffect, MagnetEffect  # noqa: E402
-from quick_herbalist.game.hints import ENTITY_HINTS, HintBox, hint_text  # noqa: E402
+from quick_herbalist.game.hints import _BG, ENTITY_HINTS, HintBox, hint_text  # noqa: E402
 
 
 def _make_sprite_manager():
@@ -886,6 +887,14 @@ def test_stop_game_closes_open_hint():
 
     assert view.hint_active is False
     assert view._hint_queue == []
+
+
+def test_hint_box_has_solid_background():
+    """Hint box must paint a solid background covering the whole box rect."""
+    box = HintBox(_make_sprite_manager(), "stone_sprite", "Stone", "desc", on_close=lambda: None)
+
+    assert box.bg_rect == box.box_rect
+    assert _BG[3] == 1.0  # solid, not translucent
 
 
 def test_hint_box_outside_touch_swallowed():

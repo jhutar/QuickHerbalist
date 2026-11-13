@@ -5,6 +5,7 @@ pause/queue; this module only carries the hint text per entity type and the
 HintBox widget that renders one hint.
 """
 
+from kivy.graphics import Color, Rectangle
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 
@@ -46,6 +47,8 @@ CLOSE_BTN_SIZE = 48
 _TITLE_FONT = 28
 _DESC_FONT = 18
 _WHITE = (1, 1, 1, 1)
+# Opaque fill so hint text never sits on top of the game scene.
+_BG = (0.1, 0.1, 0.1, 1.0)
 
 
 def hint_text(entity_type):
@@ -57,10 +60,11 @@ def hint_text(entity_type):
 class HintBox(Widget):
     """Centered tutorial popup for one entity, shown while the run is paused.
 
-    Layout: entity image left, title upper-right, description lower-right,
-    cross button in the upper-right corner. Closes via the cross button or
-    keyboard (Esc/Enter/Space, handled by the scene); any other touch is
-    swallowed while open so no game input gets through.
+    Layout: solid dark background filling the box, entity image left,
+    title upper-right, description lower-right, cross button in the
+    upper-right corner. Closes via the cross button or keyboard
+    (Esc/Enter/Space, handled by the scene); any other touch is swallowed
+    while open so no game input gets through.
     """
 
     def __init__(self, sprite_manager, sprite_name, title, description, on_close, **kwargs):
@@ -76,6 +80,11 @@ class HintBox(Widget):
             CLOSE_BTN_SIZE,
             CLOSE_BTN_SIZE,
         )
+        # Solid background behind the box for text readability.
+        self.bg_rect = (BOX_X, BOX_Y, BOX_W, BOX_H)
+        with self.canvas:
+            Color(*_BG)
+            Rectangle(pos=self.bg_rect[:2], size=self.bg_rect[2:4])
 
         image = sprite_manager.get(sprite_name)
         image.pos = (BOX_X + 20, BOX_Y + (BOX_H - IMAGE_SIZE) / 2)
