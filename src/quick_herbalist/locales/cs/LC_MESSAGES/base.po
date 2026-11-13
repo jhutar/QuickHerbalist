@@ -1,152 +1,192 @@
-# Quick Herbalist translations
-# Copyright (C) YEAR ORGANIZATION
-# Jan Hutar <jhutar@seznam.cz>, 2025.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: 0.1\n"
-"POT-Creation-Date: 2025-08-10 21:45+0200\n"
-"PO-Revision-Date: 2025-08-10 21:45+0200\n"
-"Last-Translator: Jan Hutar <jhutar@seznam.cz>\n"
-"Language-Team: Jan Hutar <jhutar@seznam.cz>\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Generated-By: pygettext.py 1.5\n"
+"content-transfer-encoding: 8bit\n"
+"content-type: text/plain; charset=UTF-8\n"
+"generated-by: manual sync from base.pot\n"
+"language: cs\n"
+"language-team: Jan Hutar <jhutar@seznam.cz>\n"
+"last-translator: Jan Hutar <jhutar@seznam.cz>\n"
+"mime-version: 1.0\n"
+"po-revision-date: 2026-11-13\n"
+"project-id-version: 0.1\n"
 
+msgid "Active Character: "
+msgstr "Aktivní postava: "
 
-#: game.py:16 game.py:207
-msgid "Quick Herbalist"
-msgstr "Rychlá bylinkářka"
-
-#: game.py:211
-msgid "Press 's' for start"
-msgstr "Stiskni 's' pro začátek"
-
-#: game.py:251 game.py:280
-msgid "Collected: "
-msgstr "Nasbíráno: "
-
-#: game.py:252 game.py:281
-msgid "Distance: "
-msgstr "Vzdálenost: "
-
-#: game.py:261
-msgid "Do you want to quit?"
-msgstr "Chceš skončit?"
-
-#: game.py:265
-msgid "Press 's' to continue"
-msgstr "Stiskni 's' pro pokračování"
-
-#: game.py:269
-msgid "Press 'q' to quit"
-msgstr "Stiskni 'q' pro ukončení"
-
-#: game.py:279
-msgid "GAME OVER!"
-msgstr "KONEC HRY!"
-
-#: screens.py
-msgid "dandelion_sprite"
-msgstr "Pampeliška"
-
-#: screens.py
-msgid "bluebell_sprite"
-msgstr "Zvonkovka"
-
-#: screens.py
-msgid "Potion Crafting"
-msgstr "Vytváření lektvarů"
-
-#: screens.py
 msgid "Back to Game Menu"
 msgstr "Zpět do herního menu"
 
-#: screens.py
-msgid "Game Menu"
-msgstr "Herní menu"
-
-#: screens.py
 msgid "Back to Main Menu"
 msgstr "Zpět do hlavního menu"
 
-#: screens.py
-msgid "Drag onto cauldron to mix"
-msgstr "Přetáhni do hrnce pro promíchání"
-
-#: screens.py
-msgid "Ingredients wasted"
-msgstr "Suroviny prohozeny"
-
-#: screens.py
 msgid "Brewed: "
 msgstr "Vymícháno: "
 
-#: screens.py
 msgid "Cauldron is empty"
 msgstr "Hrnec je prázdný"
 
-#: screens.py
+msgid "Character already exists."
+msgstr "Postava už existuje."
+
+msgid "Collected: "
+msgstr "Nasbíráno: "
+
+msgid "Confirm"
+msgstr "Potvrdit"
+
+msgid "Continue"
+msgstr "Pokračovat"
+
+msgid "Create Potions"
+msgstr "Vytvořit lektvary"
+
+msgid "Distance: "
+msgstr "Vzdálenost: "
+
+msgid "Do you want to quit?"
+msgstr "Chceš skončit?"
+
+msgid "Drag onto cauldron to mix"
+msgstr "Přetáhni do hrnce pro promíchání"
+
 msgid "Duration: "
 msgstr "Trvání: "
 
-#: potions.py
-msgid "potion_magnetism_name"
-msgstr "Magnetická píl"
+msgid "Enter Character Name"
+msgstr "Zadej jméno postavy"
 
-#: potions.py
-msgid "potion_magnetism_description"
-msgstr "Automaticky táhne květy ve vzdálenosti do X pixelů směrem k tobě"
-
-#: hints.py
 msgid "Flower"
 msgstr "Květiny"
 
-#: hints.py
 msgid "Flowers are collectible. Run through them to add them to your harvest."
-msgstr "Květiny jsou sbíratelné. Projížděj přes ně a přidáš je do své sběre."
+msgstr ""
+"Květiny jsou sbíratelné. Projížděj přes ně a přidáš je do svého sběru."
 
-#: hints.py
-msgid "Stone"
-msgstr "Kámen"
+msgid "GAME OVER!"
+msgstr "KONEC HRY!"
 
-#: hints.py
-msgid "Stones are obstacles you need to avoid. If you run into them, your mission is over."
-msgstr "Kameny jsou překážky, které musíš obejít. Pokud do kamene narazíš, tvá mise je skončena."
+msgid "Game Menu"
+msgstr "Herní menu"
 
-#: hints.py
-msgid "Rock"
-msgstr "Skála"
+msgid "Greenhouse"
+msgstr "Skleník"
 
-#: menu.py
-msgid "Restart the game to apply language changes."
-msgstr "Restartuj hru pro aplikování změny jazyka."
-
-#: hints.py
-msgid "Rocks are huge obstacles you cannot pass. If you run into them, your mission is over."
-msgstr "Skály jsou obrovské překážky, kterými neprojdeš. Pokud do skály narazíš, tvá mise je skončena."
-
-#: hints.py
-msgid "Spider"
-msgstr "Pavouk"
-
-#: hints.py
-msgid "Spiders crawl toward you and their sting ends the run. Keep your distance."
-msgstr "Pavouci se plazí po zemi směrem k tobě a jejich štípnutí ukončí výpravu. Drž od nich odstoup."
-
-#: hints.py
 msgid "Hill"
 msgstr "Kopeček"
 
-#: hints.py
 msgid "Hills are safe, but they slow you down while you run through them."
-msgstr "Kopečky jsou bezpečné, ale zpomalí tě, zatím jimi projíždíš."
+msgstr "Kopečky jsou bezpečné, ale zpomalí tě, zatímco jimi projíždíš."
 
-#: menu.py
+msgid "Ingredients wasted"
+msgstr "Suroviny prohozeny"
+
+msgid "LEVEL COMPLETED!"
+msgstr "ÚROVEŇ DOKONČENA!"
+
+msgid "Level: "
+msgstr "Úroveň: "
+
+msgid "Load Character"
+msgstr "Načíst postavu"
+
+msgid "Name cannot be empty."
+msgstr "Jméno nemůže být prázdné."
+
+msgid "New Character"
+msgstr "Nová postava"
+
+msgid "Next Level"
+msgstr "Další úroveň"
+
+msgid "No Active Character"
+msgstr "Žádná aktivní postava"
+
+msgid "No potions yet"
+msgstr "Zatím žádné lektvary"
+
+msgid "None"
+msgstr "Žádná"
+
+msgid "Placeholder Screen: Future greenhouse system will be here!"
+msgstr "Zástavní obrazovka: Zde bude budoucí systém skleníku!"
+
+msgid "Play Again"
+msgstr "Hrát znovu"
+
+msgid "Potion Crafting"
+msgstr "Vytváření lektvarů"
+
+msgid "Press 'q' to quit"
+msgstr "Stiskni 'q' pro ukončení"
+
+msgid "Press 's' to continue"
+msgstr "Stiskni 's' pro pokračování"
+
+msgid "Press 's' to start"
+msgstr "Stiskni 's' pro start"
+
+msgid "Quick Herbalist"
+msgstr "Rychlá bylinkářka"
+
+msgid "Quit"
+msgstr "Ukončit"
+
+msgid "Restart the game to apply language changes."
+msgstr "Restartuj hru pro aplikování změny jazyka."
+
+msgid "Rock"
+msgstr "Skála"
+
+msgid ""
+"Rocks are huge obstacles you cannot pass. If you run into them, your mission"
+" is over."
+msgstr ""
+"Skály jsou obrovské překážky, kterými neprojdeš. Pokud do skály narazíš, "
+"tvoje mise skončila."
+
+msgid "Select Character"
+msgstr "Vybrat postavu"
+
 msgid "Show in-game hints"
 msgstr "Zobrazovat nápovědy ve hře"
 
-#: menu.py
+msgid "Spider"
+msgstr "Pavouk"
+
+msgid ""
+"Spiders crawl toward you and their sting ends the run. Keep your distance."
+msgstr ""
+"Pavouci se plazí po zemi směrem k tobě a jejich štípnutí ukončí výpravu. Drž"
+" od nich odstup."
+
+msgid "Start Game"
+msgstr "Spustit hru"
+
+msgid "Start Level "
+msgstr "Spustit úroveň "
+
+msgid "Stone"
+msgstr "Kámen"
+
+msgid ""
+"Stones are obstacles you need to avoid. If you run into them, your mission "
+"is over."
+msgstr ""
+"Kameny jsou překážky, které musíš obejít. Pokud do kamene narazíš, tvoje "
+"mise skončila."
+
 msgid "Tutorial popups shown the first time you encounter each game entity."
 msgstr "Tutoriálová okna zobrazovaná při prvním setkání s každým prvkem hry."
+
+msgid "bluebell_sprite"
+msgstr "Zvonkovka"
+
+msgid "dandelion_sprite"
+msgstr "Pampeliška"
+
+msgid "potion_magnetism_description"
+msgstr "Automaticky táhne květy ve vzdálenosti až X pixelů směrem k tobě"
+
+msgid "potion_magnetism_name"
+msgstr "Lektvar magnetismu"

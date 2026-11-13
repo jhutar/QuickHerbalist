@@ -1,152 +1,191 @@
-# Quick Herbalist translations
-# Copyright (C) YEAR ORGANIZATION
-# Jan Hutar <jhutar@seznam.cz>, 2025.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: 0.1\n"
-"POT-Creation-Date: 2025-08-10 21:45+0200\n"
-"PO-Revision-Date: 2025-08-10 21:45+0200\n"
-"Last-Translator: Jan Hutar <jhutar@seznam.cz>\n"
-"Language-Team: Jan Hutar <jhutar@seznam.cz>\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Generated-By: pygettext.py 1.5\n"
+"content-transfer-encoding: 8bit\n"
+"content-type: text/plain; charset=UTF-8\n"
+"generated-by: manual sync from base.pot\n"
+"language: en\n"
+"language-team: Jan Hutar <jhutar@seznam.cz>\n"
+"last-translator: Jan Hutar <jhutar@seznam.cz>\n"
+"mime-version: 1.0\n"
+"po-revision-date: 2026-11-13\n"
+"project-id-version: 0.1\n"
 
+msgid "Active Character: "
+msgstr "Active Character: "
 
-#: game.py:16 game.py:207
-msgid "Quick Herbalist"
-msgstr ""
-
-#: game.py:211
-msgid "Press 's' for start"
-msgstr ""
-
-#: game.py:251 game.py:280
-msgid "Collected: "
-msgstr ""
-
-#: game.py:252 game.py:281
-msgid "Distance: "
-msgstr ""
-
-#: game.py:261
-msgid "Do you want to quit?"
-msgstr ""
-
-#: game.py:265
-msgid "Press 's' to continue"
-msgstr ""
-
-#: game.py:269
-msgid "Press 'q' to quit"
-msgstr ""
-
-#: game.py:279
-msgid "GAME OVER!"
-msgstr ""
-
-#: screens.py
-msgid "dandelion_sprite"
-msgstr "Dandelion"
-
-#: screens.py
-msgid "bluebell_sprite"
-msgstr "Bluebell"
-
-#: screens.py
-msgid "Potion Crafting"
-msgstr ""
-
-#: screens.py
 msgid "Back to Game Menu"
-msgstr ""
+msgstr "Back to Game Menu"
 
-#: screens.py
-msgid "Game Menu"
-msgstr ""
-
-#: screens.py
 msgid "Back to Main Menu"
-msgstr ""
+msgstr "Back to Main Menu"
 
-#: screens.py
-msgid "Drag onto cauldron to mix"
-msgstr ""
-
-#: screens.py
-msgid "Ingredients wasted"
-msgstr ""
-
-#: screens.py
 msgid "Brewed: "
-msgstr ""
+msgstr "Brewed: "
 
-#: screens.py
 msgid "Cauldron is empty"
-msgstr ""
+msgstr "Cauldron is empty"
 
-#: screens.py
+msgid "Character already exists."
+msgstr "Character already exists."
+
+msgid "Collected: "
+msgstr "Collected: "
+
+msgid "Confirm"
+msgstr "Confirm"
+
+msgid "Continue"
+msgstr "Continue"
+
+msgid "Create Potions"
+msgstr "Create Potions"
+
+msgid "Distance: "
+msgstr "Distance: "
+
+msgid "Do you want to quit?"
+msgstr "Do you want to quit?"
+
+msgid "Drag onto cauldron to mix"
+msgstr "Drag onto cauldron to mix"
+
 msgid "Duration: "
-msgstr ""
+msgstr "Duration: "
 
-#: potions.py
-msgid "potion_magnetism_name"
-msgstr "Magnetism Potion"
+msgid "Enter Character Name"
+msgstr "Enter Character Name"
 
-#: potions.py
-msgid "potion_magnetism_description"
-msgstr "Drags flowers up to X pixels from you towards you automatically"
-
-#: hints.py
 msgid "Flower"
-msgstr ""
+msgstr "Flower"
 
-#: hints.py
 msgid "Flowers are collectible. Run through them to add them to your harvest."
 msgstr ""
+"Flowers are collectible. Run through them to add them to your harvest."
 
-#: hints.py
-msgid "Stone"
-msgstr ""
+msgid "GAME OVER!"
+msgstr "GAME OVER!"
 
-#: hints.py
-msgid "Stones are obstacles you need to avoid. If you run into them, your mission is over."
-msgstr ""
+msgid "Game Menu"
+msgstr "Game Menu"
 
-#: hints.py
-msgid "Rock"
-msgstr ""
+msgid "Greenhouse"
+msgstr "Greenhouse"
 
-#: menu.py
-msgid "Restart the game to apply language changes."
-msgstr ""
-
-#: hints.py
-msgid "Rocks are huge obstacles you cannot pass. If you run into them, your mission is over."
-msgstr ""
-
-#: hints.py
-msgid "Spider"
-msgstr ""
-
-#: hints.py
-msgid "Spiders crawl toward you and their sting ends the run. Keep your distance."
-msgstr ""
-
-#: hints.py
 msgid "Hill"
-msgstr ""
+msgstr "Hill"
 
-#: hints.py
 msgid "Hills are safe, but they slow you down while you run through them."
-msgstr ""
+msgstr "Hills are safe, but they slow you down while you run through them."
 
-#: menu.py
+msgid "Ingredients wasted"
+msgstr "Ingredients wasted"
+
+msgid "LEVEL COMPLETED!"
+msgstr "LEVEL COMPLETED!"
+
+msgid "Level: "
+msgstr "Level: "
+
+msgid "Load Character"
+msgstr "Load Character"
+
+msgid "Name cannot be empty."
+msgstr "Name cannot be empty."
+
+msgid "New Character"
+msgstr "New Character"
+
+msgid "Next Level"
+msgstr "Next Level"
+
+msgid "No Active Character"
+msgstr "No Active Character"
+
+msgid "No potions yet"
+msgstr "No potions yet"
+
+msgid "None"
+msgstr "None"
+
+msgid "Placeholder Screen: Future greenhouse system will be here!"
+msgstr "Placeholder Screen: Future greenhouse system will be here!"
+
+msgid "Play Again"
+msgstr "Play Again"
+
+msgid "Potion Crafting"
+msgstr "Potion Crafting"
+
+msgid "Press 'q' to quit"
+msgstr "Press 'q' to quit"
+
+msgid "Press 's' to continue"
+msgstr "Press 's' to continue"
+
+msgid "Press 's' to start"
+msgstr "Press 's' to start"
+
+msgid "Quick Herbalist"
+msgstr "Quick Herbalist"
+
+msgid "Quit"
+msgstr "Quit"
+
+msgid "Restart the game to apply language changes."
+msgstr "Restart the game to apply language changes."
+
+msgid "Rock"
+msgstr "Rock"
+
+msgid ""
+"Rocks are huge obstacles you cannot pass. If you run into them, your mission"
+" is over."
+msgstr ""
+"Rocks are huge obstacles you cannot pass. If you run into them, your mission"
+" is over."
+
+msgid "Select Character"
+msgstr "Select Character"
+
 msgid "Show in-game hints"
-msgstr ""
+msgstr "Show in-game hints"
 
-#: menu.py
-msgid "Tutorial popups shown the first time you encounter each game entity."
+msgid "Spider"
+msgstr "Spider"
+
+msgid ""
+"Spiders crawl toward you and their sting ends the run. Keep your distance."
 msgstr ""
+"Spiders crawl toward you and their sting ends the run. Keep your distance."
+
+msgid "Start Game"
+msgstr "Start Game"
+
+msgid "Start Level "
+msgstr "Start Level "
+
+msgid "Stone"
+msgstr "Stone"
+
+msgid ""
+"Stones are obstacles you need to avoid. If you run into them, your mission "
+"is over."
+msgstr ""
+"Stones are obstacles you need to avoid. If you run into them, your mission "
+"is over."
+
+msgid "Tutorial popups shown the first time you encounter each game entity."
+msgstr "Tutorial popups shown the first time you encounter each game entity."
+
+msgid "bluebell_sprite"
+msgstr "bluebell_sprite"
+
+msgid "dandelion_sprite"
+msgstr "dandelion_sprite"
+
+msgid "potion_magnetism_description"
+msgstr "potion_magnetism_description"
+
+msgid "potion_magnetism_name"
+msgstr "potion_magnetism_name"
