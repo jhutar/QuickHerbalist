@@ -142,7 +142,7 @@ wheels = [
 [[package]]
 name = "kivy"
 version = "3.0.0.dev0"
-source = { git = "https://github.com/kivy/kivy.git?rev=0f23a55ccc59a55d2e726d079fedcca03c5ca068#0f23a55ccc59a55d2e726d079fedcca03c5ca068" }
+source = { registry = "https://kivy.org/downloads/simple/" }
 dependencies = [
     { name = "docutils" },
     { name = "filetype" },
@@ -153,6 +153,26 @@ dependencies = [
     { name = "pygments" },
     { name = "pypiwin32", marker = "sys_platform == 'win32'" },
     { name = "requests" },
+]
+wheels = [
+    { url = "https://kivy.org/downloads/ci/raspberrypi/kivy/kivy-3.0.0.dev0-cp311-cp311-linux_armv6l.whl" },
+    { url = "https://kivy.org/downloads/ci/raspberrypi/kivy/kivy-3.0.0.dev0-cp311-cp311-linux_armv7l.whl" },
+    { url = "https://kivy.org/downloads/ci/osx/kivy/kivy-3.0.0.dev0-cp311-cp311-macosx_10_15_universal2.whl" },
+    { url = "https://kivy.org/downloads/ci/linux/kivy/kivy-3.0.0.dev0-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl" },
+    { url = "https://kivy.org/downloads/ci/linux/kivy/kivy-3.0.0.dev0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl" },
+    { url = "https://kivy.org/downloads/ci/win/kivy/kivy-3.0.0.dev0-cp311-cp311-win_amd64.whl" },
+    { url = "https://kivy.org/downloads/ci/osx/kivy/kivy-3.0.0.dev0-cp312-cp312-macosx_10_15_universal2.whl" },
+    { url = "https://kivy.org/downloads/ci/linux/kivy/kivy-3.0.0.dev0-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl" },
+    { url = "https://kivy.org/downloads/ci/linux/kivy/kivy-3.0.0.dev0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl" },
+    { url = "https://kivy.org/downloads/ci/win/kivy/kivy-3.0.0.dev0-cp312-cp312-win_amd64.whl" },
+    { url = "https://kivy.org/downloads/ci/osx/kivy/kivy-3.0.0.dev0-cp313-cp313-macosx_10_15_universal2.whl" },
+    { url = "https://kivy.org/downloads/ci/linux/kivy/kivy-3.0.0.dev0-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl" },
+    { url = "https://kivy.org/downloads/ci/linux/kivy/kivy-3.0.0.dev0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl" },
+    { url = "https://kivy.org/downloads/ci/win/kivy/kivy-3.0.0.dev0-cp313-cp313-win_amd64.whl" },
+    { url = "https://kivy.org/downloads/ci/osx/kivy/kivy-3.0.0.dev0-cp314-cp314-macosx_10_15_universal2.whl" },
+    { url = "https://kivy.org/downloads/ci/linux/kivy/kivy-3.0.0.dev0-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl" },
+    { url = "https://kivy.org/downloads/ci/linux/kivy/kivy-3.0.0.dev0-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl" },
+    { url = "https://kivy.org/downloads/ci/win/kivy/kivy-3.0.0.dev0-cp314-cp314-win_amd64.whl" },
 ]
 
 [[package]]
@@ -421,7 +441,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "kivy", git = "https://github.com/kivy/kivy.git?rev=0f23a55ccc59a55d2e726d079fedcca03c5ca068" },
+    { name = "kivy", specifier = "==3.0.0.dev0", index = "https://kivy.org/downloads/simple/" },
     { name = "pyyaml", specifier = ">=6.0" },
 ]
 

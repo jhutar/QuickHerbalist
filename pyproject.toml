@@ -5,10 +5,11 @@ description = "A quick 2D items collecting game"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    # Kivy 3.0.0 is not on PyPI; pinned to upstream kivy/kivy master commit
-    # (MAJOR/MINOR/MICRO = 3.0.0 in kivy/_version.py). The WASM/web build
+    # Kivy 3.0.0 dev: nightly wheels from kivy.org (daily snapshot of master).
+    # To pick up a newer snapshot run: uv lock --upgrade-package kivy
+    # Replace with "kivy>=3.0.0" once 3.0.0 hits PyPI. The WASM/web build
     # (issue #10) uses psychowasp/kivy branch "wasm-support" instead.
-    "kivy @ git+https://github.com/kivy/kivy.git@0f23a55ccc59a55d2e726d079fedcca03c5ca068",
+    "kivy==3.0.0.dev0",
     "pyyaml>=6.0",
 ]
 
@@ -23,13 +24,18 @@ dev = [
 manage-sprites = "quick_herbalist.tools.sprite_editor:main"
 quick-herbalist = "quick_herbalist.app:main"
 
+[[tool.uv.index]]
+# Nightly wheels of kivy 3.0.0.dev0 (daily snapshot of master).
+name = "kivy-nightly"
+url = "https://kivy.org/downloads/simple/"
+explicit = true
+
+[tool.uv.sources]
+kivy = { index = "kivy-nightly" }
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.hatch.metadata]
-# Kivy 3.0.0 is pinned by git URL in project.dependencies.
-allow-direct-references = true
 
 [tool.ruff]
 line-length = 100
