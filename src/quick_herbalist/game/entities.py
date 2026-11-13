@@ -127,15 +127,15 @@ class Rock(Stone):
 
 
 class Spider(GameEntity):
-    """Crawling hazard: scrolls at half world speed and chases the hero
-    vertically; stings (ends the run) on contact."""
+    """Crawling hazard: scrolls at a quarter of world speed and chases the
+    hero vertically; stings (ends the run) on contact."""
 
     TYPE = "spider"
     SIZE = (32, 32)
     SPAWN_X_MIN = 50
     SPAWN_X_MAX = 200
     CHASE_SPEED = 3.0  # px/frame at 60 fps; hero can outrun it
-    SCROLL_FACTOR = 0.5  # scrolls at a share of the world speed
+    SCROLL_FACTOR = 0.25  # scrolls at a share of the world speed
 
     def move(self, frame):
         """Scroll with the world and steer vertically toward the hero."""

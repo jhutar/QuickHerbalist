@@ -447,7 +447,7 @@ def test_registry_types_and_hints_consistent():
 
 
 def test_spider_chases_hero_vertically():
-    """Spider scrolls at half world speed and steers toward the hero center."""
+    """Spider scrolls at a quarter of world speed and steers toward the hero center."""
     view = _make_game_view()
     _always_overlap(view, overlap=False)
     spider = Spider(_make_sprite_manager(), "lvl_stone", 400, view.hero.center_y - 50)
@@ -455,8 +455,8 @@ def test_spider_chases_hero_vertically():
 
     view._step_entities(_frame(view))
 
-    # world speed 3.0 px/frame * 0.5 scroll factor; chase step 3.0 px/frame
-    assert spider.x == 400 - 1.5
+    # world speed 3.0 px/frame * 0.25 scroll factor; chase step 3.0 px/frame
+    assert spider.x == 400 - 0.75
     assert spider.y == view.hero.center_y - 50 + 3.0
 
     # From below the hero it steers upward instead.
