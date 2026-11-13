@@ -15,6 +15,7 @@ translated, how to add new ones, and how the active locale is chosen.
 | `src/quick_herbalist/locales/cs/LC_MESSAGES/base.mo` | Compiled Czech catalog (binary, generated). |
 | `src/quick_herbalist/localization.py` | Binds the `base` text domain to the locales directory and exposes `_` (= `gettext.gettext`). |
 | `scripts/compile_mo.py` | Compiles a `.po` to a `.mo` with polib. |
+| `scripts/update_pot.py` | Regenerates `base.pot` from the `_()` calls in the game code and the recipe keys in `recipes.yaml`. |
 | `.pre-commit-config.yaml` | Defines the local `compile-mo` pre-commit hook (id `compile-mo`), which runs `scripts/compile_mo.py` on staged `*.po` files. |
 
 The text domain is `base`, so catalogs live under `<locale_dir>/<lang>/LC_MESSAGES/base.po`
@@ -68,21 +69,19 @@ potion workflow.
    For f-strings, translate each literal piece separately (gettext works on
    static strings), e.g. `_("Brewed: ") + _(recipe.name_key)`.
 
-2. **Regenerate `base.pot`.** The template was generated with
-   `pygettext` (see the `Generated-By` header in `base.pot`). Either
-   regenerate it (from the repo root, excluding the sprite editor):
+2. **Regenerate `base.pot`.** Run the regeneration script (from the repo
+   root):
 
    ```bash
-   pygettext -d base \
-     src/quick_herbalist/*.py \
-     src/quick_herbalist/screens/*.py \
-     src/quick_herbalist/game/*.py \
-     -o src/quick_herbalist/locales/base.pot
+   uv run python scripts/update_pot.py
    ```
 
-   or simply add the new `msgid` entry to `base.pot` by hand, matching the
-   surrounding entries. `base.pot` carries no translations; it only lists
-   the `msgid`s.
+   It extracts every static `_()` call in `src/quick_herbalist/*.py`,
+   `screens/*.py`, and `game/*.py`, plus the recipe `name_key`/
+   `description_key` and ingredient keys from `assets/recipes.yaml`.
+   Output is deterministic (sorted msgids, no timestamps) and never
+   includes `tools/sprite_editor/` or logging/terminal strings. `base.pot`
+   carries no translations; it only lists the `msgid`s.
 
 3. **Add the `msgid` to each catalog** — `locales/en/LC_MESSAGES/base.po`
    (English `msgstr`) and `locales/cs/LC_MESSAGES/base.po` (Czech `msgstr`):

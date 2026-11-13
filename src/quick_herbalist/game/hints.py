@@ -12,27 +12,28 @@ from kivy.uix.widget import Widget
 from quick_herbalist.game.widgets import SCREEN_H, SCREEN_W
 from quick_herbalist.localization import _
 
-# Entity type -> (title, description); both strings are localization msgids.
+# Entity type -> (title, description), translated at import time so the
+# literals stay extractable by scripts/update_pot.py.
 ENTITY_HINTS = {
     "flower": (
-        "Flower",
-        "Flowers are collectible. Run through them to add them to your harvest.",
+        _("Flower"),
+        _("Flowers are collectible. Run through them to add them to your harvest."),
     ),
     "stone": (
-        "Stone",
-        "Stones are obstacles you need to avoid. If you run into them, your mission is over.",
+        _("Stone"),
+        _("Stones are obstacles you need to avoid. If you run into them, your mission is over."),
     ),
     "rock": (
-        "Rock",
-        "Rocks are huge obstacles you cannot pass. If you run into them, your mission is over.",
+        _("Rock"),
+        _("Rocks are huge obstacles you cannot pass. If you run into them, your mission is over."),
     ),
     "spider": (
-        "Spider",
-        "Spiders crawl toward you and their sting ends the run. Keep your distance.",
+        _("Spider"),
+        _("Spiders crawl toward you and their sting ends the run. Keep your distance."),
     ),
     "hill": (
-        "Hill",
-        "Hills are safe, but they slow you down while you run through them.",
+        _("Hill"),
+        _("Hills are safe, but they slow you down while you run through them."),
     ),
 }
 
@@ -52,9 +53,8 @@ _BG = (0.1, 0.1, 0.1, 1.0)
 
 
 def hint_text(entity_type):
-    """Return the translated (title, description) pair for an entity type."""
-    title, description = ENTITY_HINTS[entity_type]
-    return _(title), _(description)
+    """Return the (title, description) pair for an entity type."""
+    return ENTITY_HINTS[entity_type]
 
 
 class HintBox(Widget):

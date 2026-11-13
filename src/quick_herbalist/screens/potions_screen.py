@@ -199,7 +199,7 @@ class PotionsScreen(KeyboardScreen):
             strip.add_widget(chip)
             shown = True
         if not shown:
-            empty = Label(text="No potions yet", font_size=16, color=(0.7, 0.7, 0.7, 1))
+            empty = Label(text=_("No potions yet"), font_size=16, color=(0.7, 0.7, 0.7, 1))
             empty.pos_hint = {"x": 0.05, "center_y": 0.5}
             strip.add_widget(empty)
 
