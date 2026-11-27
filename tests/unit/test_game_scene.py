@@ -455,9 +455,9 @@ def test_spider_chases_hero_vertically():
 
     view._step_entities(_frame(view))
 
-    # world speed 3.0 px/frame * 0.25 scroll factor; chase step 3.0 px/frame
+    # world speed 3.0 px/frame * 0.25 scroll factor; chase step 2.0 px/frame
     assert spider.x == 400 - 0.75
-    assert spider.y == view.hero.center_y - 50 + 3.0
+    assert spider.y == view.hero.center_y - 50 + 2.0
 
     # From below the hero it steers upward instead.
     below = Spider(_make_sprite_manager(), "lvl_stone", 400, view.hero.center_y + 100)
