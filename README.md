@@ -45,11 +45,6 @@ uv lock --upgrade-package kivy && uv sync
 Once Kivy 3.0.0 reaches PyPI, switch the dependency in `pyproject.toml` to
 `"kivy>=3.0.0"` and remove the `kivy-nightly` index and `tool.uv.sources` entries.
 
-Automated spec-kit task runner (implements unchecked tasks in a spec's `tasks.md` in sequence):
-```bash
-scripts/run_yolo_tasks.sh specs/<spec-dir>
-```
-
 ### Web build (browser)
 
 Build the static web bundle locally (Kivy 3 WASM + pyodide). Needs `uv` and

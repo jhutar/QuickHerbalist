@@ -1,0 +1,9 @@
+{
+  "name": "quickherbalist-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dev deps for the web bundle probe tests (playwright)",
+  "dependencies": {
+    "playwright": "^1.65.0"
+  }
+}

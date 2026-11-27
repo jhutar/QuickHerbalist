@@ -39,16 +39,10 @@ Thumbs.db
 *.swp
 *.tmp
 
-# Phase 0 web spike (issue #10)
-spike/web/*.whl
-spike/node_modules/
-spike/.chromium-libs/
-spike/package-lock.json
-spike/screenshot-error.png
-spike/probe-screenshot*.png
-
 # Web build output (issue #10)
 web/dist/
+web/node_modules/
+web/package-lock.json
 
 # AI tooling
 .gemini/

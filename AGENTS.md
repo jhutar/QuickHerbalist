@@ -47,9 +47,3 @@ Yes: "Bug in auth middleware. Token expiry check use `<` not `<=`. Fix:"
 3. Self-Review: Once finished, evaluate your code as if submitting a pull request for a senior code review. Fix any hidden complexities, tight coupling, or naming inconsistencies you find.
 4. Verify: Run `make test` and `make check-all`.
 5. Commit: Commit changes with `git commit --trailer Generated-by:<model> -m "<message>"` and cleanup temporary files if any.
-
-<!-- SPECKIT START -->
-For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan:
-- Plan file: [specs/002-sprite-manager/plan.md](specs/002-sprite-manager/plan.md)
-<!-- SPECKIT END -->

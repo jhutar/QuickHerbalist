@@ -1,10 +1,10 @@
-// Headless save-persistence test (node + playwright, see spike/).
+// Headless save-persistence test (node + playwright).
 // Boots the bundle with ?noapp (no game loop, so Python is callable),
 // creates a character, reloads, and checks it survived.
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
-// resolve playwright from spike/node_modules (spike/ owns the dev deps)
-const require = createRequire(fileURLToPath(new URL("../spike/package.json", import.meta.url)));
+// resolve playwright from web/node_modules (npm install in web/)
+const require = createRequire(fileURLToPath(new URL("./package.json", import.meta.url)));
 const { chromium } = require("playwright");
 
 const base = (process.env.BASE ?? "http://127.0.0.1:8322/") + "?noapp";

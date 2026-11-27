@@ -1,10 +1,10 @@
-// Headless smoke test for the web bundle (node + playwright, see spike/).
+// Headless smoke test for the web bundle (node + playwright).
 // Serve the built bundle, then: node probe.mjs  (BASE env to override URL).
 // Asserts: app boots to "app running", no page errors, canvas gets input.
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
-// resolve playwright from spike/node_modules (spike/ owns the dev deps)
-const require = createRequire(fileURLToPath(new URL("../spike/package.json", import.meta.url)));
+// resolve playwright from web/node_modules (npm install in web/)
+const require = createRequire(fileURLToPath(new URL("./package.json", import.meta.url)));
 const { chromium } = require("playwright");
 
 const base = process.env.BASE ?? "http://127.0.0.1:8322/";

@@ -8,7 +8,7 @@ ROOT="$(cd .. && pwd)"
 
 PYODIDE_VERSION="0.29.5"  # cp313 line; matches the kivy WASM wheel (314.x is py3.14)
 # Kivy 3.0.0.dev0 WASM wheel, built by kivy-school CI from psychowasp/kivy
-# branch "wasm-support" (see spike/FINDINGS.md). Pinned by build commit.
+# branch "wasm-support". Pinned by build commit.
 KIVY_WHEEL_URL="https://kivy-school.github.io/kivy-browser/wheels/97d713a6f350/kivy-3.0.0.dev0-cp313-cp313-pyemscripten_2025_0_wasm32.whl"
 KIVY_WHEEL="kivy-3.0.0.dev0-cp313-cp313-pyemscripten_2025_0_wasm32.whl"
 PYODIDE_BASE="https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full"
