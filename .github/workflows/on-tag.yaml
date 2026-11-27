@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Build Kivy 3 Linux dependencies
       uses: ./.github/actions/kivy-linux-deps
@@ -46,7 +46,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Build Kivy 3 Linux dependencies (Linux)
       if: matrix.os == 'ubuntu-latest'
