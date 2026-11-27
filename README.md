@@ -40,8 +40,11 @@ make check-all
 Kivy 3.0.0.dev0 is installed from the [Kivy nightly wheels](https://kivy.org/downloads/simple/)
 (daily snapshot of Kivy master). To pick up a newer snapshot:
 ```bash
-uv lock --upgrade-package kivy && uv sync
+make deps-upgrade
 ```
+(which also bumps pre-commit hooks and npm dev deps; run occasionally, e.g.
+monthly). Other dependencies are kept current by Dependabot
+(`.github/dependabot.yml`), which auto-merges its PRs once CI passes.
 Once Kivy 3.0.0 reaches PyPI, switch the dependency in `pyproject.toml` to
 `"kivy>=3.0.0"` and remove the `kivy-nightly` index and `tool.uv.sources` entries.
 

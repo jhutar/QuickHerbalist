@@ -18,6 +18,21 @@ PYYAML_WHEEL="pyyaml-6.0.2-cp313-cp313-pyemscripten_2025_0_wasm32.whl"
 FILETYPE_WHEEL="filetype-1.2.0-py2.py3-none-any.whl"
 FILETYPE_WHEEL_URL="https://files.pythonhosted.org/packages/18/79/1b8fa1bb3568781e84c9200f951c735f3f157429f44be0495da55894d620/${FILETYPE_WHEEL}"
 
+# SHA256 of every downloaded artifact, so a changed or compromised CDN
+# artifact fails the build instead of shipping. Recompute (download +
+# sha256sum) and update these whenever a pin above changes.
+verify() {
+  want="$1"
+  file="$2"
+  got="$(sha256sum "$file" | cut -d' ' -f1)"
+  if [ "$want" != "$got" ]; then
+    echo "sha256 mismatch for $file" >&2
+    echo "  want $want" >&2
+    echo "  got  $got" >&2
+    exit 1
+  fi
+}
+
 rm -rf dist
 mkdir -p dist dist/pyodide
 
@@ -34,6 +49,15 @@ echo "$APP_WHEEL" > dist/app-wheel.txt
 for f in pyodide.js pyodide.asm.js pyodide.asm.wasm python_stdlib.zip pyodide-lock.json; do
   curl -fsSL -o "dist/pyodide/$f" "$PYODIDE_BASE/$f"
 done
+
+verify "97d713a6f350b97a14242ff79a5be2663fc073e545b4e15fe2fa51c417291161" "dist/$KIVY_WHEEL"
+verify "20b40e900704ae4e204a9978d9806f148205df4cbdf44b5eb73a189254a72757" "dist/$PYYAML_WHEEL"
+verify "7ce71b6880181241cf7ac8697a2f1eb6a8bd9b429f7ad6d27b8db9ba5f1c2d25" "dist/$FILETYPE_WHEEL"
+verify "7f832a350240263d9946a9c3c877f7bcdab6c37d6dc65f72cd3be5905dca62dd" dist/pyodide/pyodide.js
+verify "356c42f69e1695397e9d8670bd3c2e678248cde76e18bdae1731e848537b47d7" dist/pyodide/pyodide.asm.js
+verify "54309a5a2cfd757b1f0fdbc9093c92503f7b341500110329d932487183912718" dist/pyodide/pyodide.asm.wasm
+verify "831fd1e535084b972f87c6a35275de3d236efd5166f5e77ce89497710635e73c" dist/pyodide/python_stdlib.zip
+verify "14d2c2dba101277999e17135e653d8f15389ad1437f53eae213bf0c3cdff723d" dist/pyodide/pyodide-lock.json
 
 cp index.html main.js dist/
 

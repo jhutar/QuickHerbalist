@@ -1,0 +1,22 @@
+version: 2
+updates:
+  # GitHub Actions in all workflows (major-tag pins like @v4 get bumped
+  # within the major line).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: weekly
+
+  # Python deps (pyproject.toml + uv.lock). The exact-pinned kivy nightly
+  # (==3.0.0.dev0) is intentionally untouched here; bump it manually with
+  # `make deps-upgrade`.
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: weekly
+
+  # npm dev deps in web/ (playwright probe tests).
+  - package-ecosystem: "npm"
+    directory: "/web"
+    schedule:
+      interval: weekly

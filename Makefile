@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help bootstrap check check-all test
+.PHONY: help bootstrap check check-all test deps-upgrade
 
 help:
 	@echo "Available targets:"
@@ -8,6 +8,7 @@ help:
 	@echo "  check                - Run checks on staged changes"
 	@echo "  check-all            - Run checks on all files"
 	@echo "  test                 - Run the full pytest suite"
+	@echo "  deps-upgrade         - Bump kivy nightly, pre-commit hooks, npm dev deps"
 
 bootstrap:
 	@echo "==> Installing Python 3.12 (via uv)..."
@@ -25,6 +26,16 @@ check:
 
 check-all:
 	pre-commit run --all-files
+
+# Run occasionally (e.g. monthly). Everything else is handled by Dependabot
+# (.github/dependabot.yml); this covers what it cannot: the exact-pinned
+# kivy nightly, pre-commit hook revs, and npm dev deps.
+deps-upgrade:
+	uv lock --upgrade-package kivy
+	uv sync
+	pre-commit autoupdate
+	cd web && npm update
+	@echo "==> If ruff was bumped, sync its version in .github/workflows/ci.yaml"
 
 test:
 	@echo "==> Checking help for quick-herbalist..."
