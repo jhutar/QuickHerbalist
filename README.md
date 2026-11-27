@@ -63,3 +63,9 @@ python3 -m http.server 8080 -d web/dist
 Profile saves persist per browser (localStorage). Headless smoke tests:
 `web/probe.mjs` (boot + input) and `web/probe_persist.mjs` (save survives
 reload) — run with the static server from above.
+
+The WASM pins in `web/build.sh` (pyodide version, Kivy WASM wheel commit)
+are updated manually — there is no registry Dependabot can track. When
+bumping one: change the pin, re-download the artifacts, recompute the
+sha256 checksums at the bottom of the script, run `sh web/build.sh` and
+the probe tests.
